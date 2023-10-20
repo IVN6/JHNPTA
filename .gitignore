@@ -2,7 +2,7 @@
 .node_modules
 
 
-
+git log , log ..oneline , status , status 
 un archivo donde se ponen las variables de entorno , como claves passwords para poder entrar a bases de datos 
 
 * .jp g  

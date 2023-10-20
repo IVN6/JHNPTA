@@ -1,0 +1,9 @@
+.env
+.node_modules
+
+
+
+un archivo donde se ponen las variables de entorno , como claves passwords para poder entrar a bases de datos 
+
+* .jp g  
+* .archivo

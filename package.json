@@ -1,14 +1,14 @@
 {
   "name": "IVN6",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "repository": "https://github.com/IVN6/JHNPTA.git",
   "author": "IVN6 <jorgeivanbc1@gmail.com>",
   "license": "MIT",
   "private": false,
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node js/index.js" 
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   },
   "devDependencies": {
     "nodemon": "3.0.1"

@@ -27,15 +27,16 @@ var jugador;
 
 var modo = 0;	//Raycasting = 0     Mapa = 1
 
+// const PORT = process.env.PORT
 
 // const http = require("http")
 // function requestController(		) {
 // 	console.log("jhon es muy loka")
 	
-// }
-// //configuracion del servidor
+//  }
+// // //configuracion del servidor
 // const server = http.createServer(requestController)
-// server.listen(4000)
+//  server.listen(4000)
  
 
 //----------------------------------------------------------------------

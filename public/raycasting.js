@@ -1,28 +1,20 @@
-
-const backend = document.getElementById('answertobackend')
-console.logÇ(backend)
-backend.addEventListener('click',function(){
-	console.log('cliqueo 2')
-	fetch('https://jhnpta.onrender.com/')
-})
-
-var canvas;
-var ctx;
-var FPS = 30;
+let canvas;
+let ctx;
+let FPS = 30;
 
 //DIMENSIONES EN PIXELS DEL CANVAS
-var canvasAncho = 500;
-var canvasAlto = 500;
+let canvasAncho = 500;
+let canvasAlto = 500;
 
-var tamTile = 50;
+let tamTile = 50;
 
 
 //OBJETOS
-var escenario;
-var jugador;
+let escenario;
+let jugador;
 
 
-var modo = 0;	//Raycasting = 0     Mapa = 1
+let modo = 0;	//Raycasting = 0     Mapa = 1
 
 // const PORT = process.env.PORT
 

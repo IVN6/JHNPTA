@@ -9,7 +9,8 @@ server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });*/
 
-require("dotenv").config()
+const path = require('path')
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 
 const PORT = process.env.PORT || 3000;
 const express = require('express')
@@ -33,6 +34,6 @@ app.get('/', (req, res) => {
 
 
 //escuchar reuests
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}`)
 })

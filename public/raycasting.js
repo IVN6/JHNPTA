@@ -934,7 +934,7 @@ class Sprite{
  
   //CARGAMOS SPRITES
   imgArmor = new Image();
-  imgArmor.src = "img/armor.png";
+  imgArmor.src = "https://static.vecteezy.com/system/resources/previews/020/954/712/non_2x/guitar-isolated-on-transparent-free-png.png";
   
   imgPlanta = new Image();
   imgPlanta.src = "img/planta.png";
@@ -960,7 +960,7 @@ function inicializa(){
   
   //CARGAMOS TILES
   tiles = new Image();
-  tiles.src= "img/walls.png";
+  tiles.src= "https://static.vecteezy.com/system/resources/previews/020/954/712/non_2x/guitar-isolated-on-transparent-free-png.png";
   
  
   

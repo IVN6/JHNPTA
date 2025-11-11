@@ -1,19 +1,152 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Multi-Audio Speech Mixer</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#f5f5f5; margin:20px; }
+  textarea { width:100%; height:220px; font-size:16px; padding:10px; }
+  button,input { margin-top:10px; font-size:16px; padding:8px 12px; }
+  pre { background:#fff; padding:10px; border:1px solid #ccc; margin-top:15px; white-space:pre-wrap; }
+  #wordList span { background:#e1f5fe; margin:3px; padding:4px 8px; border-radius:6px; display:inline-block; }
+</style>
+</head>
+<body>
 
-  <head>
-	<link rel="stylesheet" type="text/css" href="style.css">
-  
-    <title>Raycasting</title>
-    <script src='raycasting.js'></script>
-  </head>
+<h2>🎧 Smart Multi-Audio + Speech Mixer</h2>
 
-  <body onload='inicializa();'>
-    <canvas id='canvas' style='border:2px solid #000000;'></canvas>
-    <input type="button" id="answertobackend">
-  </body>
-   <div></div>  
+<textarea id="text">
+The Power of Small Habits
 
+Most people believe that big changes require big effort — but in reality, the smallest habits often create the most lasting impact.
+</textarea>
 
+<br>
+<label>Word to record & replace:</label>
+<input type="text" id="word" placeholder="Type a word (e.g. habits)">
+<button id="recordBtn">⏺️ Record</button>
+<button id="stopBtn" disabled>⏹️ Stop</button>
+<button id="replaceBtn" disabled>🔄 Replace Word</button>
+<button id="playBtn" disabled>▶️ Play All</button>
 
+<h4>🎵 Recorded Words:</h4>
+<div id="wordList">(none yet)</div>
 
+<pre id="output"></pre>
+
+<script>
+let mediaRecorder;
+let recordedChunks = [];
+let recordedAudios = {}; // almacena palabra -> blobURL
+let originalText = "";
+let currentWord = "";
+
+const recordBtn = document.getElementById("recordBtn");
+const stopBtn = document.getElementById("stopBtn");
+const replaceBtn = document.getElementById("replaceBtn");
+const playBtn = document.getElementById("playBtn");
+const wordList = document.getElementById("wordList");
+const output = document.getElementById("output");
+
+function updateWordList() {
+  if (Object.keys(recordedAudios).length === 0) {
+    wordList.innerHTML = "(none yet)";
+    return;
+  }
+  wordList.innerHTML = "";
+  for (const w in recordedAudios) {
+    const span = document.createElement("span");
+    span.textContent = w;
+    wordList.appendChild(span);
+  }
+}
+
+// utilidades
+function speakAsync(text, lang="es-US") {
+  return new Promise(resolve => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.onend = resolve;
+    speechSynthesis.speak(u);
+  });
+}
+
+function playAudioAsync(url, overlap=300) {
+  return new Promise(resolve => {
+    const audio = new Audio(url);
+    let ended = false;
+    audio.onended = () => { ended = true; resolve(); };
+    audio.play();
+    // Resuelve un poco antes para permitir solapamiento
+    setTimeout(() => { if (!ended) resolve(); }, Math.max(200, audio.duration*1000 - overlap));
+  });
+}
+
+// grabar audio
+recordBtn.onclick = async () => {
+  const w = document.getElementById("word").value.trim().toLowerCase();
+  if (!w) return alert("Enter a word first!");
+  currentWord = w;
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  mediaRecorder = new MediaRecorder(stream);
+  recordedChunks = [];
+  mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(recordedChunks, { type: "audio/webm" });
+    const url = URL.createObjectURL(blob);
+    recordedAudios[currentWord] = url; // guarda sin borrar los anteriores
+    updateWordList();
+    replaceBtn.disabled = false;
+    playBtn.disabled = false;
+    output.textContent = `✅ Recorded audio for "${currentWord}".`;
+  };
+  mediaRecorder.start();
+  recordBtn.disabled = true;
+  stopBtn.disabled = false;
+  output.textContent = `🎙️ Recording "${w}"...`;
+};
+
+stopBtn.onclick = () => {
+  mediaRecorder.stop();
+  recordBtn.disabled = false;
+  stopBtn.disabled = true;
+};
+
+// reemplazar palabra
+replaceBtn.onclick = () => {
+  const textArea = document.getElementById("text");
+  if (!originalText) originalText = textArea.value; // guarda copia original
+  const regex = new RegExp(`\\b${currentWord}\\b`, "gi");
+  textArea.value = textArea.value.replace(regex, `[AUDIO:${currentWord}]`);
+  output.textContent = `🔁 Replaced all "${currentWord}" with audio marker.`;
+};
+
+// reproducir todo con solapamiento
+playBtn.onclick = async () => {
+  const text = document.getElementById("text").value;
+  const lang = "es-US";
+  const parts = text.split(/(\[AUDIO:[^\]]+\])/g).filter(Boolean);
+  output.textContent = "▶️ Playing mixed text & audios...\n";
+
+  speechSynthesis.cancel();
+
+  for (const part of parts) {
+    const match = part.match(/\[AUDIO:(.+)\]/);
+    if (match) {
+      const key = match[1];
+      if (recordedAudios[key]) {
+        output.textContent += `🔊 ${key}\n`;
+        await playAudioAsync(recordedAudios[key], 100);
+      }
+    } else if (part.trim()) {
+      await speakAsync(part, lang);
+    }
+  }
+
+  output.textContent += "\n✅ Finished playback.";
+};
+</script>
+
+</body>
 </html>

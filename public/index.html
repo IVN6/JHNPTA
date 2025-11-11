@@ -17,10 +17,24 @@
 <h2>🎧 Smart Multi-Audio + Speech Mixer</h2>
 
 <textarea id="text">
-The Power of Small Habits
+Camino a la Playa
 
-Most people believe that big changes require big effort — but in reality, the smallest habits often create the most lasting impact.
-</textarea>
+Salí temprano, todavía con la neblina pegada en el parabrisas. No iba exactamente de paseo —tenía que hacer una diligencia—, pero el destino daba justo frente al [AUDIO:mar], y eso ya hacía que valiera un poco más la pena.
+
+El carro olía a filtro nuevo y a café recién comprado. Llevaba la música bajita, más por costumbre que por gusto; me gusta escuchar cómo cambia el sonido de la ciudad al campo, como si los ruidos se fueran apagando uno por uno.
+
+En la autopista, el sol empezaba a colarse por los espejos laterales. La gente que iba en moto ya tenía el uniforme de la arena: gafas, chancletas y esa actitud de “ya casi llegamos”. Yo, en cambio, iba con la mente dividida entre la cita que tenía que cumplir y las ganas de bajarme en cualquier lado solo a mirar el [AUDIO:mar] un rato.
+
+En un punto, paré en una tiendita a comprar agua. El dueño estaba sentado afuera, con una hamaca medio colgando, mirando el cielo como si esperara que alguien lo saludara desde arriba. Le pregunté cuánto costaba la botella, y me dijo:
+—Depende. ¿Es para calmar la sed o el [AUDIO:pensamiento]?
+
+No supe si era poeta o simplemente estaba aburrido, pero le sonreí. Pagué y seguí mi camino.
+
+Cuando finalmente vi el [AUDIO:mar], fue como siempre: sin sorpresa, pero con respeto. Esa línea azul que nunca se cansa de estar ahí, moviéndose igual aunque uno llegue con prisas. Me estacioné un minuto, bajé la ventana y dejé que el aire me pegara en la cara. No tenía tiempo de quedarme, pero igual me di ese instante.
+
+Pensé en lo curioso que es: uno puede vivir cerca del [AUDIO:mar] o ir mil veces, y aún así, siempre hay algo que te detiene un momento. Como si el cuerpo recordara que también necesita horizonte.
+
+Arranqué de nuevo, con la sensación de que, aunque iba a hacer una diligencia, igual había ganado algo: cinco minutos de aire salado y silencio.</textarea>
 
 <br>
 <label>Word to record & replace:</label>
@@ -72,7 +86,7 @@ function speakAsync(text, lang="es-US") {
   });
 }
 
-function playAudioAsync(url, overlap=300) {
+function playAudioAsync(url, overlap=200) {
   return new Promise(resolve => {
     const audio = new Audio(url);
     let ended = false;

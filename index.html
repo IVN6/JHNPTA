@@ -50,7 +50,18 @@
   <small style="color:#666;">Ajusta cuánto silencio quieres antes y después de insertar tus grabaciones en el texto.</small>
 </div>
 
-<div class="flexrow">
+
+
+<textarea id="textoUsuario">The quick brown fox jumps over the lazy dog. This is a sentence to test the processing. The dog is lazy, and the fox is quick. Learning a new language is a journey.</textarea>
+
+<div id="resultados" class="panel" style="display:none;">
+  <h2>Análisis</h2>
+  <div id="metricasTexto"></div>
+</div>
+
+<div id="fragmentsContainer" class="panel" style="display:none;">
+ 
+  <div class="flexrow">
   <button onclick="procesarTexto()">Procesar Texto</button>
   <label>Idioma:
     <select id="idiomaSelect">
@@ -58,12 +69,25 @@
       <option value="es-ES">Español 🇪🇸</option>
       <option value="fr-FR">Francés 🇫🇷</option>
       <option value="de-DE">Alemán 🇩🇪</option>
+      <option value="it-IT">Italiano 🇮🇹</option>
+      <option value="pt-PT">Portugués 🇵🇹</option>
     </select>
   </label>
   <button class="secondary" onclick="limpiarProgreso()">Limpiar todo</button>
 </div>
 
-<textarea id="textoUsuario">The quick brown fox jumps over the lazy dog. This is a sentence to test the processing. The dog is lazy, and the fox is quick. Learning a new language is a journey.</textarea>
+<div class="panel" id="projectManager" style="margin-top: 14px;">
+  <h3>📂 Gestor de Proyectos</h3>
+  <div class="flexrow" style="margin-bottom: 10px;">
+    <label>Proyecto Actual:</label>
+    <select id="projectSelect" onchange="cargarProyectoSeleccionado()"></select>
+  </div>
+  <div class="flexrow">
+    <button class="secondary small" onclick="guardarProyectoActual()">Guardar Cambios</button>
+    <button class="success small" onclick="crearNuevoProyecto()">+ Nuevo Texto</button>
+    <button class="secondary small" onclick="eliminarProyectoSeleccionado()">Eliminar Seleccionado</button>
+  </div>
+</div>
 
 <div id="resultados" class="panel" style="display:none;">
   <h2>Análisis</h2>
@@ -75,6 +99,8 @@
   <div id="fragments"></div>
 </div>
 
+<textarea id="textoUsuario">The quick brown fox jumps over the lazy dog. This is a sentence to test the processing. The dog is lazy, and the fox is quick. Learning a new language is a journey.</textarea>
+  
 <div id="ejercicios" class="panel" style="display:none;">
   <h2>Ejercicios (Grabación)</h2>
   <div id="listaEjercicios"></div>
@@ -102,13 +128,32 @@
     
 /* === CONSTANTES Y UTILIDADES === */
 const STOP_WORDS = new Set(['a','an','and','the','is','it','in','on','at','to','for','of','with','this','that','was','are','be','over','new','makes','s','i','you','he','she','they','we','my','his','her']);
-const STORAGE_KEYS={learned:'ap_v6_learned',audios:'ap_v6_audios'};
+// Objeto que mapea códigos de idioma a un array de Stop Words
+const LANGUAGE_STOP_WORDS = {
+    'en-US': ['a','an','and','the','is','it','in','on','at','to','for','of','with','this','that','was','are','be','over','new','makes','s','i','you','he','she','they','we','my','his','her','them'],
+    'es-ES': ['el','la','los','las','un','una','unos','unas','y','o','pero','de','a','en','por','para','con','es','se','que','del','al'],
+    'fr-FR': ['le','la','les','un','une','des','et','ou','mais','de','à','en','par','pour','avec','est','se','que','du','au','il','elle','ils','elles'],
+    'de-DE': ['der','die','das','ein','eine','und','oder','aber','von','zu','in','mit','ist','sich','was','dich','er','sie','es','wir','ihr','sie'],
+    // 🚩 Stop Words para ITALIANO
+    'it-IT': ['il','la','i','gli','le','un','uno','una','e','o','ma','di','a','in','su','per','con','è','si','che','dal','al','del','dello','della'],
+    // 🚩 Stop Words para PORTUGUÉS
+    'pt-PT': ['o','a','os','as','um','uma','uns','umas','e','ou','mas','de','a','em','por','para','com','é','se','que','do','da','no','na','ele','ela','eles','elas']
+};
 
+// Función helper para obtener el Set de Stop Words del idioma actual
+function getStopWordsSet() {
+    const lang = document.getElementById('idiomaSelect').value;
+    const words = LANGUAGE_STOP_WORDS[lang] || LANGUAGE_STOP_WORDS['en-US']; // Fallback a inglés
+    return new Set(words);
+}  
+//const STORAGE_KEYS={learned:'ap_v6_learned',audios:'ap_v6_audios'};
+const STORAGE_KEYS={learned:'ap_v6_learned',audios:'ap_v6_audios',     currentText:'ap_v6_current_text',  projects:'ap_v6_projects'};
+  
 function cargarEstado(){return{learned:JSON.parse(localStorage.getItem(STORAGE_KEYS.learned)||'[]'),audios:JSON.parse(localStorage.getItem(STORAGE_KEYS.audios)||'{}')}};
 function guardarEstado(s){localStorage.setItem(STORAGE_KEYS.learned,JSON.stringify(s.learned||[]));localStorage.setItem(STORAGE_KEYS.audios,JSON.stringify(s.audios||{}));}
 
-function limpiarTexto(t){return t.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()\"\[\]]/g,"").toLowerCase();}
-function palabrasTokenize(t){return limpiarTexto(t).split(/\s+/).filter(p=>p.length>0);}
+function limpiarTexto(t){return t.toLowerCase().replace(/[$\%^&*+=\{\}\\|\\[\]~"<>`@#\/]/g,'').replace(/\s{2,}/g,' ').trim();}
+function palabrasTokenize(t){let x=limpiarTexto(t).replace(/[.,?!:;]/g,'');return x.split(/\s+/).filter(p=>p.length>0).map(p=>p.replace(/['"]+/g,'').trim()).filter(p=>p.length>0);}
 function mostrarNoti(txt,ms=2500){const n=document.getElementById('notify');n.textContent=txt;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),ms);}
 function blobToBase64(b){return new Promise((res,rej)=>{const r=new FileReader();r.onloadend=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b);});}
 function escaparRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); } // Para evitar errores si la palabra tiene simbolos
@@ -129,12 +174,21 @@ function procesarTexto(){
   const or=t.match(/[^.!?]+[.!?]+/g)||[t];
   const palabras=palabrasTokenize(t);
   const freq={};
-  
+    // ... dentro de procesarTexto()
+  const stopWordsSet = getStopWordsSet(); // <-- Obtener el Set correcto
+
   for(const p of palabras){
-    if(p.length>1 && !STOP_WORDS.has(p)){
+    // Usar stopWordsSet para el check
+    if(p.length>1 && !stopWordsSet.has(p)){
         freq[p]=(freq[p]||0)+1;
     }
   }
+  // ...
+  //for(const p of palabras){
+//    if(p.length>1 && !STOP_WORDS.has(p)){
+   //    freq[p]=(freq[p]||0)+1;
+ //   }
+//  }
   
   const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
   globalTopWords=top;
@@ -168,7 +222,7 @@ function dividirEnFragmentos(t, maxChars=300){
 /* === NUEVA FUNCIÓN PARA N-GRAMS CON PROSODIA (Punto 1 del feedback) === */
 function dividirEnNGrams(t, n=4) {
     // La expresión regular separa el texto por comas, puntos, etc., pero los mantiene en el array.
-    const tokens = t.match(/[\w']+|[.,?!:;]/g) || []; 
+    const tokens = t.match(/[a-zA-Z0-9áéíóúÁÉÍÓÚñÑçÇ']+|[.,?!:;]/g) || [];
     const nGrams = [];
     let currentGram = "";
     let wordCount = 0;
@@ -614,9 +668,175 @@ function startRecognition(btn) {
         btn.textContent = '🎙 Reintentar';
     }
 }
+/* === CÓDIGO AÑADIDO: GESTIÓN DE PROYECTOS Y PERSISTENCIA === */
+
+function cargarProyectos() {
+    const projects = JSON.parse(localStorage.getItem(STORAGE_KEYS.projects) || '[]');
+    const textareaContent = document.getElementById('textoUsuario').value;
+    
+    if (projects.length === 0) {
+        // Inicializar con el texto de bienvenida
+        projects.push({id: Date.now(), title: "Texto Inicial", content: textareaContent});
+        guardarProyectos(projects);
+    }
+    return projects;
+}
+
+function guardarProyectos(projects) {
+    localStorage.setItem(STORAGE_KEYS.projects, JSON.stringify(projects));
+}
+
+// Persistencia del texto actual (aparte de los proyectos, para un guardado rápido)
+function guardarTextoActual() {
+    const t = document.getElementById('textoUsuario').value;
+    localStorage.setItem(STORAGE_KEYS.currentText, t);
+}
+
+// ----------------------------------------------------
+
+let globalProjects = cargarProyectos();
+// Intentar cargar el último proyecto activo o tomar el primero
+let currentProjectId = parseInt(localStorage.getItem('ap_v6_current_project_id')) || globalProjects[0].id; 
 
 
+function renderProjectSelect() {
+    const select = document.getElementById('projectSelect');
+    select.innerHTML = '';
+    
+    // Asegurarse de que el ID actual siga existiendo
+    if (!globalProjects.find(p => p.id === currentProjectId)) {
+        currentProjectId = globalProjects[0].id;
+    }
 
+    globalProjects.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = p.title.substring(0, 30) + (p.title.length > 30 ? '...' : '');
+        if (p.id === currentProjectId) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+}
+
+function cargarProyectoSeleccionado() {
+    const select = document.getElementById('projectSelect');
+    const newId = parseInt(select.value);
+    const proyecto = globalProjects.find(p => p.id === newId);
+    const textarea = document.getElementById('textoUsuario');
+    
+    // 1. Antes de cambiar, guardar el contenido actual en el proyecto ANTERIOR
+    const oldProject = globalProjects.find(p => p.id === currentProjectId);
+    if (oldProject) {
+        oldProject.content = textarea.value;
+    }
+
+    if (proyecto) {
+        currentProjectId = newId;
+        localStorage.setItem('ap_v6_current_project_id', currentProjectId); // Guardar ID activo
+        textarea.value = proyecto.content;
+        
+        // Disparar procesamiento para inicializar la UI con el nuevo texto
+        // Evitamos el "procesarTexto()" automático para no bloquear al inicio si el texto es grande
+        mostrarNoti(`📚 Proyecto "${proyecto.title}" cargado. ¡Procesa para continuar!`, 2500);
+    }
+}
+
+function guardarProyectoActual() {
+    const textarea = document.getElementById('textoUsuario');
+    const proyecto = globalProjects.find(p => p.id === currentProjectId);
+    
+    if (proyecto) {
+        const newTitle = prompt("Guardar cambios. Introduce un nuevo nombre (opcional):", proyecto.title);
+        
+        proyecto.content = textarea.value;
+        if (newTitle && newTitle.trim().length > 0) {
+            proyecto.title = newTitle;
+            renderProjectSelect();
+        }
+        guardarProyectos(globalProjects);
+        guardarTextoActual(); 
+        mostrarNoti(`💾 Proyecto "${proyecto.title}" guardado.`, 1500);
+    }
+}
+
+function crearNuevoProyecto() {
+    const title = prompt("Introduce un nombre para el nuevo texto:", `Nuevo Texto ${globalProjects.length + 1}`);
+    if (title && title.trim().length > 0) {
+        const newProject = {
+            id: Date.now(),
+            title: title,
+            content: "" 
+        };
+        
+        // Guardar el contenido del proyecto ANTERIOR antes de crear el nuevo
+        const oldProject = globalProjects.find(p => p.id === currentProjectId);
+        if (oldProject) {
+            oldProject.content = document.getElementById('textoUsuario').value;
+        }
+
+        globalProjects.push(newProject);
+        guardarProyectos(globalProjects);
+        currentProjectId = newProject.id;
+        
+        renderProjectSelect();
+        document.getElementById('textoUsuario').value = "";
+        
+        // Asegurarse de que los paneles de resultados se oculten al crear un texto nuevo.
+        document.getElementById('resultados').style.display = 'none';
+        document.getElementById('fragmentsContainer').style.display = 'none';
+        document.getElementById('ejercicios').style.display = 'none';
+        document.getElementById('shadowing').style.display = 'none';
+
+        mostrarNoti(`➕ Proyecto "${title}" creado. Empieza a escribir.`, 2000);
+    }
+}
+
+function eliminarProyectoSeleccionado() {
+    if (globalProjects.length <= 1) {
+        return mostrarNoti("No puedes eliminar el único proyecto existente.", 3000);
+    }
+    
+    const proyecto = globalProjects.find(p => p.id === currentProjectId);
+    if (proyecto && confirm(`¿Estás seguro de que quieres eliminar el proyecto "${proyecto.title}"?`)) {
+        globalProjects = globalProjects.filter(p => p.id !== currentProjectId);
+        guardarProyectos(globalProjects);
+        
+        // Cargar el primer proyecto restante como el nuevo activo
+        currentProjectId = globalProjects[0].id;
+        
+        renderProjectSelect();
+        document.getElementById('textoUsuario').value = globalProjects[0].content;
+        procesarTexto(); // Procesar automáticamente el texto del nuevo proyecto activo
+        mostrarNoti("🗑️ Proyecto eliminado.", 2000);
+    }
+}
+
+/* === INICIALIZACIÓN DEL GESTOR DE PROYECTOS === */
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Inicializar la interfaz de proyectos
+    renderProjectSelect();
+    
+    // 2. Cargar el contenido del proyecto activo en el textarea
+    const activeProject = globalProjects.find(p => p.id === currentProjectId);
+    if (activeProject) {
+        document.getElementById('textoUsuario').value = activeProject.content;
+    }
+    
+    // 3. Configurar guardado automático
+    document.getElementById('textoUsuario').addEventListener('input', guardarTextoActual);
+
+    // 4. Si hay texto, procesarlo automáticamente al cargar para inicializar la UI
+    if(activeProject && activeProject.content.trim().length > 0) {
+        procesarTexto();
+    }
+});
+
+// El resto de tu código JS existente continúa aquí...
+  
+
+  
 
 
 </script>

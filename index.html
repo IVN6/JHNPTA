@@ -98,6 +98,8 @@
 <div id="notify"></div>
 
 <script>
+                         
+    
 /* === CONSTANTES Y UTILIDADES === */
 const STOP_WORDS = new Set(['a','an','and','the','is','it','in','on','at','to','for','of','with','this','that','was','are','be','over','new','makes','s','i','you','he','she','they','we','my','his','her']);
 const STORAGE_KEYS={learned:'ap_v6_learned',audios:'ap_v6_audios'};
@@ -116,7 +118,12 @@ let globalTopWords=[];
 
 /* === PROCESAMIENTO PRINCIPAL === */
 function procesarTexto(){
-  const t=document.getElementById('textoUsuario').value.trim();if(!t)return mostrarNoti('⚠️ Escribe un texto primero.',2000);
+  let t=document.getElementById('textoUsuario').value.trim();if(!t)return mostrarNoti('⚠️ Escribe un texto primero.',2000);
+  
+  // *** NUEVA LIMPIEZA DE TEXTO (Punto 3 del feedback) ***
+  // Reemplaza saltos de línea, comillas dobles y otros caracteres de control con espacio simple.
+  // IMPORTANTE: NO REMUEVE comas, puntos, ni signos de interrogación/exclamación.
+  t = t.replace(/[\n\t"“„”‘’]/g, ' ').replace(/\s{2,}/g, ' ').trim();
   
   // Analisis basico
   const or=t.match(/[^.!?]+[.!?]+/g)||[t];
@@ -158,22 +165,43 @@ function dividirEnFragmentos(t, maxChars=300){
     globalFragments = frags;
 }
 
-/* === NUEVA FUNCIÓN PARA N-GRAMS === */
+/* === NUEVA FUNCIÓN PARA N-GRAMS CON PROSODIA (Punto 1 del feedback) === */
 function dividirEnNGrams(t, n=4) {
-    const palabras = palabrasTokenize(t);
+    // La expresión regular separa el texto por comas, puntos, etc., pero los mantiene en el array.
+    const tokens = t.match(/[\w']+|[.,?!:;]/g) || []; 
     const nGrams = [];
+    let currentGram = "";
+    let wordCount = 0;
     
-    // Convertir el texto a palabras tokenizadas
-    const rawWords = t.match(/\b\w+\b/g) || [];
-    
-    for (let i = 0; i < rawWords.length; i += n) {
-        // Toma 'n' palabras o menos si llega al final
-        const gram = rawWords.slice(i, i + n).join(' ');
-        if (gram.length > 0) {
-            nGrams.push(gram);
+    for (const token of tokens) {
+        // Si el token es puntuación (excepto apóstrofes), lo añade al grama actual y lo finaliza.
+        if (/[.,?!:;]/.test(token) && token !== "'") {
+            currentGram += token;
+            if (currentGram.trim().length > 0) nGrams.push(currentGram.trim());
+            currentGram = "";
+            wordCount = 0;
+        } 
+        // Si es una palabra o un apóstrofe
+        else {
+            if (wordCount >= n) {
+                // Si el límite de palabras se alcanza, finaliza el grama anterior.
+                nGrams.push(currentGram.trim());
+                currentGram = token;
+                wordCount = 1;
+            } else {
+                currentGram += (wordCount > 0 ? ' ' : '') + token;
+                wordCount++;
+            }
         }
     }
-    return nGrams;
+    
+    // Añade el último grama si no está vacío
+    if (currentGram.trim().length > 0) {
+        nGrams.push(currentGram.trim());
+    }
+    
+    // Filtra cualquier fragmento vacío
+    return nGrams.filter(g => g.length > 0);
 }
 
 
@@ -403,7 +431,9 @@ let attemptsLeft = 3;
 let recognition = null; // Variable global para el Web Speech Recognition
 
 function iniciarShadowing() {
-    const t = document.getElementById('textoUsuario').value.trim();
+    // Tomamos el texto limpio de procesarTexto
+    let t=document.getElementById('textoUsuario').value.trim();
+    t = t.replace(/[\n\t"“„”‘’]/g, ' ').replace(/\s{2,}/g, ' ').trim(); 
     if (!t) return mostrarNoti('⚠️ Escribe un texto primero.', 2000);
 
     const n = parseInt(document.getElementById('ngramSize').value);
@@ -424,7 +454,8 @@ function iniciarShadowing() {
     recognition = new webkitSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = document.getElementById('idiomaSelect').value;
+    // La variable de idioma se ancla aquí (Punto 2 del feedback)
+    recognition.lang = document.getElementById('idiomaSelect').value; 
 
     recognition.onresult = handleRecognitionResult;
     recognition.onerror = (e) => {
@@ -583,9 +614,6 @@ function startRecognition(btn) {
         btn.textContent = '🎙 Reintentar';
     }
 }
-
-
-
 
 
 

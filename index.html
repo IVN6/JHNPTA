@@ -79,6 +79,21 @@
   <h2>Ejercicios (Grabación)</h2>
   <div id="listaEjercicios"></div>
 </div>
+<div id="shadowing" class="panel" style="display:none;">
+  <h2>🗣️ Shadowing Mode (N-Grams)</h2>
+  <div class="flexrow">
+      <label>Tamaño de grupo (N):
+          <select id="ngramSize">
+              <option value="3">3-gram (Trigram)</option>
+              <option value="4" selected>4-gram (Quadgram)</option>
+              <option value="5">5-gram</option>
+          </select>
+      </label>
+      <button class="success" onclick="iniciarShadowing()">Start Shadowing</button>
+  </div>
+  <div id="shadowingArea" style="margin-top:15px;">
+      </div>
+</div>
 
 <div id="notify"></div>
 
@@ -128,6 +143,7 @@ function procesarTexto(){
   
   document.getElementById('fragmentsContainer').style.display='block';
   document.getElementById('ejercicios').style.display='block';
+  document.getElementById('shadowing').style.display='block'; // Mostrar el nuevo panel
 }
 
 function dividirEnFragmentos(t, maxChars=300){
@@ -141,6 +157,25 @@ function dividirEnFragmentos(t, maxChars=300){
     if(cur) frags.push(cur.trim());
     globalFragments = frags;
 }
+
+/* === NUEVA FUNCIÓN PARA N-GRAMS === */
+function dividirEnNGrams(t, n=4) {
+    const palabras = palabrasTokenize(t);
+    const nGrams = [];
+    
+    // Convertir el texto a palabras tokenizadas
+    const rawWords = t.match(/\b\w+\b/g) || [];
+    
+    for (let i = 0; i < rawWords.length; i += n) {
+        // Toma 'n' palabras o menos si llega al final
+        const gram = rawWords.slice(i, i + n).join(' ');
+        if (gram.length > 0) {
+            nGrams.push(gram);
+        }
+    }
+    return nGrams;
+}
+
 
 /* === RENDERIZADO VISUAL === */
 function renderFragments(){
@@ -216,7 +251,7 @@ function generarEjercicios(ors,top){
   });
 }
 
-/* === GRABACIÓN Y AUDIO === */
+/* === GRABACIÓN Y AUDIO (EXISTENTE) === */
 let globalStream=null;
 
 async function grabarPalabra(w,btn){
@@ -360,6 +395,202 @@ function limpiarProgreso(){
         location.reload();
     }
 }
+
+/* === SHADOWING MODE CORE LOGIC (NUEVO) === */
+let globalNGrams = [];
+let currentGramIndex = 0;
+let attemptsLeft = 3;
+let recognition = null; // Variable global para el Web Speech Recognition
+
+function iniciarShadowing() {
+    const t = document.getElementById('textoUsuario').value.trim();
+    if (!t) return mostrarNoti('⚠️ Escribe un texto primero.', 2000);
+
+    const n = parseInt(document.getElementById('ngramSize').value);
+    globalNGrams = dividirEnNGrams(t, n);
+    currentGramIndex = 0;
+    
+    if(globalNGrams.length === 0) {
+        return mostrarNoti('⚠️ No se pudieron generar N-Grams. Intenta con un texto más largo.', 3000);
+    }
+    
+    document.getElementById('shadowingArea').innerHTML = 'Preparando...';
+    
+    // 1. Inicializar el objeto de reconocimiento (webkitSpeechRecognition es un prefijo de Chrome)
+    if (!('webkitSpeechRecognition' in window)) {
+        return mostrarNoti('❌ Reconocimiento de Voz no soportado en tu navegador. Intenta con Chrome/Edge.', 5000);
+    }
+    
+    recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = document.getElementById('idiomaSelect').value;
+
+    recognition.onresult = handleRecognitionResult;
+    recognition.onerror = (e) => {
+        // En caso de error (ej: sin micrófono, no speech, no permission)
+        mostrarNoti(`Error de Reconocimiento: ${e.error}`, 3000);
+        // Habilitar el botón para reintentar o saltar
+        renderShadowingUI(true, false); 
+    };
+    recognition.onend = () => {
+        // Si el reconocimiento termina y no hubo un resultado (ej: el usuario no habló a tiempo)
+        const btn = document.querySelector('#shadowingArea .record-btn');
+        if (btn && btn.disabled) {
+            btn.disabled = false;
+            btn.textContent = `🎙 Reintentar (${attemptsLeft} intentos)`;
+        }
+    };
+    
+    nextShadowingStep();
+}
+
+function handleRecognitionResult(event) {
+    const recognizedText = event.results[0][0].transcript.trim();
+    const currentGram = globalNGrams[currentGramIndex];
+    const area = document.getElementById('shadowingArea');
+    
+    // Lógica de Validación: usamos una validación flexible (la mayoría de palabras clave deben estar)
+    const currentWords = palabrasTokenize(currentGram);
+    const recognizedWords = palabrasTokenize(recognizedText);
+    
+    let matches = 0;
+    for(const word of currentWords) {
+        if(recognizedWords.includes(word)) {
+            matches++;
+        }
+    }
+    
+    const requiredMatches = Math.floor(currentWords.length * 0.7); // 70% de las palabras
+    const isClose = matches >= requiredMatches;
+    
+    if (isClose) {
+        mostrarNoti('🎉 Correcto! Pasando al siguiente...', 2500);
+        
+        area.innerHTML = `<p class="ejercicio-frase ok">✅ **${currentGram}**</p> <p>Dijiste: "${recognizedText}"</p>`;
+        
+        currentGramIndex++;
+        attemptsLeft = 3; // Reset intentos
+        setTimeout(nextShadowingStep, 1500);
+    } else {
+        attemptsLeft--;
+        
+        if (attemptsLeft <= 0) {
+            handleFailedAttempt(recognizedText);
+        } else {
+            // Permite ver el texto (a partir del 2do intento, o 3er intento en total) y reintentar
+            mostrarNoti(`❌ No fue correcto. ${attemptsLeft} intentos restantes.`, 2000);
+            const showText = attemptsLeft <= 1; // Mostrar texto en el último intento
+            renderShadowingUI(true, showText, recognizedText); 
+        }
+    }
+}
+
+function handleFailedAttempt(recognizedText = null) {
+    const area = document.getElementById('shadowingArea');
+    
+    const displayResult = recognizedText ? `<p style="font-style: italic;">Último intento: "${recognizedText}"</p>` : '';
+    
+    area.innerHTML = `
+        <p class="ejercicio-frase bad">❌ **Fallaste.** El texto era: ${globalNGrams[currentGramIndex]}</p>
+        ${displayResult}
+        <div class="flexrow" style="margin-top:10px;">
+            <button class='small success' onclick="siguienteGram(true)">Saltar y Continuar</button>
+            <button class='small secondary' onclick="siguienteGram(false)">Reintentar</button>
+        </div>
+    `;
+    attemptsLeft = 3; // Reset para el siguiente gram
+}
+
+function siguienteGram(skip) {
+    // Detener cualquier reconocimiento en curso para evitar conflictos
+    if(recognition) recognition.abort(); 
+    
+    if(skip) currentGramIndex++;
+    // Si no salta, se mantiene currentGramIndex, pero los intentos se reinician en nextShadowingStep
+    nextShadowingStep();
+}
+
+// State machine: Listen (no text) -> Repeat (text hidden/visible)
+async function nextShadowingStep() {
+    if (currentGramIndex >= globalNGrams.length) {
+        document.getElementById('shadowingArea').innerHTML = '<h2>🎉 ¡Ejercicio de Shadowing Terminado!</h2>';
+        currentGramIndex = 0; // Reset para la próxima vez
+        return;
+    }
+    
+    const gram = globalNGrams[currentGramIndex];
+    attemptsLeft = 3; // Reiniciar
+    
+    // STEP 1: LISTEN (TEXT HIDDEN)
+    renderShadowingUI(false); // Ocultar texto, deshabilitar repetición
+    mostrarNoti(`Escucha el Fragmento ${currentGramIndex + 1}/${globalNGrams.length}`, 1500);
+
+    // Reproducción TTS del fragmento
+    await new Promise(resolve => {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(gram);
+        u.lang = document.getElementById('idiomaSelect').value;
+        u.onend = () => resolve();
+        u.onerror = () => resolve();
+        speechSynthesis.speak(u);
+    });
+    
+    // STEP 2: REPEAT (TEXT HIDDEN)
+    renderShadowingUI(true); // Habilitar repetición
+    mostrarNoti('📢 Repite el fragmento ahora.', 2000);
+}
+
+// Renderiza la interfaz de usuario para el paso actual
+function renderShadowingUI(isRepeatStep = false, showText = false, recognizedText = '') {
+    const area = document.getElementById('shadowingArea');
+    const gram = globalNGrams[currentGramIndex];
+    const textDisplay = showText ? gram : '...';
+    
+    area.innerHTML = `
+        <div style="min-height: 40px; margin-bottom: 10px;">
+             <p class="ejercicio-frase" style="font-size:1.2em; font-weight: bold;">
+                ${showText ? gram : 'Fragmento ' + (currentGramIndex + 1)}
+             </p>
+        </div>
+        
+        <div class="flexrow">
+            ${isRepeatStep ? `<button class='small success record-btn' onclick="startRecognition(this)">🎙 Grabar mi voz (${attemptsLeft} intentos)</button>` : '<button class="small secondary" disabled>Escuchando...</button>'}
+            ${showText ? `<button class='small secondary' onclick="leerTextoOriginal('${gram}')">🔊 Escuchar voz IA</button>` : ''}
+            <button class='small secondary' onclick="siguienteGram(true)">Saltar</button>
+        </div>
+        ${recognizedText ? `<p style="margin-top:10px; font-style: italic; color:#dc3545;">Último intento: ${recognizedText}</p>` : ''}
+    `;
+}
+
+function startRecognition(btn) {
+    btn.disabled = true;
+    btn.textContent = '... Habla ahora ...';
+    try {
+        // Establecer un temporizador para re-habilitar el botón si el usuario no habla
+        recognition.stopTimeout = setTimeout(() => {
+            if(btn.disabled) {
+                 btn.disabled = false;
+                 btn.textContent = `🎙 Reintentar (${attemptsLeft} intentos)`;
+            }
+        }, 5000); // 5 segundos para hablar
+        
+        recognition.start();
+    } catch (e) {
+        // En caso de que el reconocimiento ya esté activo
+        mostrarNoti('El reconocimiento ya está activo o hubo un error al iniciar.', 2000);
+        btn.disabled = false;
+        btn.textContent = '🎙 Reintentar';
+    }
+}
+
+
+
+
+
+
+
+
 </script>
 </body>
 </html>

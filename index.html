@@ -10,9 +10,29 @@
   textarea {width:100%;min-height:140px;padding:10px;font-size:15px;border-radius:6px;border:1px solid #ccc;box-sizing: border-box;}
   button {background:#0073b1;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;margin:4px;}
   button.small {padding:6px 8px;font-size:13px;}
-ty 0.4s; z-index: 100;}
+  button.secondary {background:#6c757d;}
+  button.success {background:#28a745;}
+  button:disabled {opacity: 0.6; cursor: not-allowed;}
+  
+  .panel {background:white;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-top:14px;}
+  .ejercicio-frase{font-size:1.05em;margin:10px 0;line-height:1.6;}
+  input.input-ej{padding:6px 8px;border-radius:6px;border:1px solid #ccc;font-size:15px;}
+  .ok{border-color:#28a745!important;background:#eaffea;}
+  .bad{border-color:#dc3545!important;background:#ffeaea;}
+  .fragment{border:1px dashed #ddd;padding:10px;margin:8px 0;border-radius:6px;background:#fafafa;}
+  .tag{background:#e6f4ff;color:#005a8d;padding:6px 8px;border-radius:999px;border:1px solid #d0eaff;}
+  .audio-btn{background:#fff;color:#0073b1;border:1px solid #0073b1;padding:2px 6px;border-radius:4px;cursor:pointer;font-size:0.9em;margin:0 2px;}
+  .flexrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  
+  /* Estilos del Panel de Control de Pausas */
+  .control-panel { background: #fff8e1; border: 1px solid #ffe082; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+  .slider-group { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; font-size: 0.9em; }
+  .slider-group input { flex: 1; }
+
+  #notify {position:fixed;bottom:20px;right:20px;background:#005a8d;color:white;padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2);opacity:0;transition:opacity 0.4s; z-index: 100;}
   #notify.show{opacity:1;}
 </style>
+
 </head>
 <body>
 
@@ -96,31 +116,6 @@ ty 0.4s; z-index: 100;}
 
 <script>
 
-                         
-    
-/* === CONSTANTES Y UTILIDAD  button.secondary {background:#6c757d;}
-  button.success {background:#28a745;}
-  button:disabled {opacity: 0.6; cursor: not-allowed;}
-  
-  .panel {background:white;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-top:14px;}
-  .ejercicio-frase{font-size:1.05em;margin:10px 0;line-height:1.6;}
-  input.input-ej{padding:6px 8px;border-radius:6px;border:1px solid #ccc;font-size:15px;}
-  .ok{border-colopx dashed #ddd;padding:10px;margin:8px 0;border-radius:6px;background:#fafafa;}
-  .tag{background:#e6f4ff;color:#005a8d;padding:6px 8px;border-radius:999px;border:1px solid #d0eaff;}
-  .audio-btn{background:#fff;color:#0073b1;border:1px solid #0073b1;padding:2px 6px;border-radius:4px;cursor:pointer;font-size:0.9em;margin:0 2px;}
-  .flexrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-  
-  /* Estilos del Panel de Control de Pausas */
-  .control-panel { background: #fff8e1; border: 1px solid #ffe082; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
-  .slider-group { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; font-size: 0.9em; }
-  .slider-group input { flex: 1; }
-
-  #notify {position:fixed;bottom:20px;right:20px;background:#005a8d;color:white;padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2);opacity:0;transition:opacity 0.4s; z-index: 100;}
-  #notify.show{opacity:1;}
-</style>
-
-                         
-    
 /* === CONSTANTES Y UTILIDADES === */
 const STOP_WORDS = new Set(['a','an','and','the','is','it','in','on','at','to','for','of','with','this','that','was','are','be','over','new','makes','s','i','you','he','she','they','we','my','his','her']);
 // Objeto que mapea códigos de idioma a un array de Stop Words

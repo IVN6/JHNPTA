@@ -56,7 +56,7 @@
   <label>Idioma:
     <select id="idiomaSelect">
       <option value="en-US" selected>Inglés 🇺🇸</option>
-      <option value="es-ES">Español 🇪🇸</option>
+      <option value="es-CO">Español 🇪🇸</option>
       <option value="fr-FR">Francés 🇫🇷</option>
       <option value="de-DE">Alemán 🇩🇪</option>
       <option value="it-IT">Italiano 🇮🇹</option>
@@ -477,7 +477,7 @@ let recognition = null; // Variable global para el Web Speech Recognition
 function iniciarShadowing() {
     // Tomamos el texto limpio de procesarTexto
     let t=document.getElementById('textoUsuario').value.trim();
-    t = t.replace(/[\n\t"“„”‘’]/g, ' ').replace(/\s{2,}/g, ' ').trim(); 
+    t = t.replace(/[\n\t"“„”‘’]/g, ' ').replace(/\s{2}/g, ' ').trim(); 
     if (!t) return mostrarNoti('⚠️ Escribe un texto primero.', 2000);
 
     const n = parseInt(document.getElementById('ngramSize').value);

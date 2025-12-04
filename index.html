@@ -666,9 +666,21 @@ function cargarProyectos() {
     
     if (projects.length === 0) {
         // Inicializar con el texto de bienvenida
-        projects.push({id: Date.now(), title: "Texto Inicial", content: textareaContent});
+        projects.push({
+            id: Date.now(),
+            title: "Texto Inicial",
+            content: textareaContent,
+            // 👈 AÑADIDO: Guardar el idioma por defecto (Inglés)
+            lang: "en-US" 
+        });
         guardarProyectos(projects);
     }
+    
+    // 👈 AÑADIDO: Si un proyecto viejo no tiene 'lang', lo inicializamos
+    projects.forEach(p => {
+        if (!p.lang) p.lang = 'en-US'; 
+    });
+    
     return projects;
 }
 
@@ -715,16 +727,21 @@ function cargarProyectoSeleccionado() {
     const proyecto = globalProjects.find(p => p.id === newId);
     const textarea = document.getElementById('textoUsuario');
     
-    // 1. Antes de cambiar, guardar el contenido actual en el proyecto ANTERIOR
+    // 1. Antes de cambiar, guardar el contenido y el idioma del proyecto ANTERIOR
     const oldProject = globalProjects.find(p => p.id === currentProjectId);
     if (oldProject) {
         oldProject.content = textarea.value;
+        // 👈 AÑADIDO: Guardar el idioma actual del select en el proyecto anterior
+        oldProject.lang = document.getElementById('idiomaSelect').value;
     }
 
     if (proyecto) {
         currentProjectId = newId;
         localStorage.setItem('ap_v6_current_project_id', currentProjectId); // Guardar ID activo
         textarea.value = proyecto.content;
+        
+        // 👈 CAMBIO CLAVE: Cargar el idioma guardado en el <select>
+        document.getElementById('idiomaSelect').value = proyecto.lang || 'en-US';
         
         // Disparar procesamiento para inicializar la UI con el nuevo texto
         // Evitamos el "procesarTexto()" automático para no bloquear al inicio si el texto es grande
@@ -734,12 +751,15 @@ function cargarProyectoSeleccionado() {
 
 function guardarProyectoActual() {
     const textarea = document.getElementById('textoUsuario');
+    const idiomaSelect = document.getElementById('idiomaSelect'); // 👈 OBTENER el elemento
     const proyecto = globalProjects.find(p => p.id === currentProjectId);
     
     if (proyecto) {
         const newTitle = prompt("Guardar cambios. Introduce un nuevo nombre (opcional):", proyecto.title);
         
         proyecto.content = textarea.value;
+        proyecto.lang = idiomaSelect.value; // 👈 AÑADIDO: Guardar el idioma seleccionado
+        
         if (newTitle && newTitle.trim().length > 0) {
             proyecto.title = newTitle;
             renderProjectSelect();
@@ -756,32 +776,31 @@ function crearNuevoProyecto() {
         const newProject = {
             id: Date.now(),
             title: title,
-            content: "" 
+            content: "",
+            lang: document.getElementById('idiomaSelect').value // 👈 AÑADIDO: El idioma actual
         };
         
-        // Guardar el contenido del proyecto ANTERIOR antes de crear el nuevo
+        // Guardar el contenido y el idioma del proyecto ANTERIOR antes de crear el nuevo
         const oldProject = globalProjects.find(p => p.id === currentProjectId);
         if (oldProject) {
             oldProject.content = document.getElementById('textoUsuario').value;
+            oldProject.lang = document.getElementById('idiomaSelect').value; // 👈 AÑADIDO: Guardar el idioma actual
         }
 
         globalProjects.push(newProject);
         guardarProyectos(globalProjects);
+        
+        // Seleccionar y cargar el nuevo proyecto
         currentProjectId = newProject.id;
+        document.getElementById('projectSelect').value = currentProjectId;
+        document.getElementById('textoUsuario').value = ""; // Limpiar textarea
         
-        renderProjectSelect();
-        document.getElementById('textoUsuario').value = "";
-        
-        // Asegurarse de que los paneles de resultados se oculten al crear un texto nuevo.
-        document.getElementById('resultados').style.display = 'none';
-        document.getElementById('fragmentsContainer').style.display = 'none';
-        document.getElementById('ejercicios').style.display = 'none';
-        document.getElementById('shadowing').style.display = 'none';
-
-        mostrarNoti(`➕ Proyecto "${title}" creado. Empieza a escribir.`, 2000);
+        // Ya que la función cargarProyectoSeleccionado guarda el estado del anterior
+        // y establece el idioma del nuevo, podemos usarla para completar el proceso.
+        cargarProyectoSeleccionado(); 
+        mostrarNoti(`✨ Proyecto "${newProject.title}" creado.`, 2000);
     }
 }
-
 function eliminarProyectoSeleccionado() {
     if (globalProjects.length <= 1) {
         return mostrarNoti("No puedes eliminar el único proyecto existente.", 3000);

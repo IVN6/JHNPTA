@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Efectos Reactivos con Sensores de Dispositivo</title>
+    <title>Efectos Reactivos con Sensores de Dispositivo (Corregido)</title>
     <style>
         body {
             font-family: "Noto Sans", sans-serif;
@@ -13,84 +13,98 @@
             color: #e0e0e0;
             display: flex;
             flex-direction: column;
-            gap: 50px; /* Espacio entre las secciones */
+            gap: 50px;
             align-items: center;
             min-height: 100vh;
             text-align: center;
+            /* Necesario para posicionar elementos relativos a la ventana si usáramos fixed */
+            perspective: 1000px; 
         }
 
         h1 {
-            color: #0f3460;
+            color: #4a90e2; /* Un color más vibrante */
             font-size: 2.5em;
             margin-bottom: 30px;
         }
 
-        /* Estilos para la sección de texto reactivo */
+        /* --- 1. Efecto Texto Mágico (Fondo Estático) --- */
         .text-section {
             background-color: #272744;
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
             width: 90%;
             max-width: 600px;
+            /* Necesario para el efecto de movimiento del texto */
+            overflow: hidden; 
         }
 
         .text-section h2 {
-            font-size: 3em;
-            font-weight: bold;
+            font-size: 3.5em; /* Un poco más grande */
+            font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 2px;
-            background-image: url('https://picsum.photos/id/1018/1000/600'); /* Imagen de fondo para el texto */
-            background-size: 150%; /* Más grande para que el parallax sea más notorio */
-            background-position: center center; /* Posición inicial */
+            /* El fondo ahora es mucho más grande y con repeat */
+            background-image: url('https://picsum.photos/id/1018/1000/600');
+            background-size: 100%; /* Tamaño normal */
+            background-repeat: repeat; /* Esto asegura que se repita como pediste */
+            background-position: center center;
             background-clip: text;
-            -webkit-background-clip: text; /* Para compatibilidad con navegadores basados en WebKit */
+            -webkit-background-clip: text;
             color: transparent;
             margin: 0;
-            transition: background-position 0.1s ease-out; /* Transición suave para el movimiento */
+            /* Transición suave para el movimiento de la posición del fondo */
+            transition: background-position 0.1s ease-out; 
+            /* Se establece una posición inicial muy descentrada para dar margen de movimiento */
+            background-position: 50% 50%; 
         }
 
-        /* Estilos para la sección del revelador de imagen */
+        .text-section p {
+            margin-top: 15px;
+        }
+
+        /* --- 2. Efecto Revelador de Imagen (Visor Móvil) --- */
         .image-revealer-section {
             background-color: #272744;
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
             width: 90%;
             max-width: 600px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            position: relative; /* Necesario para posicionar el visor */
         }
 
         .image-revealer-section h3 {
-            color: #0f3460;
+            color: #4a90e2;
             font-size: 1.8em;
             margin-bottom: 20px;
         }
 
         .revealer-container {
-            width: 300px; /* Tamaño del contenedor del revelador */
+            width: 300px; 
             height: 300px;
-            background-color: #3e3e6f; /* Color de fondo mientras no se revele */
-            border-radius: 50%; /* Para hacerlo circular */
-            overflow: hidden; /* Oculta lo que esté fuera del círculo */
+            background-color: #3e3e6f;
+            border-radius: 50%;
+            overflow: hidden; /* EL VISOR */
             position: relative;
-            border: 5px solid #0f3460;
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+            border: 5px solid #4a90e2;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 10px #4a90e2;
         }
 
         .revealer-image {
-            width: 500px; /* La imagen es más grande que el contenedor */
-            height: 500px;
+            /* LA IMAGEN GRANDE A REVELAR (5x más grande que el contenedor para el ejemplo) */
+            width: 1500px; 
+            height: 1500px;
             position: absolute;
-            top: -100px; /* Centrar la imagen más grande dentro del contenedor */
-            left: -100px;
-            background-image: url('https://picsum.photos/id/237/800/800'); /* Imagen grande a revelar */
+            top: -600px; /* Centrar la imagen (1500/2 - 300/2 = 600) */
+            left: -600px;
+            background-image: url('https://picsum.photos/id/237/1500/1500'); /* Imagen grande */
             background-size: cover;
-            background-position: center center; /* Posición inicial */
-            transition: transform 0.1s ease-out; /* Transición suave para el movimiento */
+            background-position: center center;
+            /* La transición solo es para hacer la imagen más fluida */
+            transition: transform 0.05s linear; 
         }
 
         .message {
@@ -112,12 +126,12 @@
 
     <section class="text-section">
         <h2>Texto Mágico</h2>
-        <p>Inclina tu dispositivo para ver cómo la imagen de fondo de este texto se mueve.</p>
+        <p>⚠️ **Efecto de Fondo Estático:** Inclina tu dispositivo. El texto se moverá sobre un fondo que parece quieto en el espacio. ¡Como una ventana!</p>
     </section>
 
     <section class="image-revealer-section">
-        <h3>¿Puedes revelar el mensaje oculto?</h3>
-        <p class="message">Mueve tu teléfono lentamente para descubrir la imagen.</p>
+        <h3>Visor de Imagen Gigante</h3>
+        <p class="message">⚠️ **Efecto de Visor Móvil:** Mueve el teléfono lentamente para explorar la imagen super grande dentro del círculo.</p>
         <div class="revealer-container">
             <div class="revealer-image" id="revealerImage"></div>
         </div>
@@ -132,44 +146,56 @@
             const revealerImage = document.getElementById('revealerImage');
             const noSupportMessage = document.getElementById('noSupportMessage');
 
-            // 1. Verificar si el dispositivo soporta la orientación (giroscopio)
+            // 1. Verificar soporte
             if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientation', (event) => {
-                    // Obtenemos los ángulos de inclinación
-                    const gamma = event.gamma; // Eje X (de lado a lado) - Rango: -90 a 90 (aprox.)
-                    const beta = event.beta;   // Eje Y (de adelante hacia atrás) - Rango: -180 a 180 (aprox.)
+                // Si soporta, ocultamos el mensaje de error
+                noSupportMessage.style.display = 'none';
 
-                    // --- Efecto de Texto Reactivo ---
-                    // Ajusta la sensibilidad para el movimiento del fondo del texto
-                    const textSensitivity = 60; 
-                    const textOffsetX = (gamma / textSensitivity) * -1; 
-                    const textOffsetY = (beta / textSensitivity) * -1;
+                window.addEventListener('deviceorientation', (event) => {
+                    // event.gamma: Eje X (de lado a lado) - Rango: ~[-90, 90]
+                    // event.beta:   Eje Y (de adelante hacia atrás) - Rango: ~[-180, 180]
+
+                    // --- 1. Efecto Texto Mágico (Fondo Estático) ---
+                    // Para que parezca fijo, el fondo debe moverse en la MISMA dirección 
+                    // que la pantalla, pero a una velocidad menor (Parallax).
+                    const textSensitivity = 1.5; // Ajusta el factor de movimiento (menos es más sutil)
                     
+                    // La posición del fondo se ajusta directamente con beta y gamma.
+                    // Multiplicar por -1 NO es necesario aquí si movemos la posición.
+                    const textOffsetX = event.gamma * textSensitivity; 
+                    const textOffsetY = event.beta * textSensitivity;
+                    
+                    // Se usa calc() para mover la posición del fondo de la máscara de texto.
+                    // El 50% es la posición central, y se le añade el offset.
                     h2Element.style.backgroundPosition = `
                         calc(50% + ${textOffsetX}px) 
                         calc(50% + ${textOffsetY}px)
                     `;
 
-                    // --- Efecto Revelador de Imagen ---
-                    // Ajusta la sensibilidad para el movimiento de la imagen del revelador
-                    const revealerSensitivity = 20; // Menor valor = más sensible
-                    const revealerTranslateX = (gamma / revealerSensitivity) * -1;
-                    const revealerTranslateY = (beta / revealerSensitivity) * -1;
 
-                    // Usamos transform para mover la imagen dentro del revelador
-                    // Esto da la sensación de que el visor se mueve sobre una imagen estática grande
+                    // --- 2. Efecto Revelador de Imagen (Visor Móvil) ---
+                    // Para que la imagen parezca pegada a la pantalla (Visor Móvil),
+                    // la imagen *detrás* del visor debe moverse en la DIRECCIÓN OPUESTA
+                    // a la inclinación del dispositivo. Esto es la corrección crucial.
+                    const revealerSensitivity = 15; // Un valor más alto hace la imagen más reactiva.
+                    
+                    // Si te inclinas a la DERECHA (+gamma), la imagen debe moverse a la IZQUIERDA (-X).
+                    const revealerTranslateX = (event.gamma / revealerSensitivity) * -1;
+                    // Si te inclinas HACIA ADELANTE (+beta), la imagen debe moverse HACIA ARRIBA (-Y).
+                    const revealerTranslateY = (event.beta / revealerSensitivity) * -1;
+
+                    // Se usa transform: translate() para mover la imagen GRANDE.
+                    // El movimiento es relativo a su posición inicial (-600px, -600px).
                     revealerImage.style.transform = `
                         translate(${revealerTranslateX}px, ${revealerTranslateY}px)
                     `;
                     
-                }, true); // El 'true' es importante para capturar el evento en la fase de captura
+                }, true);
                 
             } else {
-                // En caso de que el navegador o dispositivo no lo soporte
+                // Fallback en caso de no soportar
                 console.warn("DeviceOrientation no soportado en este navegador/dispositivo.");
-                noSupportMessage.style.display = 'block'; // Mostrar mensaje de no soporte
-                h2Element.style.background = 'linear-gradient(45deg, #0f3460, #a0a0a0)'; /* Fondo de respaldo */
-                h2Element.style.color = '#fff';
+                noSupportMessage.style.display = 'block';
             }
         });
     </script>

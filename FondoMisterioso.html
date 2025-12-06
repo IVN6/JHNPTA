@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efectos Reactivos con Sensores de Dispositivo</title>
+    <style>
+        body {
+            font-family: "Noto Sans", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            gap: 50px; /* Espacio entre las secciones */
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        h1 {
+            color: #0f3460;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+
+        /* Estilos para la sección de texto reactivo */
+        .text-section {
+            background-color: #272744;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .text-section h2 {
+            font-size: 3em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background-image: url('https://picsum.photos/id/1018/1000/600'); /* Imagen de fondo para el texto */
+            background-size: 150%; /* Más grande para que el parallax sea más notorio */
+            background-position: center center; /* Posición inicial */
+            background-clip: text;
+            -webkit-background-clip: text; /* Para compatibilidad con navegadores basados en WebKit */
+            color: transparent;
+            margin: 0;
+            transition: background-position 0.1s ease-out; /* Transición suave para el movimiento */
+        }
+
+        /* Estilos para la sección del revelador de imagen */
+        .image-revealer-section {
+            background-color: #272744;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative; /* Necesario para posicionar el visor */
+        }
+
+        .image-revealer-section h3 {
+            color: #0f3460;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+
+        .revealer-container {
+            width: 300px; /* Tamaño del contenedor del revelador */
+            height: 300px;
+            background-color: #3e3e6f; /* Color de fondo mientras no se revele */
+            border-radius: 50%; /* Para hacerlo circular */
+            overflow: hidden; /* Oculta lo que esté fuera del círculo */
+            position: relative;
+            border: 5px solid #0f3460;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .revealer-image {
+            width: 500px; /* La imagen es más grande que el contenedor */
+            height: 500px;
+            position: absolute;
+            top: -100px; /* Centrar la imagen más grande dentro del contenedor */
+            left: -100px;
+            background-image: url('https://picsum.photos/id/237/800/800'); /* Imagen grande a revelar */
+            background-size: cover;
+            background-position: center center; /* Posición inicial */
+            transition: transform 0.1s ease-out; /* Transición suave para el movimiento */
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #a0a0a0;
+        }
+
+        .no-support-message {
+            color: #e74c3c;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Efectos Interactivo con Sensores del Teléfono</h1>
+
+    <section class="text-section">
+        <h2>Texto Mágico</h2>
+        <p>Inclina tu dispositivo para ver cómo la imagen de fondo de este texto se mueve.</p>
+    </section>
+
+    <section class="image-revealer-section">
+        <h3>¿Puedes revelar el mensaje oculto?</h3>
+        <p class="message">Mueve tu teléfono lentamente para descubrir la imagen.</p>
+        <div class="revealer-container">
+            <div class="revealer-image" id="revealerImage"></div>
+        </div>
+        <p class="no-support-message" id="noSupportMessage" style="display: none;">
+            Tu navegador o dispositivo no soporta la API de DeviceOrientation.
+        </p>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const h2Element = document.querySelector('.text-section h2');
+            const revealerImage = document.getElementById('revealerImage');
+            const noSupportMessage = document.getElementById('noSupportMessage');
+
+            // 1. Verificar si el dispositivo soporta la orientación (giroscopio)
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', (event) => {
+                    // Obtenemos los ángulos de inclinación
+                    const gamma = event.gamma; // Eje X (de lado a lado) - Rango: -90 a 90 (aprox.)
+                    const beta = event.beta;   // Eje Y (de adelante hacia atrás) - Rango: -180 a 180 (aprox.)
+
+                    // --- Efecto de Texto Reactivo ---
+                    // Ajusta la sensibilidad para el movimiento del fondo del texto
+                    const textSensitivity = 60; 
+                    const textOffsetX = (gamma / textSensitivity) * -1; 
+                    const textOffsetY = (beta / textSensitivity) * -1;
+                    
+                    h2Element.style.backgroundPosition = `
+                        calc(50% + ${textOffsetX}px) 
+                        calc(50% + ${textOffsetY}px)
+                    `;
+
+                    // --- Efecto Revelador de Imagen ---
+                    // Ajusta la sensibilidad para el movimiento de la imagen del revelador
+                    const revealerSensitivity = 20; // Menor valor = más sensible
+                    const revealerTranslateX = (gamma / revealerSensitivity) * -1;
+                    const revealerTranslateY = (beta / revealerSensitivity) * -1;
+
+                    // Usamos transform para mover la imagen dentro del revelador
+                    // Esto da la sensación de que el visor se mueve sobre una imagen estática grande
+                    revealerImage.style.transform = `
+                        translate(${revealerTranslateX}px, ${revealerTranslateY}px)
+                    `;
+                    
+                }, true); // El 'true' es importante para capturar el evento en la fase de captura
+                
+            } else {
+                // En caso de que el navegador o dispositivo no lo soporte
+                console.warn("DeviceOrientation no soportado en este navegador/dispositivo.");
+                noSupportMessage.style.display = 'block'; // Mostrar mensaje de no soporte
+                h2Element.style.background = 'linear-gradient(45deg, #0f3460, #a0a0a0)'; /* Fondo de respaldo */
+                h2Element.style.color = '#fff';
+            }
+        });
+    </script>
+</body>
+</html>

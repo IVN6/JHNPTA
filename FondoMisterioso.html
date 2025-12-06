@@ -141,63 +141,62 @@
     </section>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const h2Element = document.querySelector('.text-section h2');
-            const revealerImage = document.getElementById('revealerImage');
-            const noSupportMessage = document.getElementById('noSupportMessage');
-
-            // 1. Verificar soporte
-            if (window.DeviceOrientationEvent) {
-                // Si soporta, ocultamos el mensaje de error
-                noSupportMessage.style.display = 'none';
-
-                window.addEventListener('deviceorientation', (event) => {
-                    // event.gamma: Eje X (de lado a lado) - Rango: ~[-90, 90]
-                    // event.beta:   Eje Y (de adelante hacia atrás) - Rango: ~[-180, 180]
-
-                    // --- 1. Efecto Texto Mágico (Fondo Estático) ---
-                    // Para que parezca fijo, el fondo debe moverse en la MISMA dirección 
-                    // que la pantalla, pero a una velocidad menor (Parallax).
-                    const textSensitivity = 1.5; // Ajusta el factor de movimiento (menos es más sutil)
-                    
-                    // La posición del fondo se ajusta directamente con beta y gamma.
-                    // Multiplicar por -1 NO es necesario aquí si movemos la posición.
-                    const textOffsetX = event.gamma * textSensitivity; 
-                    const textOffsetY = event.beta * textSensitivity;
-                    
-                    // Se usa calc() para mover la posición del fondo de la máscara de texto.
-                    // El 50% es la posición central, y se le añade el offset.
-                    h2Element.style.backgroundPosition = `
-                        calc(50% + ${textOffsetX}px) 
-                        calc(50% + ${textOffsetY}px)
-                    `;
+        // ... (El HTML y CSS permanecen igual) ...
 
 
-                    // --- 2. Efecto Revelador de Imagen (Visor Móvil) ---
-                    // Para que la imagen parezca pegada a la pantalla (Visor Móvil),
-                    // la imagen *detrás* del visor debe moverse en la DIRECCIÓN OPUESTA
-                    // a la inclinación del dispositivo. Esto es la corrección crucial.
-                    const revealerSensitivity = 15; // Un valor más alto hace la imagen más reactiva.
-                    
-                    // Si te inclinas a la DERECHA (+gamma), la imagen debe moverse a la IZQUIERDA (-X).
-                    const revealerTranslateX = (event.gamma / revealerSensitivity) * -1;
-                    // Si te inclinas HACIA ADELANTE (+beta), la imagen debe moverse HACIA ARRIBA (-Y).
-                    const revealerTranslateY = (event.beta / revealerSensitivity) * -1;
+    document.addEventListener('DOMContentLoaded', () => {
+        const h2Element = document.querySelector('.text-section h2');
+        const revealerImage = document.getElementById('revealerImage');
+        const noSupportMessage = document.getElementById('noSupportMessage');
 
-                    // Se usa transform: translate() para mover la imagen GRANDE.
-                    // El movimiento es relativo a su posición inicial (-600px, -600px).
-                    revealerImage.style.transform = `
-                        translate(${revealerTranslateX}px, ${revealerTranslateY}px)
-                    `;
-                    
-                }, true);
+        if (window.DeviceOrientationEvent) {
+            noSupportMessage.style.display = 'none';
+
+            window.addEventListener('deviceorientation', (event) => {
+                // Obtenemos los ángulos. 'alpha' es rotación Z, 'beta' es inclinación Y, 'gamma' es inclinación X.
+                const gamma = event.gamma; // Lado a lado (X)
+                const beta = event.beta;   // Adelante/Atrás (Y)
+
+                // --- 1. Efecto Texto Mágico (Fondo Estático/Parallax) ---
+                // Se mueve el fondo en la MISMA dirección de la inclinación
+                // para que parezca fijo detrás del texto.
+                const textSensitivity = 1.5; 
                 
-            } else {
-                // Fallback en caso de no soportar
-                console.warn("DeviceOrientation no soportado en este navegador/dispositivo.");
-                noSupportMessage.style.display = 'block';
-            }
-        });
-    </script>
+                const textOffsetX = gamma * textSensitivity; 
+                const textOffsetY = beta * textSensitivity;
+                
+                h2Element.style.backgroundPosition = `
+                    calc(50% + ${textOffsetX}px) 
+                    calc(50% + ${textOffsetY}px)
+                `;
+
+
+                // --- 2. Efecto Revelador de Imagen (Visor Móvil/Horizonte Fijo) ---
+                // Se mueve la imagen GRANDE en la DIRECCIÓN OPUESTA a la inclinación 
+                // para mantener la ilusión de que está fija.
+                const revealerSensitivity = 40; // Aumentado para un movimiento perceptible.
+                
+                // Si inclinas a la DERECHA (+gamma), la imagen se mueve a la IZQUIERDA (-X).
+                const revealerTranslateX = (gamma * revealerSensitivity) * -1;
+                
+                // Si inclinas HACIA ADELANTE (-beta), la imagen se mueve HACIA ARRIBA (-Y).
+                // Si inclinas HACIA ATRÁS (+beta), la imagen se mueve HACIA ABAJO (+Y).
+                const revealerTranslateY = beta * revealerSensitivity; // **CORREGIDO** (Sin *-1 para Y)
+
+                // Se aplica el movimiento a la imagen.
+                revealerImage.style.transform = `
+                    translate(${revealerTranslateX}px, ${revealerTranslateY}px)
+                `;
+                
+            }, true);
+            
+        } else {
+            console.warn("DeviceOrientation no soportado en este navegador/dispositivo.");
+            noSupportMessage.style.display = 'block';
+        }
+    });
+</script>
+
+    
 </body>
 </html>

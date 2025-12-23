@@ -7,6 +7,7 @@
     "cantidad": 5,
     "producto_Nombre": "Bascula Digital Pro",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
     "precio_venta": 54000,
@@ -20,6 +21,7 @@
     "cantidad": 4,
     "producto_Nombre": "Cepillo Alisador De Cabello",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
     "precio_venta": 54000,
@@ -33,6 +35,7 @@
     "cantidad": 4,
     "producto_Nombre": "Timberland De Caballero",
     "Para Hombre o mujer": "Hombre",
+    "¿Cuál es la talla?": "",
     "colores": "negro ⬛",
     "oferta": "",
     "precio_venta": 120000,
@@ -46,6 +49,7 @@
     "cantidad": 4,
     "producto_Nombre": "Escurridor De Loza 65cm",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "negro ⬛",
     "oferta": "",
     "precio_venta": 80000,
@@ -59,6 +63,7 @@
     "cantidad": 5,
     "producto_Nombre": "Limpiador De Brochas De Maquillaje ",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
     "precio_venta": 54000,
@@ -72,6 +77,7 @@
     "cantidad": 5,
     "producto_Nombre": "🧦✨ Medias Disney para niños y niñas ✨🧦",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "blanco ⬜, negro ⬛, rojo ❤️, azul 🔷, verde 💚",
     "oferta": 15000,
     "precio_venta": 18000,
@@ -85,6 +91,7 @@
     "cantidad": 0,
     "producto_Nombre": "Pijamas  de diseños coraje el perro cobarde",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "blanco ⬜, negro ⬛, rojo ❤️",
     "oferta": "",
     "precio_venta": 22000,
@@ -98,9 +105,11 @@
     "cantidad": 0,
     "producto_Nombre": "Leggings",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "negro ⬛",
     "oferta": "",
-    "precio_venta": 35000
+    "precio_venta": 35000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -110,9 +119,11 @@
     "cantidad": 0,
     "producto_Nombre": "Leggings",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "negro ⬛",
     "oferta": "",
-    "precio_venta": 35000
+    "precio_venta": 35000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -122,9 +133,11 @@
     "cantidad": 0,
     "producto_Nombre": "Leggings",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 35000
+    "precio_venta": 35000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -134,9 +147,11 @@
     "cantidad": 0,
     "producto_Nombre": "Pijama",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 22000
+    "precio_venta": 22000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -146,6 +161,7 @@
     "cantidad": 0,
     "producto_Nombre": "Camisa",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "blanco ⬜, negro ⬛",
     "oferta": "",
     "precio_venta": 22000,
@@ -159,9 +175,11 @@
     "cantidad": 4,
     "producto_Nombre": "🧦 x3 p Medias  Hombre",
     "Para Hombre o mujer": "Hombre",
+    "¿Cuál es la talla?": "",
     "colores": "blanco ⬜, negro ⬛",
     "oferta": 15000,
-    "precio_venta": 18000
+    "precio_venta": 18000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -171,9 +189,11 @@
     "cantidad": 1,
     "producto_Nombre": "Camisa",
     "Para Hombre o mujer": "Hombre",
+    "¿Cuál es la talla?": "",
     "colores": "rojo ❤️",
     "oferta": "",
-    "precio_venta": 22000
+    "precio_venta": 22000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -183,9 +203,11 @@
     "cantidad": 1,
     "producto_Nombre": "pijama elegante ",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "blanco ⬜, negro ⬛, azul 🔷, verde 💚",
     "oferta": "",
-    "precio_venta": 25000
+    "precio_venta": 25000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -195,9 +217,11 @@
     "cantidad": 0,
     "producto_Nombre": "Top de mujer 🔝",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 16000
+    "precio_venta": 16000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -207,9 +231,11 @@
     "cantidad": 2,
     "producto_Nombre": "Body elegante mujer ",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 25000
+    "precio_venta": 25000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -219,9 +245,11 @@
     "cantidad": 1,
     "producto_Nombre": "✨ Blusa Elegante para Mujer ",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 25000
+    "precio_venta": 25000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -231,9 +259,11 @@
     "cantidad": 1,
     "producto_Nombre": "Camisa",
     "Para Hombre o mujer": "Hombre",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 25000
+    "precio_venta": 25000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -243,9 +273,11 @@
     "cantidad": 1,
     "producto_Nombre": "PijamaPijamas 3 piezas",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 45000
+    "precio_venta": 45000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -255,9 +287,11 @@
     "cantidad": 4,
     "producto_Nombre": "Blusa elegante mujer ",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "blanco ⬜, negro ⬛, azul 🔷, verde 💚",
     "oferta": "",
-    "precio_venta": 24000
+    "precio_venta": 24000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -267,9 +301,11 @@
     "cantidad": 3,
     "producto_Nombre": "3 pares de Medias 🧦 x",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 18000
+    "precio_venta": 18000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -279,9 +315,11 @@
     "cantidad": 3,
     "producto_Nombre": "Medias x 3 ec",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 10000
+    "precio_venta": 10000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -291,9 +329,11 @@
     "cantidad": 2,
     "producto_Nombre": "Leggings",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "negro ⬛, rojo ❤️",
     "oferta": "",
-    "precio_venta": 35000
+    "precio_venta": 35000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -303,6 +343,7 @@
     "cantidad": 1,
     "producto_Nombre": "CamisaCamiseta Goofy ",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
     "precio_venta": 25000,
@@ -316,9 +357,11 @@
     "cantidad": 1,
     "producto_Nombre": "Pijama",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 25000
+    "precio_venta": 25000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Mueble 🛋️",
@@ -328,9 +371,11 @@
     "cantidad": 1,
     "producto_Nombre": "🦌Tapete de Navidad 🎄",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 36000
+    "precio_venta": 36000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Mueble 🛋️",
@@ -340,9 +385,11 @@
     "cantidad": 1,
     "producto_Nombre": "Tapete de Navidad ",
     "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 36000
+    "precio_venta": 36000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -352,9 +399,11 @@
     "cantidad": 1,
     "producto_Nombre": "Blusa leopardo 🐆",
     "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
     "colores": "",
     "oferta": "",
-    "precio_venta": 25000
+    "precio_venta": 25000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -364,9 +413,11 @@
     "cantidad": 1,
     "producto_Nombre": "CamisaCamiseta 👕 London 89",
     "Para Hombre o mujer": "Hombre",
+    "¿Cuál es la talla?": "",
     "colores": "verde 💚",
     "oferta": "",
-    "precio_venta": 25000
+    "precio_venta": 25000,
+    "seo": ""
   },
   {
     "Tipo de producto": "Ropa 👕👖",
@@ -376,8 +427,10 @@
     "cantidad": 2,
     "producto_Nombre": "Camiseta 👕",
     "Para Hombre o mujer": "Hombre",
+    "¿Cuál es la talla?": "",
     "colores": "blanco ⬜, negro ⬛, verde 💚",
     "oferta": "",
-    "precio_venta": 25000
+    "precio_venta": 25000,
+    "seo": ""
   }
 ]

@@ -474,5 +474,19 @@
     "oferta": "",
     "precio_venta": 0,
     "seo": ""
+  },
+  {
+    "Tipo de producto": "Prueb",
+    "Detalles del producto ( opcional )": "https://amcatglobal.aspiringminds.com/app/v1?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiIxMDAxIiwiYXVkIjoiaHR0cHM6XC9cL2FtY2F0YXBpLmFzcGlyaW5nbWluZHMuY29tXC8iLCJpYXQiOjE3NzE1MzI2OTQsIm5iZiI6MTc3MTUzMjY4NywiZXhwIjoxNzc5OTEzNDg3LCJsb2dpbiI6eyJsYW5ndWFnZSI6ImVuLVVTIiwidW5pcXVlSUQiOiI5MTk0NTgyOCIsInJlZ2lvbiI6IlVTIiwiaXNBdXRvbG9naW4iOjEsInJldHVyblVybCI6IiJ9fQ.7i2J2UvfcwoohLm267_X8zx56-kWzn008qA1RDkeQCZSRt-Cr5Vfw-1bgCa_yEWMGNFKWbRLbUGucPZpCLWy_g&autoLoginVersion=4",
+    "id": 381189,
+    "link_foto": "https://i0.wp.com/Hola?w=400&strip=all&quality=60",
+    "cantidad": 3,
+    "producto_Nombre": "Concentric ",
+    "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
+    "colores": "",
+    "oferta": "",
+    "precio_venta": 0,
+    "seo": ""
   }
 ]

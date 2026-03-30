@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boutique 3D - Postres</title>
+    <style>
+        :root {
+            --primary: #d63384;
+            --bg: #fff5f7;
+            --card-white: #ffffff;
+            --dark: #333;
+        }
+
+        body {
+            background-color: var(--bg);
+            margin: 0;
+            padding-top: 80px; /* Espacio para el header fijo */
+            padding-bottom: 50px;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- HEADER & MENU --- */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 70px;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+
+        .logo { color: var(--primary); font-weight: 800; font-size: 1.2rem; }
+        
+        .nav-icons { display: flex; gap: 15px; align-items: center; }
+        
+        .cart-icon-btn { 
+            background: none; border: none; font-size: 1.5rem; cursor: pointer; position: relative;
+        }
+        
+        #cart-count {
+            position: absolute; top: -5px; right: -5px; background: var(--primary);
+            color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px;
+        }
+
+        /* Menú Hamburguesa Simple */
+        .menu-toggle { font-size: 1.5rem; background: none; border: none; cursor: pointer; }
+
+        /* --- FEED DE PRODUCTOS --- */
+        #feed-productos {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+            perspective: 1200px;
+        }
+
+        .producto-card {
+            position: relative;
+            width: 90%;
+            margin: 0 auto;
+            background: var(--card-white);
+            border-radius: 25px;
+            transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.8s;
+            transform-style: preserve-3d;
+            opacity: 0.5;
+            transform: scale(0.9) rotateX(5deg);
+        }
+
+        /* Clase para el efecto de 3 segundos solo la primera vez */
+        .first-load-slow { transition: all 8s cubic-bezier(0.23, 1, 0.32, 1) !important; }
+
+        .producto-card.is-active {
+            opacity: 1;
+            transform: scale(1) rotateX(10deg) translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }
+
+        .visual-container {
+            position: relative;
+            height: 250px;
+            border-radius: 25px 25px 0 0;
+            overflow: visible;
+        }
+
+        .img-fondo {
+            width: 100%; height: 100%; object-fit: cover;
+            border-radius: 25px 25px 0 0;
+        }
+
+        .postre-asset {
+            position: absolute;
+            width: 80%; top: -30px; left: 10%;
+            z-index: 10;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.2));
+            pointer-events: none;
+            opacity: 0.4;
+            transform: translateY(20px) translateZ(0px);
+            transition: all 0.8s ease;
+        }
+
+        .producto-card.is-active .postre-asset {
+            opacity: 1;
+            transform: translateY(0) translateZ(100px);
+            animation: flotarAnim 3s ease-in-out infinite;
+        }
+
+        @keyframes flotarAnim {
+            0%, 100% { transform: translateY(0) translateZ(100px) rotate(0deg); }
+            50% { transform: translateY(-15px) translateZ(120px) rotate(3deg); }
+        }
+
+        /* Info Container (Limpio, sin oscurecer) */
+        .info-container {
+            padding: 20px;
+            background: white;
+            border-radius: 0 0 25px 25px;
+            text-align: center;
+        }
+
+        .titulo { margin: 0; font-size: 1.3rem; color: var(--dark); }
+        .precio { margin: 5px 0 15px 0; font-size: 1.1rem; color: var(--primary); font-weight: bold; }
+
+        .btn-compra {
+            background: var(--primary); color: white; border: none;
+            padding: 12px; width: 100%; border-radius: 12px;
+            font-weight: bold; font-size: 1rem; cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-compra:active { transform: scale(0.95); }
+
+        /* --- SIDEBAR CARRITO --- */
+        #cart-sidebar {
+            position: fixed; top: 0; right: -100%; width: 85%; height: 100%;
+            background: white; z-index: 2000; transition: 0.4s;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+            padding: 20px; display: flex; flex-direction: column;
+        }
+
+        #cart-sidebar.open { right: 0; }
+
+        .cart-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        #cart-items { flex: 1; overflow-y: auto; padding-top: 10px; }
+        
+        .cart-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
+
+        .btn-whatsapp {
+            background: #25D366; color: white; border: none; padding: 15px;
+            border-radius: 10px; font-weight: bold; text-align: center;
+            text-decoration: none; display: block; margin-top: 20px;
+        }
+        
+        .hero-section {
+    /* Ajustamos el alto total para que quepa la imagen y el texto cómodamente */
+    height: auto; 
+    min-height: 400px; 
+    padding: 40px 20px;
+}
+ .hero-section {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(45deg, #ffd1dc, #fff);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content h1 { color: var(--primary); margin: 0; font-size: 2rem; }
+        .hero-content p { color: var(--dark); opacity: 0.7; margin-top: 5px; }
+
+.hero-logo-img {
+    /* Aquí limitamos el alto a una tercera parte de la pantalla */
+    max-height: 33vh; 
+    width: auto;
+    object-fit: contain;
+    border-radius: 50%; /* Opcional: la hace circular si es un logo cuadrado */
+    margin-bottom: 20px;
+    
+    /* Efecto de sombra suave para que resalte del fondo rosa */
+    filter: drop-shadow(0 10px 15px rgba(214, 51, 132, 0.2));
+    
+    /* Animación sutil de entrada */
+    animation: fadeInHero 1.5s ease-out;
+}
+
+@keyframes fadeInHero {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="menu-toggle">☰</button>
+        <div class="logo">Paty 3D</div>
+        <div class="nav-icons">
+            <button class="cart-icon-btn" onclick="toggleCart()">
+                🛒 <span id="cart-count">0</span>
+            </button>
+        </div>
+    </header>
+    
+    <section class="hero-section">
+    <img src="https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" class="hero-logo-img" alt="Logo Boutique">
+    
+    <div class="hero-content">
+        <h1>Colección de Lujo</h1>
+        <p>Postres diseñados para los paladares más exigentes</p>
+    </div>
+</section>
+
+    <div id="feed-productos"></div>
+
+    <div id="cart-sidebar">
+        <div class="cart-header">
+            <h3>Tu Pedido</h3>
+            <button class="menu-toggle" onclick="toggleCart()">✕</button>
+        </div>
+        <div id="cart-items">
+            </div>
+        <div id="cart-total" style="font-weight: bold; margin-top: 10px;">Total: $0.00</div>
+        <a href="#" class="btn-whatsapp" onclick="sendWhatsApp()">Pedir por WhatsApp</a>
+    </div>
+
+    <script>
+    
+    const listaProductos = [
+            {
+                id: 1,
+                nombre: "Strawberry Dream",
+                precio: 18.50,
+                imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+                imgPostre: "https://static.vecteezy.com/system/resources/thumbnails/049/390/227/small_2x/strawberry-cake-with-cream-and-glaze-a-delicious-dessert-with-transparent-background-png.png"
+            },
+            {
+                id: 3,
+                nombre: "Caja Tentación",
+                precio: 32.00,
+                imgFondo: "https://tofuu.getjusto.com/orioneat-local/resized2/RZhk9D4enQb9mopmo-2400-x.webp",
+                imgPostre: "https://tofuu.getjusto.com/orioneat-local/resized2/RZhk9D4enQb9mopmo-2400-x.webp"
+            },
+            {
+                id: 2,
+                nombre: "Macaron Supreme",
+                precio: 12.00,
+                imgFondo: "https://images.unsplash.com/photo-1558326567-98ae2405596b?q=80&w=600&auto=format&fit=crop",
+                imgPostre: "https://png.pngtree.com/png-clipart/20240324/original/pngtree-macaroons-and-desserts-png-image_14668618.png"}];
+        
+
+        let carrito = [];
+        let firstTime = true; // Flag para los 3 segundos
+
+        // RENDERIZAR
+        const container = document.getElementById('feed-productos');
+        function render() {
+            container.innerHTML = listaProductos.map(p => `
+                <article class="producto-card js-card" id="prod-${p.id}">
+                    <div class="visual-container">
+                        <img src="${p.imgFondo}" class="img-fondo">
+                        <img src="${p.imgPostre}" class="postre-asset js-asset">
+                    </div>
+                    <div class="info-container">
+                        <h2 class="titulo">${p.nombre}</h2>
+                        <p class="precio">$${p.precio.toFixed(2)}</p>
+                        <button class="btn-compra" onclick="addToCart(${p.id})">Añadir al Carrito</button>
+                    </div>
+                </article>
+            `).join('');
+        }
+        render();
+
+        // OBSERVADOR
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    if (firstTime) {
+                        entry.target.classList.add('first-load-slow');
+                        firstTime = false; // Solo el primero es lento
+                    } else {
+                        entry.target.classList.remove('first-load-slow');
+                    }
+                    entry.target.classList.add('is-active');
+                } else {
+                    entry.target.classList.remove('is-active');
+                }
+            });
+        }, { threshold: 0.6 });
+
+        document.querySelectorAll('.js-card').forEach(card => observer.observe(card));
+
+        // LOGICA CARRITO
+        function addToCart(id) {
+            const prod = listaProductos.find(p => p.id === id);
+            carrito.push(prod);
+            updateCartUI();
+            
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = carrito.length;
+            const cartItemsDiv = document.getElementById('cart-items');
+            cartItemsDiv.innerHTML = carrito.map(i => `
+                <div class="cart-item">
+                    <span>${i.nombre}</span>
+                    <span>$${i.precio.toFixed(2)}</span>
+                </div>
+            `).join('');
+            const total = carrito.reduce((sum, i) => sum + i.precio, 0);
+            document.getElementById('cart-total').innerText = `Total: $${total.toFixed(2)}`;
+        }
+
+        function toggleCart() {
+            document.getElementById('cart-sidebar').classList.toggle('open');
+        }
+
+        function sendWhatsApp() {
+            if (carrito.length === 0) return alert("Tu carrito está vacío");
+            const total = carrito.reduce((sum, i) => sum + i.precio, 0);
+            const itemsMsg = carrito.map(i => `- ${i.nombre} ($${i.precio})`).join('%0A');
+            const msg = `¡Hola! Me gustaría pedir:%0A${itemsMsg}%0A%0ATotal: $${total.toFixed(2)}`;
+            window.open(`https://wa.me/573247356178?text=${msg}`, '_blank'); // Cambia el número
+        }
+
+        // GIROSCOPIO
+        window.addEventListener('deviceorientation', (event) => {
+            const activeAsset = document.querySelector('.is-active .js-asset');
+            if (activeAsset) {
+                activeAsset.style.marginLeft = `${event.gamma / 5}px`;
+                activeAsset.style.marginTop = `${event.beta / 5}px`;
+            }
+        });
+    </script>
+</body>
+</html>

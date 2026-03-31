@@ -127,16 +127,45 @@
             border-radius: 0 0 25px 25px;
             text-align: center;
         }
+       
+
+.info-container {
+    padding: 20px;
+    background: white;
+    border-radius: 0 0 25px 25px;
+    text-align: center;
+    position: relative; /* Necesario para el z-index */
+    z-index: 20; /* Por encima del fondo */
+    
+    
+}
+
+/* 2. Forzamos al botón a ser el elemento más externo */
+.btn-compra {
+    background: var(--primary); 
+    color: white; 
+    border: none;
+    padding: 12px; 
+    width: 100%; 
+    border-radius: 12px;
+    font-weight: bold; 
+    font-size: 1rem; 
+    cursor: pointer;
+    transition: transform 0.2s;
+    position: relative;
+    z-index: 30; /* El nivel más alto de todos */
+    touch-action: manipulation; /* Optimiza el click en móviles */
+}
 
         .titulo { margin: 0; font-size: 1.3rem; color: var(--dark); }
         .precio { margin: 5px 0 15px 0; font-size: 1.1rem; color: var(--primary); font-weight: bold; }
 
-        .btn-compra {
+       /* .btn-compra {
             background: var(--primary); color: white; border: none;
             padding: 12px; width: 100%; border-radius: 12px;
             font-weight: bold; font-size: 1rem; cursor: pointer;
             transition: transform 0.2s;
-        }
+        }*/
 
         .btn-compra:active { transform: scale(0.95); }
 
@@ -252,18 +281,20 @@
                 imgPostre: "https://static.vecteezy.com/system/resources/thumbnails/049/390/227/small_2x/strawberry-cake-with-cream-and-glaze-a-delicious-dessert-with-transparent-background-png.png"
             },
             {
-                id: 3,
+                id: 2,
                 nombre: "Caja Tentación",
                 precio: 32.00,
                 imgFondo: "https://tofuu.getjusto.com/orioneat-local/resized2/RZhk9D4enQb9mopmo-2400-x.webp",
-                imgPostre: "https://tofuu.getjusto.com/orioneat-local/resized2/RZhk9D4enQb9mopmo-2400-x.webp"
+                imgPostre: "https://th.bing.com/th/id/R.c5f1745a6dcf007a9de198e0a4e2d3a7?rik=mkKiWc9qDA7z%2fw&riu=http%3a%2f%2fmiam-images.m.i.pic.centerblog.net%2fo%2f0a6814f9.png&ehk=5m6PEESvnngWsgxSY0asagntbz7FKp71J1akIJ%2fKUoY%3d&risl=&pid=ImgRaw&r=0"
             },
             {
-                id: 2,
+                id: 3,
                 nombre: "Macaron Supreme",
                 precio: 12.00,
                 imgFondo: "https://images.unsplash.com/photo-1558326567-98ae2405596b?q=80&w=600&auto=format&fit=crop",
-                imgPostre: "https://png.pngtree.com/png-clipart/20240324/original/pngtree-macaroons-and-desserts-png-image_14668618.png"}];
+                imgPostre: "https://th.bing.com/th/id/R.c5f1745a6dcf007a9de198e0a4e2d3a7?rik=mkKiWc9qDA7z%2fw&riu=http%3a%2f%2fmiam-images.m.i.pic.centerblog.net%2fo%2f0a6814f9.png&ehk=5m6PEESvnngWsgxSY0asagntbz7FKp71J1akIJ%2fKUoY%3d&risl=&pid=ImgRaw&r=0"
+            }
+        ];
         
 
         let carrito = [];
@@ -272,20 +303,30 @@
         // RENDERIZAR
         const container = document.getElementById('feed-productos');
         function render() {
-            container.innerHTML = listaProductos.map(p => `
-                <article class="producto-card js-card" id="prod-${p.id}">
-                    <div class="visual-container">
-                        <img src="${p.imgFondo}" class="img-fondo">
-                        <img src="${p.imgPostre}" class="postre-asset js-asset">
-                    </div>
-                    <div class="info-container">
-                        <h2 class="titulo">${p.nombre}</h2>
-                        <p class="precio">$${p.precio.toFixed(2)}</p>
-                        <button class="btn-compra" onclick="addToCart(${p.id})">Añadir al Carrito</button>
-                    </div>
-                </article>
-            `).join('');
-        }
+    container.innerHTML = listaProductos.map(p => `
+        <article class="producto-card js-card" id="prod-${p.id}">
+            <div class="visual-container">
+                <img src="${p.imgFondo}" class="img-fondo">
+                <img src="${p.imgPostre}" class="postre-asset js-asset">
+            </div>
+            <div class="info-container">
+                <h2 class="titulo">${p.nombre}</h2>
+                <p class="precio">$${p.precio.toFixed(2)}</p>
+                <button class="btn-compra" data-id="${p.id}">Añadir al Carrito</button>
+            </div>
+        </article>
+    `).join('');
+
+    // Delegación de eventos para asegurar el click
+    document.querySelectorAll('.btn-compra').forEach(boton => {
+        boton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita que el click se pierda en la carta
+            const id = parseInt(e.target.getAttribute('data-id'));
+            addToCart(id);
+        });
+    });
+}
+
         render();
 
         // OBSERVADOR
@@ -341,13 +382,41 @@
         }
 
         // GIROSCOPIO
-        window.addEventListener('deviceorientation', (event) => {
-            const activeAsset = document.querySelector('.is-active .js-asset');
-            if (activeAsset) {
-                activeAsset.style.marginLeft = `${event.gamma / 5}px`;
-                activeAsset.style.marginTop = `${event.beta / 5}px`;
+        // Función para activar los sensores (Necesaria para iOS)
+async function activarSensores() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        try {
+            const permission = await DeviceOrientationEvent.requestPermission();
+            if (permission === 'granted') {
+                iniciarGiroscopio();
             }
-        });
+        } catch (error) {
+            console.error("Error pidiendo permiso al sensor:", error);
+        }
+    } else {
+        // En Android suele no requerir permiso explícito, solo HTTPS
+        iniciarGiroscopio();
+    }
+}
+
+function iniciarGiroscopio() {
+    window.addEventListener('deviceorientation', (event) => {
+        const activeAsset = document.querySelector('.is-active .js-asset');
+        if (activeAsset) {
+            // Usamos translate en lugar de margin para suavidad y rendimiento
+            // Gamma: inclinación izquierda/derecha | Beta: inclinación adelante/atrás
+            const moveX = event.gamma / 2; 
+            const moveY = event.beta / 2;
+            
+            // Mantener el translateZ(100px) para que no pierda el efecto 3D
+            activeAsset.style.transform = `translate(${moveX}px, ${moveY}px) translateZ(100px)`;
+        }
+    });
+}
+
+// Opcional: Activar al primer toque en cualquier parte de la pantalla
+document.body.addEventListener('click', activarSensores, { once: true });
+
     </script>
 </body>
 </html>

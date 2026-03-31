@@ -116,10 +116,14 @@
         }
 
         @keyframes flotarAnim {
-            0%, 100% { transform: translateY(0) translateZ(100px) rotate(0deg); }
-            50% { transform: translateY(-15px) translateZ(120px) rotate(3deg); }
+    0%, 100% { top: -30px; }
+    50% { top: -45px; }
+            }
+        .producto-card.is-active .postre-asset {
+    opacity: 1;
+    /* Quitamos el translateZ de aquí para darlo por JS */
+    animation: flotarAnim 3s ease-in-out infinite;
         }
-
         /* Info Container (Limpio, sin oscurecer) */
         .info-container {
             padding: 20px;
@@ -401,15 +405,31 @@ async function activarSensores() {
 
 function iniciarGiroscopio() {
     window.addEventListener('deviceorientation', (event) => {
-        const activeAsset = document.querySelector('.is-active .js-asset');
-        if (activeAsset) {
-            // Usamos translate en lugar de margin para suavidad y rendimiento
-            // Gamma: inclinación izquierda/derecha | Beta: inclinación adelante/atrás
-            const moveX = event.gamma / 2; 
-            const moveY = event.beta / 2;
-            
-            // Mantener el translateZ(100px) para que no pierda el efecto 3D
-            activeAsset.style.transform = `translate(${moveX}px, ${moveY}px) translateZ(100px)`;
+        // Buscamos la carta activa y el producto dentro
+        const activeCard = document.querySelector('.is-active');
+        const activeAsset = activeCard ? activeCard.querySelector('.js-asset') : null;
+        
+        if (activeAsset && activeCard) {
+            // 1. Sensibilidad (ajusta estos números para más o menos movimiento)
+            // Gamma es izquierda/derecha (-90 a 90)
+            // Beta es adelante/atrás (-180 a 180)
+            const tiltX = event.gamma; // Inclinación lateral
+            const tiltY = event.beta;  // Inclinación frontal
+
+            // 2. Efecto Parallax para el producto (se mueve opuesto al giro)
+            const moveX = tiltX * 0.5; 
+            const moveY = (tiltY - 45) * 0.5; // Restamos 45 para centrarlo según la posición natural de la mano
+
+            // 3. Rotación sutil de la CARTA (hace que todo el diseño reaccione)
+            const cardRotateX = 10 + (tiltY - 45) * 0.1;
+            const cardRotateY = tiltX * 0.1;
+
+            // Aplicamos a la carta
+            activeCard.style.transform = `scale(1) rotateX(${cardRotateX}deg) rotateY(${cardRotateY}deg) translateY(-10px)`;
+
+            // Aplicamos al producto (lo mantenemos "al frente" con translateZ)
+            // Agregamos una rotación inversa para que parezca estable
+            activeAsset.style.transform = `translate(${moveX}px, ${moveY}px) translateZ(120px) rotateY(${-tiltX * 0.5}deg)`;
         }
     });
 }

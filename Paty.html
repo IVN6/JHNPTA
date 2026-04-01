@@ -243,7 +243,7 @@
 <body>
 
     <header>
-        <button class="menu-toggle">☰</button>
+        <button class="menu-toggle" onclick="toggleNav()">☰</button>
         <div class="logo">Paty 3D</div>
         <div class="nav-icons">
             <button class="cart-icon-btn" onclick="toggleCart()">
@@ -273,7 +273,21 @@
         <div id="cart-total" style="font-weight: bold; margin-top: 10px;">Total: $0.00</div>
         <a href="#" class="btn-whatsapp" onclick="sendWhatsApp()">Pedir por WhatsApp</a>
     </div>
-
+<div id="nav-sidebar" style="position: fixed; top: 0; left: -100%; width: 250px; height: 100%; background: white; z-index: 3000; transition: 0.4s; box-shadow: 5px 0 20px rgba(0,0,0,0.1); padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h3 style="color: var(--primary);">Menú</h3>
+        <button onclick="toggleNav()" style="background:none; border:none; font-size:1.5rem;">✕</button>
+    </div>
+    <nav style="display: flex; flex-direction: column; gap: 20px;">
+        <a href="#" style="text-decoration: none; color: var(--dark); font-weight: 500;">🍰 Pasteles</a>
+        <a href="#" style="text-decoration: none; color: var(--dark); font-weight: 500;">🍪 Galletas</a>
+        <a href="#" style="text-decoration: none; color: var(--dark); font-weight: 500;">🎁 Cajas de Regalo</a>
+        <hr style="border: 0; border-top: 1px solid #eee; width: 100%;">
+        <a href="#" style="text-decoration: none; color: var(--dark); font-weight: 500;">📍 Ubicación</a>
+        <a href="#" style="text-decoration: none; color: var(--dark); font-weight: 500;">📞 Contacto</a>
+    </nav>
+</div>
+    
     <script>
     
     const listaProductos = [
@@ -352,26 +366,68 @@
 
         document.querySelectorAll('.js-card').forEach(card => observer.observe(card));
 
+// Función para abrir/cerrar menú
+function toggleNav() {
+    const nav = document.getElementById('nav-sidebar');
+    if (nav.style.left === "0px") {
+        nav.style.left = "-100%";
+    } else {
+        nav.style.left = "0px";
+    }
+}
         // LOGICA CARRITO
-        function addToCart(id) {
-            const prod = listaProductos.find(p => p.id === id);
-            carrito.push(prod);
-            updateCartUI();
-            
-        }
+    // 1. Modificamos el añadir para que agrupe por cantidad
+function addToCart(id) {
+    const itemEnCarrito = carrito.find(p => p.id === id);
+    
+    if (itemEnCarrito) {
+        itemEnCarrito.cantidad += 1;
+    } else {
+        const prod = listaProductos.find(p => p.id === id);
+        // Clonamos el producto y le añadimos cantidad 1
+        carrito.push({ ...prod, cantidad: 1 });
+    }
+    updateCartUI();
+}
 
-        function updateCartUI() {
-            document.getElementById('cart-count').innerText = carrito.length;
-            const cartItemsDiv = document.getElementById('cart-items');
-            cartItemsDiv.innerHTML = carrito.map(i => `
-                <div class="cart-item">
-                    <span>${i.nombre}</span>
-                    <span>$${i.precio.toFixed(2)}</span>
-                </div>
-            `).join('');
-            const total = carrito.reduce((sum, i) => sum + i.precio, 0);
-            document.getElementById('cart-total').innerText = `Total: $${total.toFixed(2)}`;
+// 2. Nueva función para quitar o reducir cantidad
+function removeFromCart(id) {
+    const index = carrito.findIndex(p => p.id === id);
+    if (index !== -1) {
+        if (carrito[index].cantidad > 1) {
+            carrito[index].cantidad -= 1;
+        } else {
+            carrito.splice(index, 1); // Lo borra si llega a 0
         }
+    }
+    updateCartUI();
+}
+
+// 3. Actualizamos la UI para mostrar controles de + y -
+function updateCartUI() {
+    document.getElementById('cart-count').innerText = carrito.reduce((sum, i) => sum + i.cantidad, 0);
+    const cartItemsDiv = document.getElementById('cart-items');
+    
+    cartItemsDiv.innerHTML = carrito.map(i => `
+        <div class="cart-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <div style="text-align: left;">
+                <div style="font-weight: bold;">${i.nombre}</div>
+                <div style="color: var(--primary);">$${(i.precio * i.cantidad).toFixed(2)}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button onclick="removeFromCart(${i.id})" style="width:25px; height:25px; border-radius:50%; border:1px solid #ddd;">-</button>
+                <span>${i.cantidad}</span>
+                <button onclick="addToCart(${i.id})" style="width:25px; height:25px; border-radius:50%; border:1px solid #ddd;">+</button>
+            </div>
+        </div>
+    `).join('');
+    
+    const total = carrito.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
+    document.getElementById('cart-total').innerText = `Total: $${total.toFixed(2)}`;
+}
+
+
+    
 
         function toggleCart() {
             document.getElementById('cart-sidebar').classList.toggle('open');

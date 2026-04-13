@@ -432,5 +432,47 @@
     "oferta": "",
     "precio_venta": 25000,
     "seo": ""
+  },
+  {
+    "Tipo de producto": "",
+    "Detalles del producto ( opcional )": "",
+    "id": "",
+    "link_foto": "",
+    "cantidad": 0,
+    "producto_Nombre": "Sin Nombre",
+    "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
+    "colores": "",
+    "oferta": "",
+    "precio_venta": 0,
+    "seo": ""
+  },
+  {
+    "Tipo de producto": "",
+    "Detalles del producto ( opcional )": "",
+    "id": "",
+    "link_foto": "",
+    "cantidad": 0,
+    "producto_Nombre": "Sin Nombre",
+    "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
+    "colores": "",
+    "oferta": "",
+    "precio_venta": 0,
+    "seo": ""
+  },
+  {
+    "Tipo de producto": "",
+    "Detalles del producto ( opcional )": "",
+    "id": "",
+    "link_foto": "",
+    "cantidad": 0,
+    "producto_Nombre": "Sin Nombre",
+    "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
+    "colores": "",
+    "oferta": "",
+    "precio_venta": 0,
+    "seo": ""
   }
 ]

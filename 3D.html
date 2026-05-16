@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Efecto Holograma 3D</title>
+    <title>Efecto Pastel 3D - Pro</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -13,49 +13,51 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: #08080a;
+            background-color: #0a0a0c;
             overflow: hidden;
             font-family: sans-serif;
             /* Perspectiva para el mundo 3D */
-            perspective: 1000px;
+            perspective: 1200px;
         }
 
         .scene {
-            width: 280px;
+            width: 300px;
             height: 400px;
             display: flex;
             justify-content: center;
-            align-items: flex-end; /* Alinea la imagen al fondo del contenedor */
+            align-items: flex-end; 
             transform-style: preserve-3d;
-
-    /* ... lo que ya tenías ... */
-    background: radial-gradient(ellipse at bottom, rgba(255,255,255,0.1) 0%, transparent 70%);
         }
-        
 
         .floating-element {
-    width: 100%;
-    height: 100%;
-    /* Reemplaza la línea de background por esta: */
-    background: url('https://static.vecteezy.com/system/resources/thumbnails/049/390/227/small_2x/strawberry-cake-with-cream-and-glaze-a-delicious-dessert-with-transparent-background-png.png') center/contain no-repeat;
-    
-    border-radius: 10px;
-    /* Quité el shadow negro y puse uno más suave para que el pastel flote mejor */
-    filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5)); 
-    
-    transform-origin: bottom center;
-    will-change: transform;
-    transition: transform 0.05s linear;
+            width: 100%;
+            height: 100%;
+            /* Imagen del pastel con fondo transparente */
+            background: url('https://static.vecteezy.com/system/resources/thumbnails/049/390/227/small_2x/strawberry-cake-with-cream-and-glaze-a-delicious-dessert-with-transparent-background-png') center/contain no-repeat;
+            
+            /* Sombra que sigue la forma del pastel */
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
+            
+            /* El eje de giro es la base (la bisagra) */
+            transform-origin: bottom center;
+            
+            will-change: transform;
+            /* Transición lineal muy rápida para que no tenga lag */
+            transition: transform 0.05s linear;
         }
 
         #btn {
-            margin-top: 30px;
-            padding: 12px 24px;
-            border-radius: 30px;
+            position: fixed;
+            bottom: 40px;
+            padding: 15px 35px;
+            border-radius: 50px;
             border: none;
-            background: #fff;
+            background: #ffffff;
+            color: #000;
             font-weight: bold;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
             cursor: pointer;
+            z-index: 100;
         }
     </style>
 </head>
@@ -65,40 +67,58 @@
         <div class="floating-element" id="hologram"></div>
     </div>
 
-    <button id="btn">Activar Verticalidad</button>
+    <button id="btn">Activar Efecto 3D</button>
 
     <script>
         const hologram = document.getElementById('hologram');
         const btn = document.getElementById('btn');
 
         function update(event) {
-    let beta = event.beta;   
-    let gamma = event.gamma; 
+            let beta = event.beta;   // Adelante/Atrás (rango 0 a 180)
+            let gamma = event.gamma; // Lateral (rango -90 a 90)
 
-    if (beta === null || gamma === null) return;
+            if (beta === null || gamma === null) return;
 
-    // 1. LÍMITES VERTICALES (Para que no se vea por detrás)
-    // Forzamos a que el cálculo solo ocurra entre 20° y 90° de inclinación del cel
-    // Así evitamos que la imagen se gire por completo.
-    let constrainedBeta = Math.max(20, Math.min(90, beta));
+            // 1. DEFINIR EL ÁNGULO DE REPOSO
+            // Consideramos que el usuario sostiene el cel normalmente a 70 grados.
+            const baseAngle = 70;
+            let diff = beta - baseAngle;
 
-    // 2. ROTACIÓN X (Verticalidad con tope)
-    let rotationX = -(90 - constrainedBeta);
+            // 2. LÍMITES VERTICALES (Clamping)
+            // Evitamos que la rotación sea excesiva para que no se vea "plano" o al revés.
+            let rotationX = -diff; 
+            rotationX = Math.max(-60, Math.min(60, rotationX));
 
-    // 3. COMPENSACIÓN DE ESCALA (Con tope para no deformar de más)
-    let rad = (90 - constrainedBeta) * (Math.PI / 180);
-    let scaleY = 1 / Math.cos(rad);
-    scaleY = Math.min(2.0, scaleY); // No permitimos que se estire más del doble
+            // 3. COMPENSACIÓN ANAMÓRFICA (Stretch)
+            // Calculamos cuánto estirar la imagen para que no parezca aplastada al inclinar.
+            let rad = (diff * 0.8) * (Math.PI / 180);
+            let scaleY = 1 / Math.cos(rad);
+            // Cap de estiramiento máximo de 2.5 para que no se deforme feo
+            scaleY = Math.min(2.5, Math.max(1, scaleY));
 
-    // 4. LÍMITES HORIZONTALES (Para que no dé la vuelta lateral)
-    // Limitamos gamma a +/- 45 grados para que solo se mueva un poco a los lados
-    let constrainedGamma = Math.max(-45, Math.min(45, gamma));
-    let rotationY = -constrainedGamma * 0.5; // El 0.5 lo hace más sutil
+            // 4. LÍMITES HORIZONTALES
+            // Amortiguamos gamma para que el giro lateral sea sutil y no muestre la espalda.
+            let rotationY = -gamma * 0.5;
+            rotationY = Math.max(-40, Math.min(40, rotationY));
 
-    // Aplicamos la transformación
-    hologram.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) scaleY(${scaleY})`;
-}
+            // Aplicamos la transformación final
+            hologram.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) scaleY(${scaleY})`;
+        }
 
+        btn.addEventListener('click', async () => {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const result = await DeviceOrientationEvent.requestPermission();
+                    if (result === 'granted') {
+                        window.addEventListener('deviceorientation', update);
+                        btn.style.display = 'none';
+                    }
+                } catch (e) { alert("Error al activar sensores"); }
+            } else {
+                window.addEventListener('deviceorientation', update);
+                btn.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>

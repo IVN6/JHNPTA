@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efecto Holograma Flotante</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #0d0d11;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, sans-serif;
+            /* 1. Definimos la perspectiva del universo 3D en el contenedor padre */
+            perspective: 1200px; 
+        }
+
+        /* Contenedor de la escena */
+        .scene {
+            width: 280px;
+            height: 380px;
+            transform-style: preserve-3d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* La imagen o tarjeta que va a flotar */
+        .floating-element {
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600') center/cover;
+            border-radius: 24px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 
+                        0 0 40px rgba(0, 229, 255, 0.2);
+            
+            /* 2. translateZ(100px) hace que la imagen "salga" de la pantalla hacia tu cara */
+            transform: rotateX(0deg) rotateY(0deg) translateZ(100px);
+            
+            /* will-change le avisa al celular que use la GPU para máxima fluidez */
+            will-change: transform; 
+            transition: transform 0.1s ease-out; /* Suaviza el movimiento del giroscopio */
+        }
+
+        /* Botón necesario para pedir permisos en iPhone (iOS) */
+        #permission-btn {
+            position: absolute;
+            bottom: 40px;
+            padding: 15px 30px;
+            background: #ffffff;
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 10px 20px rgba(255,255,255,0.1);
+            cursor: pointer;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scene">
+        <!-- Puedes cambiar este div por una etiqueta <img> si prefieres -->
+        <div class="floating-element" id="hologram"></div>
+    </div>
+
+    <button id="permission-btn">Activar Efecto 3D</button>
+
+    <script>
+        const hologram = document.getElementById('hologram');
+        const btn = document.getElementById('permission-btn');
+
+        // Función que calcula la deformación matemática
+        function orientate(event) {
+            // beta: inclinación adelante/atrás (rango aproximado de -180 a 180)
+            // gamma: inclinación izquierda/derecha (rango -90 a 90)
+            let beta = event.beta;
+            let gamma = event.gamma;
+
+            if (beta === null || gamma === null) return;
+
+            // Ajuste de postura: asumimos que el usuario mira el cel con una inclinación cómoda de 60°
+            const baseBeta = 60; 
+
+            // Calculamos la desviación del teléfono respecto a la postura base
+            let tiltX = beta - baseBeta;
+            let tiltY = gamma;
+
+            // Ponemos límites (candados) para que la imagen no se voltee por completo si giran de golpe
+            tiltX = Math.max(-50, Math.min(50, tiltX));
+            tiltY = Math.max(-50, Math.min(50, tiltY));
+
+            /* 
+               MATEMÁTICA INVERSA:
+               Para que parezca estático en el aire mientras el cel se mueve:
+               - Si el cel baja (tiltX positivo), la imagen debe rotar en negativo para "mirar arriba".
+               - Si el cel se inclina a la derecha (tiltY positivo), la imagen rota en negativo.
+               El 'translateZ(100px)' es el truco maestro: separa físicamente la imagen de la pantalla.
+            */
+            const rotateX = -tiltX; 
+            const rotateY = tiltY; 
+
+            hologram.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(100px)`;
+        }
+
+        // Gestión de permisos obligatoria para sistemas modernos (especialmente iOS 13+)
+        btn.addEventListener('click', async () => {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // Caso iOS (iPhone)
+                try {
+                    const permissionState = await DeviceOrientationEvent.requestPermission();
+                    if (permissionState === 'granted') {
+                        window.addEventListener('deviceorientation', orientate);
+                        btn.style.display = 'none';
+                    } else {
+                        alert('Para ver el efecto flotante, necesitas otorgar el permiso.');
+                    }
+                } catch (error) {
+                    console.error("Error al solicitar permisos de sensor:", error);
+                }
+            } else {
+                // Caso Android y la mayoría de navegadores de escritorio en modo pruebas
+                window.addEventListener('deviceorientation', orientate);
+                btn.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -68,47 +68,33 @@
         const btn = document.getElementById('btn');
 
         function update(event) {
-            let beta = event.beta;   // Inclinación adelante/atrás (0 plano, 90 vertical)
-            let gamma = event.gamma; // Inclinación lateral
+    let beta = event.beta;   
+    let gamma = event.gamma; 
 
-            if (beta === null) return;
+    if (beta === null || gamma === null) return;
 
-            // 1. CÁLCULO DE ROTACIÓN X (Verticalidad)
-            // Queremos que la imagen esté a 90° del suelo.
-            // Si el cel está a 60°, la imagen debe rotar 30° hacia adelante.
-            // La fórmula es: Inclinación_Imagen = -(90 - beta)
-            let rotationX = -(90 - beta);
+    // 1. LÍMITES VERTICALES (Para que no se vea por detrás)
+    // Forzamos a que el cálculo solo ocurra entre 20° y 90° de inclinación del cel
+    // Así evitamos que la imagen se gire por completo.
+    let constrainedBeta = Math.max(20, Math.min(90, beta));
 
-            // 2. CÁLCULO DE ESCALA (Compensación visual)
-            // Cuando el cel se acuesta, el ojo ve la imagen más corta.
-            // Usamos la secante (1/coseno) para estirarla lo justo.
-            let rad = (90 - beta) * (Math.PI / 180);
-            let scaleY = 1 / Math.cos(rad);
+    // 2. ROTACIÓN X (Verticalidad con tope)
+    let rotationX = -(90 - constrainedBeta);
 
-            // Limitamos la escala para que no se rompa si el cel está totalmente plano
-            scaleY = Math.min(2.5, Math.max(1, scaleY));
+    // 3. COMPENSACIÓN DE ESCALA (Con tope para no deformar de más)
+    let rad = (90 - constrainedBeta) * (Math.PI / 180);
+    let scaleY = 1 / Math.cos(rad);
+    scaleY = Math.min(2.0, scaleY); // No permitimos que se estire más del doble
 
-            // 3. ROTACIÓN Y (Lateral)
-            // Para que parezca estática, rotamos inversamente al movimiento del cel.
-            let rotationY = -gamma;
+    // 4. LÍMITES HORIZONTALES (Para que no dé la vuelta lateral)
+    // Limitamos gamma a +/- 45 grados para que solo se mueva un poco a los lados
+    let constrainedGamma = Math.max(-45, Math.min(45, gamma));
+    let rotationY = -constrainedGamma * 0.5; // El 0.5 lo hace más sutil
 
-            // Aplicamos la transformación:
-            // Primero rotamos en la bisagra y luego escalamos para mantener el tamaño visual
-            hologram.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) scaleY(${scaleY})`;
-        }
+    // Aplicamos la transformación
+    hologram.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) scaleY(${scaleY})`;
+}
 
-        btn.addEventListener('click', async () => {
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                const result = await DeviceOrientationEvent.requestPermission();
-                if (result === 'granted') {
-                    window.addEventListener('deviceorientation', update);
-                    btn.style.display = 'none';
-                }
-            } else {
-                window.addEventListener('deviceorientation', update);
-                btn.style.display = 'none';
-            }
-        });
     </script>
 </body>
 </html>

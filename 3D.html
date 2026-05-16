@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Efecto 3D Vertical</title>
+    <title>Efecto Verticalidad Real</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -12,72 +12,78 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #050505;
+            background-color: #000;
             overflow: hidden;
-            font-family: sans-serif;
-            /* Perspectiva profunda para acentuar el efecto 3D */
-            perspective: 1000px; 
+            perspective: 1000px; /* Esencial para que el 3D funcione */
         }
 
         .scene {
-            width: 300px;
-            height: 400px;
+            width: 250px;
+            height: 350px;
             transform-style: preserve-3d;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            /* Fijamos el origen en la base para que parezca "parada" en el piso del cel */
+            transform-origin: bottom center; 
         }
 
         .floating-element {
             width: 100%;
             height: 100%;
             background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600') center/cover;
-            border-radius: 15px;
-            box-shadow: 0 50px 100px rgba(0,0,0,0.5);
-            
-            /* Eliminamos el translateZ estático para controlarlo por JS */
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
             will-change: transform;
-            transition: transform 0.05s linear; 
+        }
+
+        #permission-btn {
+            position: fixed;
+            bottom: 20px;
+            padding: 15px 30px;
+            z-index: 100;
+            border-radius: 50px;
+            border: none;
+            background: #00e5ff;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <div class="scene">
+    <div class="scene" id="scene">
         <div class="floating-element" id="hologram"></div>
     </div>
 
-    <button id="permission-btn" style="position:fixed; bottom:20px; z-index:100; padding:12px 24px; border-radius:20px; border:none; background:#fff; font-weight:bold;">
-        Activar Sensor
-    </button>
+    <button id="permission-btn">Activar Giroscopio</button>
 
     <script>
         const hologram = document.getElementById('hologram');
         const btn = document.getElementById('permission-btn');
 
         function orientate(event) {
-            let beta = event.beta;   // Inclinación adelante/atrás (0 a 180)
-            let gamma = event.gamma; // Inclinación lateral (-90 a 90)
+            let beta = event.beta;   // Inclinación adelante/atrás
+            let gamma = event.gamma; // Inclinación lateral
 
-            if (beta === null || gamma === null) return;
+            if (beta === null) return;
 
-            /* LÓGICA DE COMPENSACIÓN:
-               Si el objetivo es que la imagen esté siempre a 90° respecto al suelo:
-               La rotación necesaria es (90 - beta).
-               Si el cel está a 90° (vertical), la rotación es 0 (paralelo al cel).
-               Si el cel está a 45°, la imagen rota 45° hacia adelante para compensar.
-            */
-            let rotationX = 90 - beta;
+            // 1. Calculamos cuánto le falta al cel para estar vertical (90°)
+            // Si el cel está a 60°, el ángulo de compensación es 30°.
+            let angleToVertical = 90 - beta;
 
-            // Reducimos el movimiento lateral (gamma) al 20% para que sea casi imperceptible
-            // como pediste, pero que mantenga un toque de profundidad.
-            let rotationY = gamma * 0.2; 
+            // 2. TRUCO MAESTRO: Compensación de escala.
+            // Para que no se vea "pequeña" al acostar el cel, calculamos la secante 
+            // del ángulo (1/cos). Esto estira la imagen lo justo para cancelar 
+            // la perspectiva del ojo.
+            let rad = angleToVertical * (Math.PI / 180);
+            let scaleY = 1 / Math.cos(rad);
 
-            // Aplicamos los límites para evitar que la imagen se deforma de forma absurda
-            rotationX = Math.max(-70, Math.min(70, rotationX));
+            // Limitamos para evitar distorsiones infinitas cuando el cel está muy plano
+            scaleY = Math.min(3, Math.max(1, scaleY));
+            let rotationX = angleToVertical;
 
-            // El translateZ(50px) hace que la imagen "flote" un poco sobre el cristal
-            hologram.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) translateZ(50px)`;
+            // Movimiento lateral mínimo (casi nulo como pediste)
+            let rotationY = gamma * 0.1;
+
+            // Aplicamos: Rotamos para verticalizar y Escalamos para compensar el "achicamiento"
+            hologram.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) scaleY(${scaleY})`;
         }
 
         btn.addEventListener('click', async () => {

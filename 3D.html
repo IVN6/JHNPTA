@@ -3,49 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Vertical Pro</title>
+    <title>Efecto Holograma 3D</title>
     <style>
         * { box-sizing: border-box; }
         body {
             margin: 0;
             height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: #000;
+            background-color: #08080a;
             overflow: hidden;
-            /* Perspectiva amplia para que el estiramiento sea visible */
-            perspective: 800px; 
+            font-family: sans-serif;
+            /* Perspectiva para el mundo 3D */
+            perspective: 1000px;
         }
 
         .scene {
             width: 280px;
             height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* Alinea la imagen al fondo del contenedor */
             transform-style: preserve-3d;
-            /* FIJAMOS EL ANCLA EN LA BASE: 
-               Esto hace que la imagen "crezca" hacia arriba */
-            transform-origin: bottom center; 
         }
 
         .floating-element {
             width: 100%;
             height: 100%;
             background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600') center/cover;
-            border-radius: 12px;
-            box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
+            border-radius: 10px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+            
+            /* LA CLAVE: El eje de giro está en la base (la bisagra) */
+            transform-origin: bottom center;
+            
             will-change: transform;
+            transition: transform 0.05s linear;
         }
 
-        #permission-btn {
-            position: fixed;
-            top: 20px;
+        #btn {
+            margin-top: 30px;
             padding: 12px 24px;
-            z-index: 100;
-            border-radius: 10px;
+            border-radius: 30px;
             border: none;
             background: #fff;
-            color: #000;
             font-weight: bold;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -55,54 +60,51 @@
         <div class="floating-element" id="hologram"></div>
     </div>
 
-    <button id="permission-btn">Activar Efecto</button>
+    <button id="btn">Activar Verticalidad</button>
 
     <script>
         const hologram = document.getElementById('hologram');
-        const btn = document.getElementById('permission-btn');
+        const btn = document.getElementById('btn');
 
-        function orientate(event) {
-            let beta = event.beta;   // Inclinación frente/atrás
+        function update(event) {
+            let beta = event.beta;   // Inclinación adelante/atrás (0 plano, 90 vertical)
             let gamma = event.gamma; // Inclinación lateral
 
             if (beta === null) return;
 
-            // 1. ELIMINAMOS EL OFFSET: 
-            // Si el usuario sostiene el cel a 70°, queremos que a partir de ahí 
-            // la imagen esté vertical.
-            const userAngle = 70; 
-            let diff = beta - userAngle;
+            // 1. CÁLCULO DE ROTACIÓN X (Verticalidad)
+            // Queremos que la imagen esté a 90° del suelo.
+            // Si el cel está a 60°, la imagen debe rotar 30° hacia adelante.
+            // La fórmula es: Inclinación_Imagen = -(90 - beta)
+            let rotationX = -(90 - beta);
 
-            // 2. ROTACIÓN INVERSA:
-            // Si el cel baja (beta aumenta), la imagen debe rotar hacia ADELANTE
-            // para mantenerse vertical. En CSS, rotar hacia adelante es negativo en X.
-            let rotationX = -diff;
+            // 2. CÁLCULO DE ESCALA (Compensación visual)
+            // Cuando el cel se acuesta, el ojo ve la imagen más corta.
+            // Usamos la secante (1/coseno) para estirarla lo justo.
+            let rad = (90 - beta) * (Math.PI / 180);
+            let scaleY = 1 / Math.cos(rad);
 
-            // 3. COMPENSACIÓN DE ESTIRAMIENTO (Anamorfosis):
-            // Si el cel se acuesta, la imagen se proyecta más corta al ojo.
-            // La escala debe aumentar para compensar esa pérdida de altura visual.
-            // Usamos el valor absoluto para que siempre estire al alejarse del ángulo base.
-            let stretch = 1 + (Math.abs(diff) / 60); 
+            // Limitamos la escala para que no se rompa si el cel está totalmente plano
+            scaleY = Math.min(2.5, Math.max(1, scaleY));
 
-            // 4. MOVIMIENTO LATERAL COMPENSADO:
-            // Para que no se mueva "con" el cel, sino que parezca quieta,
-            // rotamos en Y el valor inverso de gamma.
-            let rotationY = -gamma * 0.8; 
+            // 3. ROTACIÓN Y (Lateral)
+            // Para que parezca estática, rotamos inversamente al movimiento del cel.
+            let rotationY = -gamma;
 
-            // Aplicamos la transformación
-            // Nota: scaleY(stretch) hará que la parte superior crezca porque el origen es 'bottom'
-            hologram.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) scaleY(${stretch})`;
+            // Aplicamos la transformación:
+            // Primero rotamos en la bisagra y luego escalamos para mantener el tamaño visual
+            hologram.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) scaleY(${scaleY})`;
         }
 
         btn.addEventListener('click', async () => {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                const state = await DeviceOrientationEvent.requestPermission();
-                if (state === 'granted') {
-                    window.addEventListener('deviceorientation', orientate);
+                const result = await DeviceOrientationEvent.requestPermission();
+                if (result === 'granted') {
+                    window.addEventListener('deviceorientation', update);
                     btn.style.display = 'none';
                 }
             } else {
-                window.addEventListener('deviceorientation', orientate);
+                window.addEventListener('deviceorientation', update);
                 btn.style.display = 'none';
             }
         });

@@ -260,19 +260,7 @@
         <p>Postres diseñados para los paladares más exigentes</p>
     </div>
 </section>
-<div style="width: 90%; max-width: 400px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
-    <input type="text" id="buscador" placeholder="🔍 Buscar postre..." 
-        style="padding: 12px; border-radius: 20px; border: 1px solid #ddd; outline: none;">
-    
-    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none;">
-        <button onclick="filtrar('Todos')" style="background: var(--primary); color: white; border: none; padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; white-space: nowrap;">Todos</button>
-        <button onclick="filtrar('Postres')" style="background: white; border: 1px solid #ddd; padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; white-space: nowrap;">Postres</button>
-        <button onclick="filtrar('Dulces')" style="background: white; border: 1px solid #ddd; padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; white-space: nowrap;">Dulces</button>
-        <button onclick="filtrar('Pasabocas')" style="background: white; border: 1px solid #ddd; padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; white-space: nowrap;">Pasabocas</button>
-        <button onclick="filtrar('Bebidas')" style="background: white; border: 1px solid #ddd; padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; white-space: nowrap;">Bebidas</button>
-    </div>
-</div>
-    
+
     <div id="feed-productos"></div>
 
     <div id="cart-sidebar">
@@ -315,82 +303,305 @@
     
     <script>
     
-    // 1. Datos completos de la carta
-const listaProductos = [
-    // POSTRES
-    { id: 1, categoria: "Postres", nombre: "Cremitas", precio: 3000, desc: "Delicada crema dulce.", imgFondo: "https://via.placeholder.com/400x250?text=Postres", imgPostre: "https://static.vecteezy.com/system/resources/thumbnails/049/390/227/small_2x/strawberry-cake-with-cream-and-glaze-a-delicious-dessert-with-transparent-background-png.png" },
-    { id: 2, categoria: "Postres", nombre: "Arroz con Leche", precio: 7000, desc: "Clásico con canela.", imgFondo: "https://via.placeholder.com/400x250", imgPostre: "https://png.pngtree.com/png-clipart/20231017/original/pngtree-rice-pudding-dessert-png-image_13334586.png" },
-    { id: 3, categoria: "Postres", nombre: "Merengón Coguano", precio: 12000, desc: "Frutas y crema fresca.", imgFondo: "https://via.placeholder.com/400x250", imgPostre: "https://png.pngtree.com/png-clipart/20230113/ourmid/pngtree-strawberry-dessert-cake-png-image_6561141.png" },
-    { id: 4, categoria: "Postres", nombre: "Napoleón de Coco", precio: 9500, desc: "Capas cremosas de coco.", imgFondo: "https://via.placeholder.com/400x250", imgPostre: "https://png.pngtree.com/png-clipart/20240324/original/pngtree-macaroons-and-desserts-png-image_14668618.png" },
-    
-    // DULCES
-    { id: 5, categoria: "Dulces", nombre: "Brevas con Arequipe", precio: 9000, desc: "Higos con dulce de leche.", imgFondo: "https://via.placeholder.com/400x250", imgPostre: "https://png.pngtree.com/png-vector/20240131/ourmid/pngtree-high-quality-mexican-dessert-cajeta-png-image_11579453.png" },
-    { id: 6, categoria: "Dulces", nombre: "Mielmesabe", precio: 8000, desc: "Tradición de leche cortada.", imgFondo: "https://via.placeholder.com/400x250", imgPostre: "https://png.pngtree.com/png-clipart/20230508/ourmid/pngtree-yellow-dessert-pudding-png-image_7088151.png" },
-
-    // PASABOCAS
-    { id: 7, categoria: "Pasabocas", nombre: "Milhoja Francesa", precio: 12000, desc: "Hojaldre fino y crema.", imgFondo: "https://via.placeholder.com/400x250", imgPostre: "https://png.pngtree.com/png-clipart/20231019/original/pngtree-mille-feuille-cake-isolated-png-image_13364491.png" },
-    { id: 8, categoria: "Pasabocas", nombre: "Pan de Yuca", precio: 5000, desc: "Horneado y calientito.", imgFondo: "https://via.placeholder.com/400x250", imgPostre: "https://png.pngtree.com/png-clipart/20231016/original/pngtree-baked-cheese-bread-png-image_13317774.png" },
-
-    // BEBIDAS
-    { id: 9, categoria: "Bebidas", nombre: "Malteada", precio: 9500, desc: "Batido cremoso helado.", imgFondo: "https://via.placeholder.com/400x250", imgPostre: "https://png.pngtree.com/png-clipart/20230417/ourmid/pngtree-strawberry-milkshake-pink-drink-png-image_6705608.png" },
-    { id: 10, categoria: "Bebidas", nombre: "Afogatto", precio: 8500, desc: "Espresso con helado.", imgFondo: "https://via.placeholder.com/400x250", imgPostre: "https://png.pngtree.com/png-clipart/20230928/original/pngtree-iced-coffee-afogatto-png-image_13009144.png" }
-];
-
-// 2. Función de Renderizado Mejorada
-function render(productosFiltrados = listaProductos) {
-    const container = document.getElementById('feed-productos');
-    
-    if (productosFiltrados.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:20px;">No encontramos lo que buscas 🍰</p>`;
-        return;
+    const listaProductos = [
+    {
+        "id": 1,
+        "categoria": "Hora del Postre",
+        "nombre": "Merengón",
+        "precio": "12k / 15k",
+        "descripcion": "Clásico merengue con frutas y crema.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 2,
+        "categoria": "Hora del Postre",
+        "nombre": "Fresas con crema",
+        "precio": "9.5k / 12k",
+        "descripcion": "Fresas frescas seleccionadas con crema suave.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 3,
+        "categoria": "Hora del Postre",
+        "nombre": "Obleas",
+        "precio": "4.5k / 5.5k",
+        "descripcion": "Tradicional oblea crujiente con arequipe.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 4,
+        "categoria": "Hora del Postre",
+        "nombre": "Cuajada",
+        "precio": "9800",
+        "descripcion": "Cuajada fresca con melao de panela.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 5,
+        "categoria": "Hora del Postre",
+        "nombre": "Cheesecakes",
+        "precio": "9500",
+        "descripcion": "Tarta de queso cremosa con frutos rojos.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 6,
+        "categoria": "Hora del Postre",
+        "nombre": "Pie de limón",
+        "precio": "9500",
+        "descripcion": "Equilibrio perfecto entre ácido y dulce.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 7,
+        "categoria": "Hora del Postre",
+        "nombre": "Tiramisú",
+        "precio": "9500",
+        "descripcion": "Postre italiano con café y cacao.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 8,
+        "categoria": "Hora del Postre",
+        "nombre": "Torta tres leches",
+        "precio": "9500",
+        "descripcion": "Bizcocho bañado en tres tipos de leche.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 9,
+        "categoria": "Hora del Postre",
+        "nombre": "Leche asada",
+        "precio": "9500",
+        "descripcion": "Postre horneado tradicional y suave.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 10,
+        "categoria": "Hora del Postre",
+        "nombre": "Napoleón de coco",
+        "precio": "9500",
+        "descripcion": "Capas crujientes con crema de coco.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 11,
+        "categoria": "Hora del Postre",
+        "nombre": "Mousse",
+        "precio": "9500",
+        "descripcion": "Textura aireada y sabor intenso.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 12,
+        "categoria": "Hora del Postre",
+        "nombre": "Cremitas Sabores",
+        "precio": "3000",
+        "descripcion": "Pequeños bocados de sabor variado.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 13,
+        "categoria": "Hora del Postre",
+        "nombre": "Natilla",
+        "precio": "8000",
+        "descripcion": "Postre típico de consistencia firme.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 14,
+        "categoria": "Hora del Postre",
+        "nombre": "Algodón azúcar",
+        "precio": "4.2k / 5.2k",
+        "descripcion": "Nube dulce para recordar la infancia.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 15,
+        "categoria": "Hora del Postre",
+        "nombre": "Chicharrón Cuajada",
+        "precio": "13000",
+        "descripcion": "Combinación única de texturas.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 16,
+        "categoria": "Horneaditos",
+        "nombre": "Milhoja",
+        "precio": "12000",
+        "descripcion": "Hojaldre crocante con arequipe y crema.",
+        "imgFondo": "https://helenadelombana.com/wp-content/uploads/2023/08/Milhoja-Receta-Especial.webp",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 17,
+        "categoria": "Horneaditos",
+        "nombre": "Rollitos",
+        "precio": "6.5k / 7.5k",
+        "descripcion": "Masa suave enrollada con canela.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 18,
+        "categoria": "Horneaditos",
+        "nombre": "Repollas und",
+        "precio": "8500",
+        "descripcion": "Profiteroles rellenos de crema pastelera.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 19,
+        "categoria": "Horneaditos",
+        "nombre": "Eclair",
+        "precio": "8500",
+        "descripcion": "Fino postre francés cubierto de chocolate.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 20,
+        "categoria": "Horneaditos",
+        "nombre": "Corazones hojaldre",
+        "precio": "13000",
+        "descripcion": "Hojaldre en forma de corazón, muy crocante.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 21,
+        "categoria": "Horneaditos",
+        "nombre": "Pan de yuca",
+        "precio": "5000",
+        "descripcion": "Pan tradicional horneado con queso.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 22,
+        "categoria": "Dulces",
+        "nombre": "Postre de natas",
+        "precio": "9000",
+        "descripcion": "Tradición pura con leche y canela.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 23,
+        "categoria": "Dulces",
+        "nombre": "Arequipe coco",
+        "precio": "9000",
+        "descripcion": "Dulce de leche con ralladura de coco.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 24,
+        "categoria": "Dulces",
+        "nombre": "Mielmesabe",
+        "precio": "8000",
+        "descripcion": "Postre campesino a base de leche cortada.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 25,
+        "categoria": "Dulces",
+        "nombre": "Arroz con leche",
+        "precio": "7000",
+        "descripcion": "Cremoso arroz con un toque de canela.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 26,
+        "categoria": "Dulces",
+        "nombre": "Brevas + arequipe",
+        "precio": "9000",
+        "descripcion": "Higos en almíbar rellenos de arequipe.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 27,
+        "categoria": "Café y Bebidas",
+        "nombre": "Americano",
+        "precio": "4500",
+        "descripcion": "Café negro suave y equilibrado.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 28,
+        "categoria": "Café y Bebidas",
+        "nombre": "Cappuccino",
+        "precio": "4800",
+        "descripcion": "Café con espuma de leche cremosa.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 29,
+        "categoria": "Café y Bebidas",
+        "nombre": "Affogato",
+        "precio": "8500",
+        "descripcion": "Helado de vainilla bañado en espresso.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 30,
+        "categoria": "Café y Bebidas",
+        "nombre": "Malteadas",
+        "precio": "9500",
+        "descripcion": "Batido espeso y frío de varios sabores.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 31,
+        "categoria": "Especiales",
+        "nombre": "Strawberry Dream",
+        "precio": "18.50",
+        "descripcion": "Tarta de fresas premium con glaseado.",
+        "imgFondo": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 32,
+        "categoria": "Especiales",
+        "nombre": "Caja Tentación",
+        "precio": "32.00",
+        "descripcion": "Surtido especial para los amantes del dulce.",
+        "imgFondo": "https://tofuu.getjusto.com/orioneat-local/resized2/RZhk9D4enQb9mopmo-2400-x.webp",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
+    },
+    {
+        "id": 33,
+        "categoria": "Especiales",
+        "nombre": "Macaron Supreme",
+        "precio": "12.00",
+        "descripcion": "Macarons artesanales de alta calidad.",
+        "imgFondo": "https://images.unsplash.com/photo-1558326567-98ae2405596b?q=80&w=600&auto=format&fit=crop",
+        "imgPostre": "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
     }
-
-    container.innerHTML = productosFiltrados.map(p => `
-        <article class="producto-card js-card" id="prod-${p.id}">
-            <div class="visual-container">
-                <img src="${p.imgFondo}" class="img-fondo">
-                <img src="${p.imgPostre}" class="postre-asset js-asset">
-            </div>
-            <div class="info-container">
-                <small style="color: var(--primary); font-weight: bold;">${p.categoria}</small>
-                <h2 class="titulo">${p.nombre}</h2>
-                <p style="font-size: 0.8rem; color: #666; margin: 5px 0;">${p.desc}</p>
-                <p class="precio">$${p.precio.toLocaleString()}</p>
-                <button class="btn-compra" data-id="${p.id}">Añadir al Carrito</button>
-            </div>
-        </article>
-    `).join('');
-
-    // Re-vincular botones y observador
-    document.querySelectorAll('.btn-compra').forEach(boton => {
-        boton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            addToCart(parseInt(e.target.getAttribute('data-id')));
-        });
-    });
-    
-    document.querySelectorAll('.js-card').forEach(card => observer.observe(card));
-}
-
-        // Buscador en tiempo real
-document.getElementById('buscador').addEventListener('input', (e) => {
-    const termino = e.target.value.toLowerCase();
-    const filtrados = listaProductos.filter(p => 
-        p.nombre.toLowerCase().includes(termino) || 
-        p.categoria.toLowerCase().includes(termino)
-    );
-    render(filtrados);
-});
-
-// Filtro por botones
-function filtrar(cat) {
-    if (cat === 'Todos') {
-        render(listaProductos);
-    } else {
-        const filtrados = listaProductos.filter(p => p.categoria === cat);
-        render(filtrados);
-    }
-}
+]
         
 
         let carrito = [];
@@ -416,6 +627,12 @@ function filtrar(cat) {
     // Delegación de eventos para asegurar el click
     document.querySelectorAll('.btn-compra').forEach(boton => {
         boton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita que el click se pierda en la carta
+            const id = parseInt(e.target.getAttribute('data-id'));
+            addToCart(id);
+        });
+    });
+}
 
         render();
 

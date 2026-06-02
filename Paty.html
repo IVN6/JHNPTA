@@ -223,13 +223,201 @@
     max-height: 33vh; 
     width: auto;
     object-fit: contain;
-    border-radius: 50%; /* Opcional: la hace circular si es un logo cuadrado */
+:root {
+    --primary: #d63384;
+    --bg: #fff5f7;
+    --card-white: #ffffff;
+    --dark: #333;
+}
+
+body {
+    background-color: var(--bg);
+    margin: 0;
+    padding-top: 80px; /* Espacio para el header fijo */
+    padding-bottom: 50px;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* --- HEADER & MENU --- */
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 70px;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    z-index: 1000;
+}
+
+.logo { color: var(--primary); font-weight: 800; font-size: 1.2rem; }
+
+.nav-icons { display: flex; gap: 15px; align-items: center; }
+
+.cart-icon-btn { 
+    background: none; border: none; font-size: 1.5rem; cursor: pointer; position: relative;
+}
+
+#cart-count {
+    position: absolute; top: -5px; right: -5px; background: var(--primary);
+    color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px;
+}
+
+/* Menú Hamburguesa Simple */
+.menu-toggle { font-size: 1.5rem; background: none; border: none; cursor: pointer; }
+
+/* --- FEED DE PRODUCTOS --- */
+#feed-productos {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+    /* ELIMINADO: perspective aquí causaba la distorsión en cascada */
+}
+
+.producto-card {
+    position: relative;
+    width: 90%;
+    margin: 0 auto;
+    background: var(--card-white);
+    border-radius: 25px;
+    /* SOLUCIÓN: Cada producto maneja su propia perspectiva individual */
+    perspective: 1000px; 
+    transform-style: preserve-3d;
+    opacity: 0.5;
+    transform: scale(0.9) rotateX(5deg);
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.6s;
+}
+
+/* Clase para el efecto lento de carga */
+.first-load-slow { transition: all 3s cubic-bezier(0.23, 1, 0.32, 1) !important; }
+
+.producto-card.is-active {
+    opacity: 1;
+    /* Rotación base limpia y predecible */
+    transform: scale(1) rotateX(0deg) translateY(0px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
+
+.visual-container {
+    position: relative;
+    height: 250px;
+    border-radius: 25px 25px 0 0;
+    overflow: visible;
+    transform-style: preserve-3d;
+}
+
+.img-fondo {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: 25px 25px 0 0;
+}
+
+.postre-asset {
+    position: absolute;
+    width: 80%; top: -30px; left: 10%;
+    z-index: 10;
+    filter: drop-shadow(0 20px 30px rgba(0,0,0,0.2));
+    pointer-events: none;
+    opacity: 0.4;
+    transform: translateY(20px) translateZ(0px);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+/* El efecto flotar sólo se activa cuando es visible */
+.producto-card.is-active .postre-asset {
+    opacity: 1;
+    animation: flotarAnim 3s ease-in-out infinite;
+}
+
+@keyframes flotarAnim {
+    0%, 100% { transform: translateY(0px) translateZ(60px); }
+    50% { transform: translateY(-15px) translateZ(80px); }
+}
+
+/* Info Container (Limpio, sin oscurecer) */
+.info-container {
+    padding: 20px;
+    background: white;
+    border-radius: 0 0 25px 25px;
+    text-align: center;
+    position: relative; 
+    z-index: 20; 
+}
+
+.btn-compra {
+    background: var(--primary); 
+    color: white; 
+    border: none;
+    padding: 12px; 
+    width: 100%; 
+    border-radius: 12px;
+    font-weight: bold; 
+    font-size: 1rem; 
+    cursor: pointer;
+    transition: transform 0.2s;
+    position: relative;
+    z-index: 30; 
+    touch-action: manipulation; 
+}
+
+.titulo { margin: 0; font-size: 1.3rem; color: var(--dark); }
+.precio { margin: 5px 0 15px 0; font-size: 1.1rem; color: var(--primary); font-weight: bold; }
+.btn-compra:active { transform: scale(0.95); }
+
+/* --- SIDEBAR CARRITO --- */
+#cart-sidebar {
+    position: fixed; top: 0; right: -100%; width: 85%; height: 100%;
+    background: white; z-index: 2000; transition: 0.4s;
+    box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+    padding: 20px; display: flex; flex-direction: column;
+}
+
+#cart-sidebar.open { right: 0; }
+.cart-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+#cart-items { flex: 1; overflow-y: auto; padding-top: 10px; }
+.cart-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
+
+.btn-whatsapp {
+    background: #25D366; color: white; border: none; padding: 15px;
+    border-radius: 10px; font-weight: bold; text-align: center;
+    text-decoration: none; display: block; margin-top: 20px;
+}
+
+.hero-section {
+    height: auto; 
+    min-height: 400px; 
+    padding: 40px 20px;
+    width: 100%;
+    background: linear-gradient(45deg, #ffd1dc, #fff);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.hero-content h1 { color: var(--primary); margin: 0; font-size: 2rem; }
+.hero-content p { color: var(--dark); opacity: 0.7; margin-top: 5px; }
+
+.hero-logo-img {
+    max-height: 33vh; 
+    width: auto;
+    object-fit: contain;
+    border-radius: 50%; 
     margin-bottom: 20px;
-    
-    /* Efecto de sombra suave para que resalte del fondo rosa */
     filter: drop-shadow(0 10px 15px rgba(214, 51, 132, 0.2));
-    
-    /* Animación sutil de entrada */
     animation: fadeInHero 1.5s ease-out;
 }
 
@@ -237,6 +425,7 @@
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
 
     </style>
 </head>

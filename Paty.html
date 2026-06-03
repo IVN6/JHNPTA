@@ -747,7 +747,7 @@ function cargarCategorias() {
 function render() {
     const container = document.getElementById('feed-productos');
     
-    // Filtrar la lista
+    // Filtrar la lista según búsqueda y categoría
     const productosFiltrados = listaProductos.filter(p => {
         const coincideNombre = p.nombre.toLowerCase().includes(busquedaActual.toLowerCase());
         const coincideDesc = p.descripcion.toLowerCase().includes(busquedaActual.toLowerCase());
@@ -755,13 +755,20 @@ function render() {
         return (coincideNombre || coincideDesc) && coincideCat;
     });
 
+    // Limpiar contenedor
+    container.innerHTML = "";
+
     if (productosFiltrados.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:50px; opacity:0.5;">No encontramos resultados para tu búsqueda 🍰</p>`;
+        container.innerHTML = `<p style="text-align:center; padding:50px; opacity:0.5; grid-column: 1/-1;">No encontramos resultados 🍰</p>`;
         return;
     }
 
-    container.innerHTML = productosFiltrados.map(p => `
-        <article class="producto-card js-card" id="prod-${p.id}">
+    // Crear y renderizar productos
+    productosFiltrados.forEach(p => {
+        const article = document.createElement('article');
+        article.className = 'producto-card js-card';
+        article.id = `prod-${p.id}`;
+        article.innerHTML = `
             <div class="visual-container">
                 <img src="${p.imgFondo}" class="img-fondo">
                 <img src="${p.imgPostre}" class="postre-asset js-asset">
@@ -772,17 +779,21 @@ function render() {
                 <p class="precio">$${p.precio.toLocaleString()}</p>
                 <button class="btn-compra" data-id="${p.id}">Añadir al Carrito</button>
             </div>
-        </article>
-    `).join('');
+        `;
 
-    // Re-observar las cartas para el efecto 3D
-    document.querySelectorAll('.js-card').forEach(card => observer.observe(card));
-    
-    // Asignar eventos de botones
-    document.querySelectorAll('.btn-compra').forEach(boton => {
-        boton.onclick = (e) => addToCart(parseInt(e.target.getAttribute('data-id')));
+        // Añadir evento al botón de compra
+        article.querySelector('.btn-compra').onclick = (e) => {
+            e.stopPropagation();
+            addToCart(p.id);
+        };
+
+        container.appendChild(article);
+        
+        // ¡ESTO ES LO IMPORTANTE!: Volver a observar la carta para que la animación funcione
+        observer.observe(article);
     });
 }
+
 
 // 3. Controladores de Eventos
 function filtrarCategoria(cat, btn) {

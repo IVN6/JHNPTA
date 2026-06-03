@@ -242,64 +242,6 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- BUSCADOR Y CATEGORÍAS --- */
-.search-container {
-    padding: 15px 20px;
-    background: white;
-    width: 100%;
-    box-sizing: border-box;
-    position: sticky;
-    top: 70px;
-    z-index: 900;
-}
-
-.search-bar {
-    width: 100%;
-    padding: 12px 15px;
-    border-radius: 15px;
-    border: 1px solid #eee;
-    background: #f9f9f9;
-    font-size: 1rem;
-    outline: none;
-    transition: all 0.3s;
-}
-
-.search-bar:focus {
-    border-color: var(--primary);
-    background: white;
-    box-shadow: 0 4px 12px rgba(214, 51, 132, 0.1);
-}
-
-.categories-wrapper {
-    display: flex;
-    overflow-x: auto;
-    gap: 10px;
-    padding: 10px 20px;
-    background: white;
-    white-space: nowrap;
-    scrollbar-width: none; /* Ocultar scroll en Firefox */
-}
-
-.categories-wrapper::-webkit-scrollbar { display: none; } /* Ocultar scroll en Chrome */
-
-.cat-btn {
-    padding: 8px 18px;
-    border-radius: 20px;
-    border: 1px solid #eee;
-    background: white;
-    color: var(--dark);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.cat-btn.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-                     }
-        
-
     </style>
 </head>
 <body>
@@ -322,16 +264,7 @@
         <p>Postres diseñados para los paladares más exigentes</p>
     </div>
 </section>
-<div class="search-container">
-    <input type="text" id="buscador" class="search-bar" placeholder="🔍 Busca tu postre favorito...">
-</div>
 
-<div class="categories-wrapper" id="filtros-categorias">
-    <button class="cat-btn active" onclick="filtrarCategoria('Todos')">Todos</button>
-    </div>
-
-<div id="feed-productos"></div>
-    
     <div id="feed-productos"></div>
 
     <div id="cart-sidebar">
@@ -728,90 +661,32 @@
 
         // RENDERIZAR
         const container = document.getElementById('feed-productos');
-        let categoriaActual = "Todos";
-let busquedaActual = "";
-
-// 1. Extraer categorías únicas de la lista de productos
-function cargarCategorias() {
-    const categorias = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
-    const catContainer = document.getElementById('filtros-categorias');
-    catContainer.innerHTML = categorias.map(cat => `
-        <button class="cat-btn ${cat === 'Todos' ? 'active' : ''}" 
-                onclick="filtrarCategoria('${cat}', this)">
-            ${cat}
-        </button>
-    `).join('');
-}
-
-// 2. Función de Filtrado Combinada (Buscador + Categoría)
-function render() {
-    const container = document.getElementById('feed-productos');
-    
-    // Filtrar la lista según búsqueda y categoría
-    const productosFiltrados = listaProductos.filter(p => {
-        const coincideNombre = p.nombre.toLowerCase().includes(busquedaActual.toLowerCase());
-        const coincideDesc = p.descripcion.toLowerCase().includes(busquedaActual.toLowerCase());
-        const coincideCat = categoriaActual === "Todos" || p.categoria === categoriaActual;
-        return (coincideNombre || coincideDesc) && coincideCat;
-    });
-
-    // Limpiar contenedor
-    container.innerHTML = "";
-
-    if (productosFiltrados.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:50px; opacity:0.5; grid-column: 1/-1;">No encontramos resultados 🍰</p>`;
-        return;
-    }
-
-    // Crear y renderizar productos
-    productosFiltrados.forEach(p => {
-        const article = document.createElement('article');
-        article.className = 'producto-card js-card';
-        article.id = `prod-${p.id}`;
-        article.innerHTML = `
+        function render() {
+    container.innerHTML = listaProductos.map(p => `
+        <article class="producto-card js-card" id="prod-${p.id}">
             <div class="visual-container">
                 <img src="${p.imgFondo}" class="img-fondo">
                 <img src="${p.imgPostre}" class="postre-asset js-asset">
             </div>
             <div class="info-container">
                 <h2 class="titulo">${p.nombre}</h2>
-                <p style="font-size:0.8rem; color:#888; margin: 5px 0;">${p.descripcion}</p>
-                <p class="precio">$${p.precio.toLocaleString()}</p>
+                <p class="precio">$${p.precio.toFixed(2)}</p>
                 <button class="btn-compra" data-id="${p.id}">Añadir al Carrito</button>
             </div>
-        `;
+        </article>
+    `).join('');
 
-        // Añadir evento al botón de compra
-        article.querySelector('.btn-compra').onclick = (e) => {
-            e.stopPropagation();
-            addToCart(p.id);
-        };
-
-        container.appendChild(article);
-        
-        // ¡ESTO ES LO IMPORTANTE!: Volver a observar la carta para que la animación funcione
-        observer.observe(article);
+    // Delegación de eventos para asegurar el click
+    document.querySelectorAll('.btn-compra').forEach(boton => {
+        boton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita que el click se pierda en la carta
+            const id = parseInt(e.target.getAttribute('data-id'));
+            addToCart(id);
+        });
     });
 }
 
-
-// 3. Controladores de Eventos
-function filtrarCategoria(cat, btn) {
-    categoriaActual = cat;
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    if(btn) btn.classList.add('active');
-    render();
-}
-
-document.getElementById('buscador').addEventListener('input', (e) => {
-    busquedaActual = e.target.value;
-    render();
-});
-
-// Inicializar al cargar
-cargarCategorias();
-render();
-
+        render();
 
         // OBSERVADOR
         const observer = new IntersectionObserver((entries) => {

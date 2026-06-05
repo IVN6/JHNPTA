@@ -15,29 +15,28 @@
             --border: #dee2e6;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             font-family: system-ui, -apple-system, sans-serif;
             background: var(--bg-interno);
             color: var(--dark);
             display: grid;
-            grid-template-columns: 1fr 380px;
+            grid-template-columns: 1fr;
             height: 100vh;
             overflow: hidden;
             user-select: none;
         }
-        body {
-    margin: 0;
-    font-family: system-ui, -apple-system, sans-serif;
-    background: var(--bg-interno);
-    color: var(--dark);
-    display: grid;
-    grid-template-columns: 1fr 380px;
-    height: 100vh; /* ◄--- AGREGA ESTA LÍNEA */
-    overflow: hidden;
-    user-select: none;
+
+        /* --- CONTENEDOR PRINCIPAL RESPONSIVE --- */
+        @media (min-width: 992px) {
+            body {
+                grid-template-columns: 1fr 400px;
+            }
         }
-        
 
         /* --- COLUMNA IZQUIERDA: CATÁLOGO Y MONITOR --- */
         .catalogo-section {
@@ -45,29 +44,30 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            box-sizing: border-box;
+            height: 100%;
         }
 
         .categorias-bar {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
-            padding-bottom: 5px;
+            padding-bottom: 8px;
             border-bottom: 2px solid var(--border);
             overflow-x: auto;
             scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
         }
         .categorias-bar::-webkit-scrollbar { display: none; }
 
         .btn-categoria {
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: 1px solid var(--border);
             background: white;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             white-space: nowrap;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .btn-categoria.active {
@@ -78,8 +78,8 @@
 
         .grid-productos {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
             margin-bottom: 20px;
         }
 
@@ -87,7 +87,7 @@
             background: white;
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 12px 8px;
+            padding: 10px 6px;
             text-align: center;
             cursor: pointer;
             display: flex;
@@ -96,6 +96,7 @@
             align-items: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             touch-action: manipulation;
+            transition: transform 0.1s ease;
         }
 
         .producto-celda:active {
@@ -104,16 +105,16 @@
         }
 
         .producto-celda img {
-            width: 75px;
-            height: 75px;
+            width: 70px;
+            height: 70px;
             object-fit: cover;
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             pointer-events: none;
         }
 
         .prod-nombre {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             margin: 0 0 4px 0;
             line-height: 1.2;
@@ -132,10 +133,11 @@
             border-radius: 12px;
             background: #fff;
             padding: 15px;
-            flex: 1;
+            margin-top: auto;
             display: flex;
             flex-direction: column;
             min-height: 200px;
+            max-height: 300px;
         }
 
         .historial-titulo {
@@ -150,7 +152,6 @@
         .lista-historial-scroll {
             flex: 1;
             overflow-y: auto;
-            max-height: 280px;
         }
 
         .pedido-ticket {
@@ -164,35 +165,46 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            gap: 10px;
         }
         
         .pedido-ticket.pagado { border-left-color: var(--success); }
 
-        .ticket-info { display: flex; flex-direction: column; gap: 2px; }
+        .ticket-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
         .ticket-notas { font-size: 0.75rem; color: #6c757d; font-style: italic; }
-        .ticket-acciones { display: flex; align-items: center; gap: 8px; }
+        .ticket-acciones { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
         .btn-ticket-status {
-            background: none; border: 1px solid #dee2e6; padding: 4px 8px;
+            background: none; border: 1px solid #dee2e6; padding: 6px 10px;
             border-radius: 4px; cursor: pointer; font-size: 0.75rem; background: #fff;
+            font-weight: 600;
         }
         .btn-ticket-del {
-            background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem; padding: 4px;
+            background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2rem; padding: 4px;
         }
 
-        /* --- COLUMNA DERECHA: COMANDA ACTIVA --- */
+        /* --- COLUMNA DERECHA / SECCIÓN COMANDA --- */
         .comanda-section {
             background: white;
-            border-left: 2px solid var(--border);
+            border-top: 2px solid var(--border);
             display: flex;
             flex-direction: column;
             height: 100%;
+            overflow: hidden;
+        }
+
+        @media (min-width: 992px) {
+            .comanda-section {
+                border-top: none;
+                border-left: 2px solid var(--border);
+            }
         }
 
         .comanda-header {
             padding: 15px;
             border-bottom: 1px solid var(--border);
             background: #fff;
+            flex-shrink: 0;
         }
 
         .meta-inputs {
@@ -208,13 +220,16 @@
             border-radius: 8px;
             font-size: 0.95rem;
             outline: none;
+            width: 100%;
         }
         .meta-inputs input:focus, .meta-inputs select:focus { border-color: var(--primary); }
 
+        /* LISTADO DE ITEMS CON SCROLL INDEPENDIENTE */
         .items-lista {
             flex: 1;
             overflow-y: auto;
-            padding: 15px;
+            padding: 0 15px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .item-linea {
@@ -222,7 +237,7 @@
             grid-template-columns: 1fr auto;
             align-items: center;
             gap: 10px;
-            padding: 10px 0;
+            padding: 12px 0;
             border-bottom: 1px solid #f1f3f5;
         }
 
@@ -233,14 +248,17 @@
         }
 
         .item-linea-controles button {
-            width: 32px;
-            height: 32px;
+            width: 36px; /* Área de toque mejorada para dedos */
+            height: 36px;
             border: 1px solid var(--border);
             background: #fff;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .item-linea-controles button:active { background: #f1f3f5; }
 
@@ -248,6 +266,7 @@
             padding: 15px;
             border-top: 2px solid var(--border);
             background: #f8f9fa;
+            flex-shrink: 0;
         }
 
         .totales-row {
@@ -276,7 +295,8 @@
         #toast-container {
             position: fixed;
             bottom: 20px;
-            right: 400px;
+            left: 50%;
+            transform: translate(-50%, 10px);
             background: #323232;
             color: white;
             padding: 12px 24px;
@@ -285,39 +305,42 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 5000;
             opacity: 0;
-            transform: translateY(10px);
             transition: opacity 0.3s, transform 0.3s;
             pointer-events: none;
             display: flex;
             align-items: center;
             gap: 8px;
+            white-space: nowrap;
         }
         #toast-container.show {
             opacity: 1;
-            transform: translateY(0);
+            transform: translate(-50%, 0);
         }
 
-        @media (max-width: 360px) {
-            body { grid-template-columns: 1fr; }
-            .comanda-section { display: none; }
+        /* Vista móvil: Apilado vertical para pantallas medianas/chicas */
+        @media (max-width: 991px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-rows: 55vh 45vh; /* Divide la pantalla de forma táctil y cómoda */
+            }
+            #toast-container {
+                bottom: 46vh; /* Mueve el aviso arriba de la comanda para que no se tape */
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- COLUMNA IZQUIERDA -->
     <main class="catalogo-section">
         <div class="categorias-bar" id="categorias-bar"></div>
         <div class="grid-productos" id="grid-productos"></div>
         
-        <!-- Monitor Fijo en Base -->
         <div class="historial-box">
             <div class="historial-titulo">Monitor Activo de Mesas</div>
             <div class="lista-historial-scroll" id="lista-historial"></div>
         </div>
     </main>
 
-    <!-- COLUMNA DERECHA -->
     <aside class="comanda-section">
         <div class="comanda-header">
             <h3 style="margin:0; color: var(--dark);">Nueva Orden</h3>
@@ -342,362 +365,54 @@
         </div>
     </aside>
 
-    <!-- UI Dinámica de Feedback rápido sin alertas congelantes -->
     <div id="toast-container"></div>
 
     <script>
         const listaProductos = [
-    {
-        id: 1,
-        categoria: "Hora del Postre",
-        nombre: "Merengón",
-        precio: 12000,
-        descripcion: "Clásico merengue con frutas y crema.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" // Merengue
-    },
-    {
-        id: 101,
-        categoria: "Hora del Postre",
-        nombre: "Merengón Especial",
-        precio: 15000,
-        descripcion: "Clásico merengue con frutas y crema.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" // Merengue
-    },
-    {
-        id: 2,
-        categoria: "Hora del Postre",
-        nombre: "Fresas con crema",
-        precio: 9500,
-        descripcion: "Fresas frescas seleccionadas con crema suave.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ" // Fresas
-    },
-    {
-        id: 201,
-        categoria: "Hora del Postre",
-        nombre: "Fresas con crema Especial",
-        precio: 12000,
-        descripcion: "Fresas frescas seleccionadas con crema suave.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv" // Fresas especial
-    },
-    {
-        id: 3,
-        categoria: "Hora del Postre",
-        nombre: "Obleas",
-        precio: 4500,
-        descripcion: "Tradicional oblea crujiente con arequipe.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 301,
-        categoria: "Hora del Postre",
-        nombre: "Obleas Especial",
-        precio: 5500,
-        descripcion: "Tradicional oblea crujiente con arequipe.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 4,
-        categoria: "Hora del Postre",
-        nombre: "Cuajada",
-        precio: 9800,
-        descripcion: "Cuajada fresca con melao de panela.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq" // Cuajada
-    },
-    {
-        id: 5,
-        categoria: "Hora del Postre",
-        nombre: "Cheesecakes",
-        precio: 9500,
-        descripcion: "Tarta de queso cremosa con frutos rojos.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 6,
-        categoria: "Hora del Postre",
-        nombre: "Pie de limón",
-        precio: 9500,
-        descripcion: "Equilibrio perfecto entre ácido y dulce.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf" // Pie de limón
-    },
-    {
-        id: 7,
-        categoria: "Hora del Postre",
-        nombre: "Tiramisú",
-        precio: 9500,
-        descripcion: "Postre italiano con café y cacao.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh" // Tiramisú
-    },
-    {
-        id: 8,
-        categoria: "Hora del Postre",
-        nombre: "Torta tres leches",
-        precio: 9500,
-        descripcion: "Bizcocho bañado en tres tipos de leche.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 9,
-        categoria: "Hora del Postre",
-        nombre: "Leche asada",
-        precio: 9500,
-        descripcion: "Postre horneado tradicional y suave.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" // Leche asada
-    },
-    {
-        id: 10,
-        categoria: "Hora del Postre",
-        nombre: "Napoleón de coco",
-        precio: 9500,
-        descripcion: "Capas crujientes con crema de coco.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" // Napoleón
-    },
-    {
-        id: 11,
-        categoria: "Hora del Postre",
-        nombre: "Mousse",
-        precio: 9500,
-        descripcion: "Textura aireada y sabor intenso.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr" // Mousse
-    },
-    {
-        id: 12,
-        categoria: "Hora del Postre",
-        nombre: "Cremitas Sabores",
-        precio: 3000,
-        descripcion: "Pequeños bocados de sabor variado.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ" // Cremitas
-    },
-    {
-        id: 13,
-        categoria: "Hora del Postre",
-        nombre: "Natilla",
-        precio: 8000,
-        descripcion: "Postre típico de consistencia firme.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 14,
-        categoria: "Hora del Postre",
-        nombre: "Algodón azúcar",
-        precio: 4200,
-        descripcion: "Nube dulce para recordar la infancia.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 1401,
-        categoria: "Hora del Postre",
-        nombre: "Algodón azúcar Especial",
-        precio: 5200,
-        descripcion: "Nube dulce para recordar la infancia.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 15,
-        categoria: "Hora del Postre",
-        nombre: "Chicharrón Cuajada",
-        precio: 13000,
-        descripcion: "Combinación única de texturas.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 16,
-        categoria: "Horneaditos",
-        nombre: "Milhoja",
-        precio: 12000,
-        descripcion: "Hojaldre crocante con arequipe y crema.",
-        imgFondo: "https://helenadelombana.com/wp-content/uploads/2023/08/Milhoja-Receta-Especial.webp",
-        imgPostre: "https://png.pngtree.com/png-vector/20260115/ourmid/pngtree-delicate-millefeuille-pastry-with-custard-and-powdered-sugar-png-image_18528647.webp"
-    },
-    {
-        id: 17,
-        categoria: "Horneaditos",
-        nombre: "Rollitos",
-        precio: 6500,
-        descripcion: "Masa suave enrollada con canela.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 1701,
-        categoria: "Horneaditos",
-        nombre: "Rollitos Especial",
-        precio: 7500,
-        descripcion: "Masa suave enrollada con canela.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 18,
-        categoria: "Horneaditos",
-        nombre: "Repollas und",
-        precio: 8500,
-        descripcion: "Profiteroles rellenos de crema pastelera.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 19,
-        categoria: "Horneaditos",
-        nombre: "Eclair",
-        precio: 8500,
-        descripcion: "Fino postre francés cubierto de chocolate.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 20,
-        categoria: "Horneaditos",
-        nombre: "Corazones hojaldre",
-        precio: 13000,
-        descripcion: "Hojaldre en forma de corazón, muy crocante.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 21,
-        categoria: "Horneaditos",
-        nombre: "Pan de yuca",
-        precio: 5000,
-        descripcion: "Pan tradicional horneado con queso.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 22,
-        categoria: "Dulces",
-        nombre: "Postre de natas",
-        precio: 9000,
-        descripcion: "Tradición pura con leche y canela.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 23,
-        categoria: "Dulces",
-        nombre: "Arequipe coco",
-        precio: 9000,
-        descripcion: "Dulce de leche con ralladura de coco.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 24,
-        categoria: "Dulces",
-        nombre: "Mielmesabe",
-        precio: 8000,
-        descripcion: "Postre campesino a base de leche cortada.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 25,
-        categoria: "Dulces",
-        nombre: "Arroz con leche",
-        precio: 7000,
-        descripcion: "Cremoso arroz con un toque de canela.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 26,
-        categoria: "Dulces",
-        nombre: "Brevas + arequipe",
-        precio: 9000,
-        descripcion: "Higos en almíbar rellenos de arequipe.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 27,
-        categoria: "Café y Bebidas",
-        nombre: "Americano",
-        precio: 4500,
-        descripcion: "Café negro suave y equilibrado.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://png.pngtree.com/png-vector/20230413/ourmid/pngtree-americano-coffee-beans-transparent-white-background-png-image_6698453.png"
-    },
-    {
-        id: 28,
-        categoria: "Café y Bebidas",
-        nombre: "Cappuccino",
-        precio: 4800,
-        descripcion: "Café con espuma de leche cremosa.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 29,
-        categoria: "Café y Bebidas",
-        nombre: "Affogato",
-        precio: 8500,
-        descripcion: "Helado de vainilla bañado en espresso.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://thumbs.dreamstime.com/b/caf%C3%A9-affogato-crema-de-hielo-con-fondo-transparente-384065281.jpg"
-    },
-    {
-        id: 30,
-        categoria: "Café y Bebidas",
-        nombre: "Malteadas",
-        precio: 9500,
-        descripcion: "Batido espeso y frío de varios sabores.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 31,
-        categoria: "Especiales",
-        nombre: "Strawberry Dream",
-        precio: 18500,
-        descripcion: "Tarta de fresas premium con glaseado.",
-        imgFondo: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 32,
-        categoria: "Especiales",
-        nombre: "Caja Tentación",
-        precio: 32000,
-        descripcion: "Surtido especial para los amantes del dulce.",
-        imgFondo: "https://tofuu.getjusto.com/orioneat-local/resized2/RZhk9D4enQb9mopmo-2400-x.webp",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    },
-    {
-        id: 33,
-        categoria: "Especiales",
-        nombre: "Macaron Supreme",
-        precio: 12000,
-        descripcion: "Macarons artesanales de alta calidad.",
-        imgFondo: "https://images.unsplash.com/photo-1558326567-98ae2405596b?q=80&w=600&auto=format&fit=crop",
-        imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3"
-    }
-];
+            { id: 1, categoria: "Hora del Postre", nombre: "Merengón", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" },
+            { id: 101, categoria: "Hora del Postre", nombre: "Merengón Especial", precio: 15000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" },
+            { id: 2, categoria: "Hora del Postre", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ" },
+            { id: 201, categoria: "Hora del Postre", nombre: "Fresas con crema Esp.", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv" },
+            { id: 3, categoria: "Hora del Postre", nombre: "Obleas", precio: 4500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 301, categoria: "Hora del Postre", nombre: "Obleas Especial", precio: 5500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 4, categoria: "Hora del Postre", nombre: "Cuajada", precio: 9800, imgPostre: "https://lh3.googleusercontent.com/d/1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq" },
+            { id: 5, categoria: "Hora del Postre", nombre: "Cheesecakes", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 6, categoria: "Hora del Postre", nombre: "Pie de limón", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf" },
+            { id: 7, categoria: "Hora del Postre", nombre: "Tiramisú", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh" },
+            { id: 8, categoria: "Hora del Postre", nombre: "Torta tres leches", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 9, categoria: "Hora del Postre", nombre: "Leche asada", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" },
+            { id: 10, categoria: "Hora del Postre", nombre: "Napoleón de coco", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" },
+            { id: 11, categoria: "Hora del Postre", nombre: "Mousse", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr" },
+            { id: 12, categoria: "Hora del Postre", nombre: "Cremitas Sabores", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ" },
+            { id: 13, categoria: "Hora del Postre", nombre: "Natilla", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 14, categoria: "Hora del Postre", nombre: "Algodón azúcar", precio: 4200, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 1401, categoria: "Hora del Postre", nombre: "Algodón Esp.", precio: 5200, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 15, categoria: "Hora del Postre", nombre: "Chicharrón Cuajada", precio: 13000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 16, categoria: "Horneaditos", nombre: "Milhoja", precio: 12000, imgPostre: "https://png.pngtree.com/png-vector/20260115/ourmid/pngtree-delicate-millefeuille-pastry-with-custard-and-powdered-sugar-png-image_18528647.webp" },
+            { id: 17, categoria: "Horneaditos", nombre: "Rollitos", precio: 6500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 1701, categoria: "Horneaditos", nombre: "Rollitos Especial", precio: 7500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 18, categoria: "Horneaditos", nombre: "Repollas und", precio: 8500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 19, categoria: "Horneaditos", nombre: "Eclair", precio: 8500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 20, categoria: "Horneaditos", nombre: "Corazones hojaldre", precio: 13000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 21, categoria: "Horneaditos", nombre: "Pan de yuca", precio: 5000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 22, categoria: "Dulces", nombre: "Postre de natas", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 23, categoria: "Dulces", nombre: "Arequipe coco", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 24, categoria: "Dulces", nombre: "Mielmesabe", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 25, categoria: "Dulces", nombre: "Arroz con leche", precio: 7000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 26, categoria: "Dulces", nombre: "Brevas + arequipe", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 27, categoria: "Café y Bebidas", nombre: "Americano", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20230413/ourmid/pngtree-americano-coffee-beans-transparent-white-background-png-image_6698453.png" },
+            { id: 28, categoria: "Café y Bebidas", nombre: "Cappuccino", precio: 4800, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 29, categoria: "Café y Bebidas", nombre: "Affogato", precio: 8500, imgPostre: "https://thumbs.dreamstime.com/b/caf%C3%A9-affogato-crema-de-hielo-con-fondo-transparente-384065281.jpg" },
+            { id: 30, categoria: "Café y Bebidas", nombre: "Malteadas", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 31, categoria: "Especiales", nombre: "Strawberry Dream", precio: 18500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 32, categoria: "Especiales", nombre: "Caja Tentación", precio: 32000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 33, categoria: "Especiales", nombre: "Macaron Supreme", precio: 12000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" }
+        ];
 
-
-        // Carga inicial leyendo desde LocalStorage
         let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [];
         let categoriaActual = "Todos";
 
-        // Lanzador de avisos en pantalla (Toast)
         function showToast(mensaje, icon = "ℹ️") {
             const toast = document.getElementById('toast-container');
             toast.innerHTML = `<span>${icon}</span> ${mensaje}`;
@@ -739,7 +454,7 @@
                 existente.cantidad += 1;
             } else {
                 const prod = listaProductos.find(p => p.id === id);
-                comandaActiva.push({ ...prod, cantidad: 1 });
+                comandaActiva.push({ ...prod, quantity: 1, cantidad: 1 });
             }
             guardarYRenderComanda();
         }
@@ -766,9 +481,9 @@
                         <div style="font-size:0.85rem; color:#666;">$${(item.precio * item.cantidad).toLocaleString()}</div>
                     </div>
                     <div class="item-linea-controles">
-                        <button onclick="modificarCantidad(${item.id}, -1)">-</button>
-                        <span style="font-weight:bold; min-width:15px; text-align:center;">${item.cantidad}</span>
-                        <button onclick="modificarCantidad(${item.id}, 1)">+</button>
+                        <button onclick="event.stopPropagation(); modificarCantidad(${item.id}, -1)">-</button>
+                        <span style="font-weight:bold; min-width:20px; text-align:center;">${item.cantidad}</span>
+                        <button onclick="event.stopPropagation(); modificarCantidad(${item.id}, 1)">+</button>
                     </div>
                 </div>
             `).join('');
@@ -788,7 +503,6 @@
             const notas = document.getElementById('comentario-orden').value;
             const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
 
-            // Generar objeto del pedido para el historial
             const nuevoPedido = {
                 id: Date.now(),
                 mesa: mesa,
@@ -802,7 +516,6 @@
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             renderHistorial();
 
-            // Limpieza express de comanda para la siguiente orden
             comandaActiva = [];
             localStorage.removeItem('comandaActiva');
             document.getElementById('comentario-orden').value = "";
@@ -811,7 +524,6 @@
             showToast(`Mesa ${mesa} enviada correctamente`, "⚡");
         }
 
-        // Cambiar el estado directamente desde la celda del monitor
         function alternarEstadoPedido(id) {
             const pedido = historialPedidos.find(p => p.id === id);
             if (pedido) {
@@ -822,7 +534,6 @@
             }
         }
 
-        // Eliminar pedido ya despachado o cerrado
         function borrarPedidoHistorial(id) {
             historialPedidos = historialPedidos.filter(p => p.id !== id);
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
@@ -840,16 +551,16 @@
             lista.innerHTML = historialPedidos.map(p => `
                 <div class="pedido-ticket ${p.estado === 'Pagado' ? 'pagado' : ''}">
                     <div class="ticket-info">
-                        <span style="font-weight:bold;">Mesa ${p.mesa} ➔ ${p.estado === 'Pagado' ? 'Entregado (PAGADO)' : 'Cocina (Pendiente)'}</span>
-                        <span style="font-size:0.8rem; color:#495057;">${p.detalles}</span>
+                        <span style="font-weight:bold; font-size:0.8rem;">Mesa ${p.mesa} ➔ ${p.estado === 'Pagado' ? 'PAGADO' : 'Pendiente'}</span>
+                        <span style="font-size:0.78rem; color:#495057;">${p.detalles}</span>
                         ${p.notas ? `<span class="ticket-notas">Nota: ${p.notas}</span>` : ''}
                     </div>
                     <div class="ticket-acciones">
-                        <strong style="margin-right:8px;">$${p.total.toLocaleString()}</strong>
+                        <strong style="font-size:0.8rem;">$${p.total.toLocaleString()}</strong>
                         <button class="btn-ticket-status" onclick="alternarEstadoPedido(${p.id})">
                             ${p.estado === 'Pagado' ? 'Reabrir' : 'Cobrar'}
                         </button>
-                        <button class="btn-ticket-del" onclick="borrarPedidoHistorial(${p.id})" title="Archivar Orden">✕</button>
+                        <button class="btn-ticket-del" onclick="borrarPedidoHistorial(${p.id})">✕</button>
                     </div>
                 </div>
             `).join('');

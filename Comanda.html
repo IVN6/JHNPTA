@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Comandas - Interno Premium</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel de Comandas Premium - Multiplataforma</title>
     <style>
         :root {
             --primary: #d63384;
@@ -11,63 +11,119 @@
             --warning: #ffc107;
             --danger: #dc3545;
             --dark: #212529;
-            --bg-interno: #f8f9fa;
+            --bg-interno: #f4f6f8;
             --border: #dee2e6;
+            --nav-height: 60px;
         }
 
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            margin: 0;
             font-family: system-ui, -apple-system, sans-serif;
             background: var(--bg-interno);
             color: var(--dark);
-            display: grid;
-            grid-template-columns: 1fr;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
             user-select: none;
         }
 
-        /* --- CONTENEDOR PRINCIPAL RESPONSIVE --- */
-        @media (min-width: 992px) {
-            body {
-                grid-template-columns: 1fr 400px;
-            }
+        /* --- NAV BAR INFERIOR (MÓVIL) --- */
+        .mobile-nav {
+            display: flex;
+            background: white;
+            border-top: 1px solid var(--border);
+            height: var(--nav-height);
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 1000;
         }
 
-        /* --- COLUMNA IZQUIERDA: CATÁLOGO Y MONITOR --- */
-        .catalogo-section {
-            padding: 15px;
+        .nav-tab {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6c757d;
+            background: none;
+            border: none;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+        }
+
+        .nav-tab .badge {
+            position: absolute;
+            top: 6px;
+            right: 25%;
+            background: var(--primary);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .app-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - var(--nav-height));
+            overflow: hidden;
+        }
+
+        .section-view {
+            display: none; /* Se controla por JS en móvil */
+            flex-direction: column;
+            width: 100%;
             height: 100%;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        .section-view.active {
+            display: flex;
+        }
+
+        /* --- SECCIÓN CATÁLOGO --- */
+        .categorias-container {
+            position: sticky;
+            top: 0;
+            background: var(--bg-interno);
+            z-index: 10;
+            padding-bottom: 10px;
         }
 
         .categorias-bar {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid var(--border);
+            gap: 8px;
             overflow-x: auto;
+            padding-bottom: 5px;
             scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
         }
         .categorias-bar::-webkit-scrollbar { display: none; }
 
         .btn-categoria {
-            padding: 10px 20px;
+            padding: 10px 18px;
             border: 1px solid var(--border);
             background: white;
-            border-radius: 8px;
+            border-radius: 20px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             white-space: nowrap;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            transition: all 0.2s;
         }
 
         .btn-categoria.active {
@@ -76,77 +132,147 @@
             border-color: var(--dark);
         }
 
+        .grid-productos-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
         .grid-productos {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 10px;
-            margin-bottom: 20px;
         }
 
         .producto-celda {
             background: white;
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 10px 6px;
+            padding: 10px;
             text-align: center;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            align-items: center;
+            min-height: 150px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            touch-action: manipulation;
-            transition: transform 0.1s ease;
-        }
-
-        .producto-celda:active {
-            background: #fff0f3;
-            transform: scale(0.96);
         }
 
         .producto-celda img {
-            width: 70px;
-            height: 70px;
+            width: 100%;
+            height: 75px;
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 6px;
-            pointer-events: none;
         }
 
-        .prod-nombre {
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin: 0 0 4px 0;
-            line-height: 1.2;
-        }
+        .prod-nombre { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
+        .prod-precio { font-size: 0.85rem; color: var(--primary); font-weight: 700; }
 
-        .prod-precio {
-            font-size: 0.85rem;
-            color: var(--primary);
-            font-weight: 700;
-            margin: 0;
-        }
-
-        /* MONITOR DE MESAS EN VIVO */
-        .historial-box {
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: #fff;
-            padding: 15px;
-            margin-top: auto;
+        /* --- SECCIÓN COMANDA ACTIVA --- */
+        .comanda-wrapper {
             display: flex;
             flex-direction: column;
-            min-height: 200px;
-            max-height: 300px;
+            height: 100%;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
         }
 
-        .historial-titulo {
-            font-size: 0.85rem;
+        .comanda-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            background: #fff;
+        }
+
+        .meta-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .meta-inputs select, .meta-inputs input {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: #fff;
+        }
+
+        .items-lista {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .item-linea {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .item-linea-controles {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .item-linea-controles button {
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--border);
+            background: #fff;
+            border-radius: 6px;
             font-weight: bold;
-            text-transform: uppercase;
-            color: #6c757d;
+            cursor: pointer;
+        }
+
+        .comanda-footer {
+            padding: 15px;
+            border-top: 2px solid var(--border);
+            background: #f8f9fa;
+        }
+
+        .totales-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: bold;
             margin-bottom: 12px;
-            letter-spacing: 0.5px;
+        }
+
+        .btn-enviar-pedido {
+            width: 100%;
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* --- MONITOR E HISTORIAL --- */
+        .monitor-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .balance-box {
+            background: var(--dark);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
         }
 
         .lista-historial-scroll {
@@ -155,194 +281,294 @@
         }
 
         .pedido-ticket {
-            font-size: 0.85rem;
-            padding: 10px 12px;
+            background: white;
+            padding: 12px;
             border-left: 5px solid var(--warning);
-            background: #f8f9fa;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            gap: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
-        
         .pedido-ticket.pagado { border-left-color: var(--success); }
 
-        .ticket-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-        .ticket-notas { font-size: 0.75rem; color: #6c757d; font-style: italic; }
-        .ticket-acciones { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-
-        .btn-ticket-status {
-            background: none; border: 1px solid #dee2e6; padding: 6px 10px;
-            border-radius: 4px; cursor: pointer; font-size: 0.75rem; background: #fff;
-            font-weight: 600;
-        }
-        .btn-ticket-del {
-            background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2rem; padding: 4px;
-        }
-
-        /* --- COLUMNA DERECHA / SECCIÓN COMANDA --- */
-        .comanda-section {
-            background: white;
-            border-top: 2px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        @media (min-width: 992px) {
-            .comanda-section {
-                border-top: none;
-                border-left: 2px solid var(--border);
-            }
-        }
-
-        .comanda-header {
-            padding: 15px;
-            border-bottom: 1px solid var(--border);
-            background: #fff;
-            flex-shrink: 0;
-        }
-
-        .meta-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .meta-inputs input, .meta-inputs select {
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            outline: none;
-            width: 100%;
-        }
-        .meta-inputs input:focus, .meta-inputs select:focus { border-color: var(--primary); }
-
-        /* LISTADO DE ITEMS CON SCROLL INDEPENDIENTE */
-        .items-lista {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0 15px;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .item-linea {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 0;
-            border-bottom: 1px solid #f1f3f5;
-        }
-
-        .item-linea-controles {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .item-linea-controles button {
-            width: 36px; /* Área de toque mejorada para dedos */
-            height: 36px;
-            border: 1px solid var(--border);
-            background: #fff;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .item-linea-controles button:active { background: #f1f3f5; }
-
-        .comanda-footer {
-            padding: 15px;
-            border-top: 2px solid var(--border);
-            background: #f8f9fa;
-            flex-shrink: 0;
-        }
-
-        .totales-row {
+        .ticket-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; margin-bottom: 4px;}
+        .ticket-detalles { font-size: 0.85rem; color: #495057; margin-bottom: 6px; }
+        .ticket-notas { font-size: 0.75rem; color: #6c757d; font-style: italic; display: block; margin-bottom: 8px; }
+        
+        .ticket-acciones {
             display: flex;
             justify-content: space-between;
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 15px;
+            align-items: center;
+            border-top: 1px solid #f1f3f5;
+            padding-top: 8px;
         }
 
-        .btn-enviar-pedido {
-            width: 100%;
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 15px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 8px;
+        .btn-ticket-status {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: #fff;
+            font-size: 0.75rem;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(37, 211, 102, 0.2);
+            font-weight: 600;
         }
-        .btn-enviar-pedido:active { transform: scale(0.99); }
+        .btn-ticket-del { background: none; border: none; color: var(--danger); font-size: 1.1rem; cursor: pointer; }
 
-        /* TOAST NOTIFICATION SYSTEM */
+        /* TOAST SYSTEM */
         #toast-container {
             position: fixed;
-            bottom: 20px;
+            bottom: 75px;
             left: 50%;
-            transform: translate(-50%, 10px);
-            background: #323232;
+            transform: translateX(-50%) translateY(10px);
+            background: rgba(33, 37, 41, 0.95);
             color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
             z-index: 5000;
             opacity: 0;
-            transition: opacity 0.3s, transform 0.3s;
+            transition: all 0.3s ease;
             pointer-events: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
             white-space: nowrap;
         }
-        #toast-container.show {
-            opacity: 1;
-            transform: translate(-50%, 0);
-        }
+        #toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* Vista móvil: Apilado vertical para pantallas medianas/chicas */
-        @media (max-width: 991px) {
+        /* --- RESPONSIVE ADAPTATION (TABLETS / PC) --- */
+        @media (min-width: 768px) {
             body {
-                grid-template-columns: 1fr;
-                grid-template-rows: 55vh 45vh; /* Divide la pantalla de forma táctil y cómoda */
+                height: 100vh;
             }
-            #toast-container {
-                bottom: 46vh; /* Mueve el aviso arriba de la comanda para que no se tape */
+            .mobile-nav {
+                display: none; /* Escondemos pestañas en pantallas grandes */
             }
+            .app-container {
+                height: 100vh;
+                display: grid;
+                grid-template-columns: 1fr 360px 340px; /* Tres columnas perfectas fijas */
+                gap: 0;
+            }
+            .section-view {
+                display: flex !important; /* Mostramos todo al tiempo en PC */
+                border-right: 1px solid var(--border);
+                height: 100vh;
+            }
+            .section-view:last-child { border-right: none; }
         }
     </style>
 </head>
 <body>
 
-    <main class="catalogo-section">
-        <div class="categorias-bar" id="categorias-bar"></div>
-        <div class="grid-productos" id="grid-productos"></div>
+    <div class="app-container">
         
-        <div class="historial-box">
-            <div class="historial-titulo">Monitor Activo de Mesas</div>
-            <div class="lista-historial-scroll" id="lista-historial"></div>
-        </div>
-    </main>
+        <main id="view-catalogo" class="section-view active">
+            <div class="categorias-container">
+                <div class="categorias-bar" id="categorias-bar"></div>
+            </div>
+            <div class="grid-productos-scroll">
+                <div class="grid-productos" id="grid-productos"></div>
+            </div>
+        </main>
 
-    <aside class="comanda-section">
-        <div class="comanda-header">
+        <aside id="view-comanda" class="section-view">
+            <div class="comanda-wrapper">
+                <div class="comanda-header">
+                    <h3 style="color: var(--dark);">Orden Actual</h3>
+                    <div class="meta-inputs">
+                        <select id="num-mesa">
+                            <option value="1">Mesa 1</option>
+                            <option value="2">Mesa 2</option>
+                            <option value="3">Mesa 3</option>
+                            <option value="4">Mesa 4</option>
+                            <option value="5">Mesa 5</option>
+                            <option value="6">Mesa 6</option>
+                        </select>
+                        <select id="estado-pago">
+                            <option value="Pendiente">❌ Por Pagar</option>
+                            <option value="Pagado">✅ Ya Pagó</option>
+                        </select>
+                    </div>
+                    <input type="text" id="comentario-orden" placeholder="Notas internas para cocina..." style="width:100%; margin-top:10px; padding:10px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem;">
+                </div>
+
+                <div class="items-lista" id="items-comanda"></div>
+
+                <div class="comanda-footer">
+                    <div class="totales-row">
+                        <span>Total:</span>
+                        <span id="total-comanda">$0</span>
+                    </div>
+                    <button class="btn-enviar-pedido" onclick="procesarOrden()">Enviar a Cocina</button>
+                </div>
+            </div>
+        </aside>
+
+        <section id="view-monitor" class="section-view">
+            <div class="monitor-wrapper">
+                <h3 style="margin-bottom:10px;">Monitor de Mesas</h3>
+                
+                <div class="balance-box">
+                    <span>Ventas de Hoy: <strong id="balance-dinero">$0</strong></span>
+                    <span>Órdenes: <strong id="balance-cantidad">0</strong></span>
+                </div>
+
+                <div class="lista-historial-scroll" id="lista-historial"></div>
+            </div>
+        </section>
+
+    </div>
+
+    <nav class="mobile-nav">
+        <button class="nav-tab active" onclick="switchView('view-catalogo', this)">
+            <span>📋</span> Menú
+        </button>
+        <button class="nav-tab" onclick="switchView('view-comanda', this)">
+            <span>🛒</span> Comanda
+            <span class="badge" id="badge-comanda" style="display:none;">0</span>
+        </button>
+        <button class="nav-tab" onclick="switchView('view-monitor', this)">
+            <span>🖥️</span> Monitor
+        </button>
+    </nav>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // Reducido a 4 productos icónicos de tu lista original para simplificar el flujo
+        const listaProductos = [
+            { id: 1, categoria: "Hora del Postre", nombre: "Merengón", precio: 12000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 2, categoria: "Hora del Postre", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 16, categoria: "Horneaditos", nombre: "Milhoja", precio: 12000, imgPostre: "https://png.pngtree.com/png-vector/20260115/ourmid/pngtree-delicate-millefeuille-pastry-with-custard-and-powdered-sugar-png-image_18528647.webp" },
+            { id: 27, categoria: "Café y Bebidas", nombre: "Americano", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20230413/ourmid/pngtree-americano-coffee-beans-transparent-white-background-png-image_6698453.png" }
+        ];
+
+        let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
+        let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [];
+        let categoriaActual = "Todos";
+
+        // Cambiar vistas en Móvil
+        function switchView(viewId, button) {
+            if (window.innerWidth < 768) {
+                document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                
+                document.getElementById(viewId).classList.add('active');
+                button.classList.add('active');
+            }
+        }
+
+        function showToast(mensaje) {
+            const toast = document.getElementById('toast-container');
+            toast.innerText = mensaje;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function initCategorias() {
+            const bar = document.getElementById('categorias-bar');
+            const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
+            bar.innerHTML = cats.map(c => `
+                <button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCategoria('${c}', this)">${c}</button>
+            `).join('');
+        }
+
+        function cambiarCategoria(cat, btn) {
+            document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            categoriaActual = cat;
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid-productos');
+            const filtrados = listaProductos.filter(p => categoriaActual === "Todos" || p.categoria === categoriaActual);
+            
+            grid.innerHTML = filtrados.map(p => `
+                <div class="producto-celda" onclick="agregarAComanda(${p.id})">
+                    <img src="${p.imgPostre}" onerror="this.src='https://placehold.co/100'">
+                    <p class="prod-nombre">${p.nombre}</p>
+                    <p class="prod-precio">$${p.precio.toLocaleString()}</p>
+                </div>
+            `).join('');
+        }
+
+        function agregarAComanda(id) {
+            const existente = comandaActiva.find(item => item.id === id);
+            if (existente) {
+                existente.cantidad += 1;
+            } else {
+                const prod = listaProductos.find(p => p.id === id);
+                comandaActiva.push({ ...prod, cantidad: 1 });
+            }
+            guardarYRenderComanda();
+            showToast("Producto agregado 🛒");
+        }
+
+        function modificarCantidad(id, cambio) {
+            const index = comandaActiva.findIndex(item => item.id === id);
+            if (index !== -1) {
+                comandaActiva[index].cantidad += cambio;
+                if (comandaActiva[index].cantidad <= 0) comandaActiva.splice(index, 1);
+            }
+            guardarYRenderComanda();
+        }
+
+        function guardarYRenderComanda() {
+            localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
+            const contenedor = document.getElementById('items-comanda');
+            
+            contenedor.innerHTML = comandaActiva.map(item => `
+                <div class="item-linea">
+                    <div>
+                        <div style="font-weight:600;">${item.nombre}</div>
+                        <div style="font-size:0.85rem; color:#666;">$${(item.precio * item.cantidad).toLocaleString()}</div>
+                    </div>
+                    <div class="item-linea-controles">
+                        <button onclick="modificarCantidad(${item.id}, -1)">-</button>
+                        <span style="font-weight:bold;">${item.cantidad}</span>
+                        <button onclick="modificarCantidad(${item.id}, 1)">+</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+            document.getElementById('total-comanda').innerText = `$${total.toLocaleString()}`;
+
+            // Actualizar Badge flotante del botón móvil
+            const badge = document.getElementById('badge-comanda');
+            const totalItems = comandaActiva.reduce((acc, item) => acc + item.cantidad, 0);
+            if(totalItems > 0) {
+                badge.innerText = totalItems;
+                badge.style.display = "block";
+            } else {
+                badge.style.display = "none";
+            }
+        }
+
+        function procesarOrden() {
+            if (comandaActiva.length === 0) {
+                showToast("¡La comanda está vacía! ⚠️");
+                return;
+            }
+            
+            const mesa = document.getElementById('num-mesa').value;
+            const estado = document.getElementById('estado-pago').value;
+            const notas = document.getElementById('comentario-orden').value;
+            const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+
+            const nuevoPedido = {
+                id: Date.now(),
+                mesa: mesa,
+                estado: estado,
+                notas: notas,
+                total: total,
+                detalles: comandaActiva.map(i => `${i.cantidad}x ${i.nombre}`).join(', ')
+            };
+
+            historialPedidos.unshift(nuevoPedido);
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+            
+            // resetear campos
+            comandaActiva = [];
+            localStorage.removeItem('co      <div class="comanda-header">
             <h3 style="margin:0; color: var(--dark);">Nueva Orden</h3>
             <div class="meta-inputs">
                 <input type="number" id="num-mesa" placeholder="Mesa" min="1" value="1">

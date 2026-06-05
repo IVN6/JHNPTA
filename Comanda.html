@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel de Comandas Premium - Multiplataforma</title>
+    <title>Panel de Comandas - Multiplataforma Premium</title>
     <style>
         :root {
             --primary: #d63384;
@@ -11,9 +11,9 @@
             --warning: #ffc107;
             --danger: #dc3545;
             --dark: #212529;
-            --bg-interno: #f4f6f8;
+            --bg-interno: #f8f9fa;
             --border: #dee2e6;
-            --nav-height: 60px;
+            --nav-height: 65px;
         }
 
         * {
@@ -33,7 +33,7 @@
             user-select: none;
         }
 
-        /* --- NAV BAR INFERIOR (MÓVIL) --- */
+        /* --- BOTONES DE NAVEGACIÓN SIEMPRE VISIBLES EN MÓVIL --- */
         .mobile-nav {
             display: flex;
             background: white;
@@ -42,7 +42,7 @@
             position: fixed;
             bottom: 0;
             width: 100%;
-            z-index: 1000;
+            z-index: 2000;
         }
 
         .nav-tab {
@@ -51,17 +51,19 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
-            font-weight: 600;
+            font-size: 0.85rem;
+            font-weight: bold;
             color: #6c757d;
             background: none;
             border: none;
             cursor: pointer;
             position: relative;
+            gap: 4px;
         }
 
         .nav-tab.active {
             color: var(--primary);
+            background: #fff0f3;
         }
 
         .nav-tab .badge {
@@ -70,21 +72,23 @@
             right: 25%;
             background: var(--primary);
             color: white;
-            font-size: 0.7rem;
-            padding: 2px 6px;
+            font-size: 0.75rem;
+            padding: 2px 7px;
             border-radius: 10px;
+            font-weight: bold;
         }
 
-        /* --- CONTENEDOR PRINCIPAL --- */
+        /* --- CONTENEDOR MULTIPLATAFORMA --- */
         .app-container {
             display: flex;
             flex: 1;
             height: calc(100vh - var(--nav-height));
             overflow: hidden;
+            position: relative;
         }
 
         .section-view {
-            display: none; /* Se controla por JS en móvil */
+            display: none; /* Se alterna dinámicamente en móviles */
             flex-direction: column;
             width: 100%;
             height: 100%;
@@ -96,34 +100,32 @@
             display: flex;
         }
 
-        /* --- SECCIÓN CATÁLOGO --- */
+        /* --- VISTA: CATÁLOGO --- */
         .categorias-container {
-            position: sticky;
-            top: 0;
             background: var(--bg-interno);
-            z-index: 10;
             padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 12px;
         }
 
         .categorias-bar {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             overflow-x: auto;
-            padding-bottom: 5px;
+            padding-bottom: 4px;
             scrollbar-width: none;
         }
         .categorias-bar::-webkit-scrollbar { display: none; }
 
         .btn-categoria {
-            padding: 10px 18px;
+            padding: 12px 22px;
             border: 1px solid var(--border);
             background: white;
-            border-radius: 20px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: bold;
             white-space: nowrap;
-            font-size: 0.85rem;
-            transition: all 0.2s;
+            font-size: 0.9rem;
         }
 
         .btn-categoria.active {
@@ -135,41 +137,45 @@
         .grid-productos-scroll {
             flex: 1;
             overflow-y: auto;
-            padding-bottom: 20px;
+            padding-bottom: 10px;
         }
 
         .grid-productos {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+            gap: 12px;
         }
 
         .producto-celda {
             background: white;
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 10px;
+            padding: 12px 8px;
             text-align: center;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 150px;
+            align-items: center;
+            min-height: 155px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            touch-action: manipulation;
         }
+        .producto-celda:active { background: #fff0f3; transform: scale(0.97); }
 
         .producto-celda img {
-            width: 100%;
-            height: 75px;
+            width: 70px;
+            height: 70px;
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 6px;
+            pointer-events: none;
         }
 
         .prod-nombre { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
         .prod-precio { font-size: 0.85rem; color: var(--primary); font-weight: 700; }
 
-        /* --- SECCIÓN COMANDA ACTIVA --- */
+        /* --- VISTA: COMANDA (ESTRUCTURA ANTICORTE) --- */
         .comanda-wrapper {
             display: flex;
             flex-direction: column;
@@ -183,7 +189,8 @@
         .comanda-header {
             padding: 15px;
             border-bottom: 1px solid var(--border);
-            background: #fff;
+            background: white;
+            flex-shrink: 0; /* Evita que el header colapse el espacio */
         }
 
         .meta-inputs {
@@ -193,18 +200,20 @@
             margin-top: 10px;
         }
 
-        .meta-inputs select, .meta-inputs input {
+        .meta-inputs input, .meta-inputs select {
             padding: 10px;
             border: 1px solid var(--border);
             border-radius: 8px;
-            font-size: 0.9rem;
-            background: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            background: white;
         }
 
         .items-lista {
-            flex: 1;
-            overflow-y: auto;
+            flex: 1; /* Absorbe el espacio sobrante de forma dinámica */
+            overflow-y: auto; /* Permite scroll exclusivamente en la lista de ítems */
             padding: 15px;
+            background: #fafafa;
         }
 
         .item-linea {
@@ -222,25 +231,27 @@
         }
 
         .item-linea-controles button {
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             border: 1px solid var(--border);
-            background: #fff;
+            background: white;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
         }
 
+        /* Bloque inferior inmune a pérdidas de pantalla */
         .comanda-footer {
             padding: 15px;
             border-top: 2px solid var(--border);
             background: #f8f9fa;
+            flex-shrink: 0; 
         }
 
         .totales-row {
             display: flex;
             justify-content: space-between;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: bold;
             margin-bottom: 12px;
         }
@@ -251,13 +262,14 @@
             color: white;
             border: none;
             padding: 14px;
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
+            box-shadow: 0 4px 6px rgba(37, 211, 102, 0.15);
         }
 
-        /* --- MONITOR E HISTORIAL --- */
+        /* --- VISTA: MONITOR --- */
         .monitor-wrapper {
             display: flex;
             flex-direction: column;
@@ -267,12 +279,13 @@
         .balance-box {
             background: var(--dark);
             color: white;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 14px;
+            border-radius: 10px;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            flex-shrink: 0;
         }
 
         .lista-historial-scroll {
@@ -286,19 +299,18 @@
             border-left: 5px solid var(--warning);
             border-radius: 6px;
             margin-bottom: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
         }
         .pedido-ticket.pagado { border-left-color: var(--success); }
 
-        .ticket-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; margin-bottom: 4px;}
-        .ticket-detalles { font-size: 0.85rem; color: #495057; margin-bottom: 6px; }
-        .ticket-notas { font-size: 0.75rem; color: #6c757d; font-style: italic; display: block; margin-bottom: 8px; }
-        
+        .ticket-info { display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; }
+        .ticket-notas { font-size: 0.75rem; color: #6c757d; font-style: italic; margin-top: 4px; }
         .ticket-acciones {
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-top: 1px solid #f1f3f5;
+            margin-top: 8px;
             padding-top: 8px;
         }
 
@@ -306,48 +318,51 @@
             padding: 6px 12px;
             border-radius: 4px;
             border: 1px solid var(--border);
-            background: #fff;
+            background: white;
             font-size: 0.75rem;
+            font-weight: bold;
             cursor: pointer;
-            font-weight: 600;
         }
-        .btn-ticket-del { background: none; border: none; color: var(--danger); font-size: 1.1rem; cursor: pointer; }
+        .btn-ticket-del { background: none; border: none; color: var(--danger); font-size: 1.1rem; cursor: pointer; padding: 0 5px; }
 
-        /* TOAST SYSTEM */
+        /* SECCIÓN DE AUDITORÍA OCULTA */
+        .admin-audit-section {
+            margin-top: 15px;
+            border-top: 2px dashed var(--border);
+            padding-top: 12px;
+        }
+
+        /* TOAST ALERT SYSTEM */
         #toast-container {
             position: fixed;
-            bottom: 75px;
+            bottom: 85px;
             left: 50%;
             transform: translateX(-50%) translateY(10px);
             background: rgba(33, 37, 41, 0.95);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 30px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             z-index: 5000;
             opacity: 0;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             pointer-events: none;
-            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         #toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* --- RESPONSIVE ADAPTATION (TABLETS / PC) --- */
+        /* --- ADAPTACIÓN INTELIGENTE A TABLETS Y COMPUTADORAS --- */
         @media (min-width: 768px) {
-            body {
-                height: 100vh;
-            }
-            .mobile-nav {
-                display: none; /* Escondemos pestañas en pantallas grandes */
-            }
+            body { height: 100vh; }
+            .mobile-nav { display: none; } /* Ocultamos barra de pestañas en pantallas grandes */
             .app-container {
                 height: 100vh;
                 display: grid;
-                grid-template-columns: 1fr 360px 340px; /* Tres columnas perfectas fijas */
+                grid-template-columns: 1fr 370px 350px; /* Recupera tu amada vista original dividida */
                 gap: 0;
             }
             .section-view {
-                display: flex !important; /* Mostramos todo al tiempo en PC */
+                display: flex !important; /* Muestra todas las columnas al tiempo */
                 border-right: 1px solid var(--border);
                 height: 100vh;
             }
@@ -357,10 +372,8 @@
 </head>
 <body>
 
-    <!-- CONTENEDOR DE VISTAS -->
     <div class="app-container">
         
-        <!-- INTERFAZ 1: CATÁLOGO -->
         <main id="view-catalogo" class="section-view active">
             <div class="categorias-container">
                 <div class="categorias-bar" id="categorias-bar"></div>
@@ -370,26 +383,18 @@
             </div>
         </main>
 
-        <!-- INTERFAZ 2: COMANDA ACTIVA -->
         <aside id="view-comanda" class="section-view">
             <div class="comanda-wrapper">
                 <div class="comanda-header">
-                    <h3 style="color: var(--dark);">Orden Actual</h3>
+                    <h3 style="color: var(--dark); font-size: 1.15rem;">Nueva Comanda</h3>
                     <div class="meta-inputs">
-                        <select id="num-mesa">
-                            <option value="1">Mesa 1</option>
-                            <option value="2">Mesa 2</option>
-                            <option value="3">Mesa 3</option>
-                            <option value="4">Mesa 4</option>
-                            <option value="5">Mesa 5</option>
-                            <option value="6">Mesa 6</option>
-                        </select>
+                        <input type="number" id="num-mesa" placeholder="Mesa" min="1" value="1">
                         <select id="estado-pago">
                             <option value="Pendiente">❌ Por Pagar</option>
                             <option value="Pagado">✅ Ya Pagó</option>
                         </select>
                     </div>
-                    <input type="text" id="comentario-orden" placeholder="Notas internas para cocina..." style="width:100%; margin-top:10px; padding:10px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem;">
+                    <input type="text" id="comentario-orden" placeholder="Notas internas de preparación..." style="width:100%; margin-top:10px; padding:10px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem;">
                 </div>
 
                 <div class="items-lista" id="items-comanda"></div>
@@ -404,33 +409,36 @@
             </div>
         </aside>
 
-        <!-- INTERFAZ 3: MONITOR & REPORTES -->
         <section id="view-monitor" class="section-view">
             <div class="monitor-wrapper">
-                <h3 style="margin-bottom:10px;">Monitor de Mesas</h3>
+                <h3 style="margin-bottom:10px; font-size: 1.15rem;">Monitor en Vivo</h3>
                 
-                <!-- Caja de informes rápidos (Balance) -->
                 <div class="balance-box">
-                    <span>Ventas de Hoy: <strong id="balance-dinero">$0</strong></span>
-                    <span>Órdenes: <strong id="balance-cantidad">0</strong></span>
+                    <span>Caja Recaudada: <strong id="balance-dinero">$0</strong></span>
+                    <span>Comandas: <strong id="balance-cantidad">0</strong></span>
                 </div>
 
                 <div class="lista-historial-scroll" id="lista-historial"></div>
+
+                <div class="admin-audit-section">
+                    <button onclick="verHistorialAuditoria()" style="width:100%; padding:8px; background:#e9ecef; border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:bold; color:#495057;">
+                        🔐 Ver Bitácora Completa del Día (Auditoría)
+                    </button>
+                </div>
             </div>
         </section>
 
     </div>
 
-    <!-- NAVEGACIÓN MÓVIL (Sticky Bottom) -->
     <nav class="mobile-nav">
-        <button class="nav-tab active" onclick="switchView('view-catalogo', this)">
+        <button class="nav-tab active" id="btn-tab-catalogo" onclick="switchView('view-catalogo', this)">
             <span>📋</span> Menú
         </button>
-        <button class="nav-tab" onclick="switchView('view-comanda', this)">
+        <button class="nav-tab" id="btn-tab-comanda" onclick="switchView('view-comanda', this)">
             <span>🛒</span> Comanda
             <span class="badge" id="badge-comanda" style="display:none;">0</span>
         </button>
-        <button class="nav-tab" onclick="switchView('view-monitor', this)">
+        <button class="nav-tab" id="btn-tab-monitor" onclick="switchView('view-monitor', this)">
             <span>🖥️</span> Monitor
         </button>
     </nav>
@@ -438,19 +446,55 @@
     <div id="toast-container"></div>
 
     <script>
-        // Lista reducida de 4 productos solicitados
+        // Tu lista de productos original completa preservada
         const listaProductos = [
-            { id: 1, categoria: "Hora del Postre", nombre: "Merengón", precio: 12000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 2, categoria: "Hora del Postre", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 16, categoria: "Horneaditos", nombre: "Milhoja", precio: 12000, imgPostre: "https://helenadelombana.com/wp-content/uploads/2023/08/Milhoja-Receta-Especial.webp" },
-            { id: 27, categoria: "Café y Bebidas", nombre: "Americano", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20230413/ourmid/pngtree-americano-coffee-beans-transparent-white-background-png-image_6698453.png" }
+            { id: 1, categoria: "Hora del Postre", nombre: "Merengón", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" },
+            { id: 101, categoria: "Hora del Postre", nombre: "Merengón Especial", precio: 15000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" },
+            { id: 2, categoria: "Hora del Postre", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ" },
+            { id: 201, categoria: "Hora del Postre", nombre: "Fresas con crema Especial", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv" },
+            { id: 3, categoria: "Hora del Postre", nombre: "Obleas", precio: 4500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 301, categoria: "Hora del Postre", nombre: "Obleas Especial", precio: 5500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 4, categoria: "Hora del Postre", nombre: "Cuajada", precio: 9800, imgPostre: "https://lh3.googleusercontent.com/d/1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq" },
+            { id: 5, categoria: "Hora del Postre", nombre: "Cheesecakes", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 6, categoria: "Hora del Postre", nombre: "Pie de limón", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf" },
+            { id: 7, categoria: "Hora del Postre", nombre: "Tiramisú", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh" },
+            { id: 8, categoria: "Hora del Postre", nombre: "Torta tres leches", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 9, categoria: "Hora del Postre", nombre: "Leche asada", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" },
+            { id: 10, categoria: "Hora del Postre", nombre: "Napoleón de coco", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" },
+            { id: 11, categoria: "Hora del Postre", nombre: "Mousse", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr" },
+            { id: 12, categoria: "Hora del Postre", nombre: "Cremitas Sabores", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ" },
+            { id: 13, categoria: "Hora del Postre", nombre: "Natilla", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 14, categoria: "Hora del Postre", nombre: "Algodón azúcar", precio: 4200, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 1401, categoria: "Hora del Postre", nombre: "Algodón azúcar Especial", precio: 5200, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 15, categoria: "Hora del Postre", nombre: "Chicharrón Cuajada", precio: 13000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 16, categoria: "Horneaditos", nombre: "Milhoja", precio: 12000, imgPostre: "https://png.pngtree.com/png-vector/20260115/ourmid/pngtree-delicate-millefeuille-pastry-with-custard-and-powdered-sugar-png-image_18528647.webp" },
+            { id: 17, categoria: "Horneaditos", nombre: "Rollitos", precio: 6500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 1701, categoria: "Horneaditos", nombre: "Rollitos Especial", precio: 7500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+              { id: 18, categoria: "Horneaditos", nombre: "Repollas und",
+ precio: 8500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 19, categoria: "Horneaditos", nombre: "Eclair", precio: 8500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 20, categoria: "Horneaditos", nombre: "Corazones hojaldre", precio: 13000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 21, categoria: "Horneaditos", nombre: "Pan de yuca", precio: 5000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 22, categoria: "Dulces", nombre: "Postre de natas", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 23, categoria: "Dulces", nombre: "Arequipe coco", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 24, categoria: "Dulces", nombre: "Mielmesabe", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 25, categoria: "Dulces", nombre: "Arroz con leche", precio: 7000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 26, categoria: "Dulces", nombre: "Brevas + arequipe", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 27, categoria: "Café y Bebidas", nombre: "Americano", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20230413/ourmid/pngtree-americano-coffee-beans-transparent-white-background-png-image_6698453.png" },
+            { id: 28, categoria: "Café y Bebidas", nombre: "Cappuccino", precio: 4800, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 29, categoria: "Café y Bebidas", nombre: "Affogato", precio: 8500, imgPostre: "https://thumbs.dreamstime.com/b/caf%C3%A9-affogato-crema-de-hielo-con-fondo-transparente-384065281.jpg" },
+            { id: 30, categoria: "Café y Bebidas", nombre: "Malteadas", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 31, categoria: "Especiales", nombre: "Strawberry Dream", precio: 18500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+            { id: 32, categoria: "Especiales", nombre: "Caja Tentación", precio: 32000, imgPostre: "https://tofuu.getjusto.com/orioneat-local/resized2/RZhk9D4enQb9mopmo-2400-x.webp" },
+            { id: 33, categoria: "Especiales", nombre: "Macaron Supreme", precio: 12000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" }
         ];
 
         let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [];
+        // Bitácora oculta e inborrable para el dueño del negocio
+        let bitacoraAuditoria = JSON.parse(localStorage.getItem('bitacoraAuditoria')) || [];
         let categoriaActual = "Todos";
 
-        // Cambiar vistas en Móvil
         function switchView(viewId, button) {
             if (window.innerWidth < 768) {
                 document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
@@ -470,7 +514,6 @@
 
         function initCategorias() {
             const bar = document.getElementById('categorias-bar');
-            // Mapea correctamente las categorías que existen en los productos reducidos
             const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
             bar.innerHTML = cats.map(c => `
                 <button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCategoria('${c}', this)">${c}</button>
@@ -488,11 +531,6 @@
             const grid = document.getElementById('grid-productos');
             const filtrados = listaProductos.filter(p => categoriaActual === "Todos" || p.categoria === categoriaActual);
             
-            if(filtrados.length === 0) {
-                grid.innerHTML = `<div style="padding:20px; color:#aaa;">No hay productos en esta categoría.</div>`;
-                return;
-            }
-
             grid.innerHTML = filtrados.map(p => `
                 <div class="producto-celda" onclick="agregarAComanda(${p.id})">
                     <img src="${p.imgPostre}" onerror="this.src='https://placehold.co/100'">
@@ -511,7 +549,7 @@
                 comandaActiva.push({ ...prod, cantidad: 1 });
             }
             guardarYRenderComanda();
-            showToast("Producto agregado 🛒");
+            showToast("Agregado a la orden 🛒");
         }
 
         function modificarCantidad(id, cambio) {
@@ -530,12 +568,12 @@
             contenedor.innerHTML = comandaActiva.map(item => `
                 <div class="item-linea">
                     <div>
-                        <div style="font-weight:600;">${item.nombre}</div>
+                        <div style="font-weight:600; font-size:0.95rem;">${item.nombre}</div>
                         <div style="font-size:0.85rem; color:#666;">$${(item.precio * item.cantidad).toLocaleString()}</div>
                     </div>
                     <div class="item-linea-controles">
                         <button onclick="modificarCantidad(${item.id}, -1)">-</button>
-                        <span style="font-weight:bold; min-width:20px; text-align:center;">${item.cantidad}</span>
+                        <span style="font-weight:bold;">${item.cantidad}</span>
                         <button onclick="modificarCantidad(${item.id}, 1)">+</button>
                     </div>
                 </div>
@@ -544,7 +582,6 @@
             const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
             document.getElementById('total-comanda').innerText = `$${total.toLocaleString()}`;
 
-            // Actualizar número en la pestaña flotante de Comanda
             const badge = document.getElementById('badge-comanda');
             const totalItems = comandaActiva.reduce((acc, item) => acc + item.cantidad, 0);
             if(totalItems > 0) {
@@ -555,14 +592,13 @@
             }
         }
 
-        
         function procesarOrden() {
             if (comandaActiva.length === 0) {
-                showToast("¡La comanda está vacía! ⚠️");
+                showToast("⚠️ La comanda está vacía.");
                 return;
             }
             
-            const mesa = document.getElementById('num-mesa').value;
+            const mesa = document.getElementById('num-mesa').value || "S/M";
             const estado = document.getElementById('estado-pago').value;
             const notas = document.getElementById('comentario-orden').value;
             const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
@@ -573,19 +609,29 @@
                 estado: estado,
                 notas: notas,
                 total: total,
-                detalles: comandaActiva.map(i => `${i.cantidad}x ${i.nombre}`).join(', ')
+                detalles: comandaActiva.map(i => `${i.cantidad}x ${i.nombre}`).join(', '),
+                itemsRaw: [...comandaActiva] // Salvaguardamos los objetos para reedición posterior
             };
 
             historialPedidos.unshift(nuevoPedido);
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             
+            // Duplicamos a la bitácora inmune de auditoría de caja
+            bitacoraAuditoria.unshift({...nuevoPedido, fechaLog: new Date().toLocaleString(), accion: 'CREADO'});
+            localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
+
             comandaActiva = [];
             localStorage.removeItem('comandaActiva');
             document.getElementById('comentario-orden').value = "";
             
             guardarYRenderComanda();
             renderHistorial();
-            showToast(`¡Mesa ${mesa} enviada! ⚡`);
+            showToast(`⚡ ¡Mesa ${mesa} enviada!`);
+
+            // Redirección visual amigable si estamos en smartphone
+            if (window.innerWidth < 768) {
+                switchView('view-monitor', document.getElementById('btn-tab-monitor'));
+            }
         }
 
         function alternarEstadoPedido(id) {
@@ -593,49 +639,132 @@
             if (pedido) {
                 pedido.estado = (pedido.estado === 'Pagado') ? 'Pendiente' : 'Pagado';
                 localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+                
+                bitacoraAuditoria.unshift({
+                    id: Date.now(),
+                    mesa: pedido.mesa,
+                    total: pedido.total,
+                    detalles: pedido.detalles,
+                    fechaLog: new Date().toLocaleString(),
+                    accion: `CAMBIO ESTADO A ${pedido.estado}`
+                });
+                localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
+
                 renderHistorial();
-                showToast("Estado actualizado 🔄");
+                showToast("🔄 Estado de pago actualizado.");
             }
         }
 
-        function borrarPedidoHistorial(id) {
+        // REABRIR CUENTA: Devuelve los artículos al carrito/comanda activa para editar de verdad
+        function reabrirCuentaParaEditar(id) {
+            const pedido = historialPedidos.find(p => p.id === id);
+            if (pedido) {
+                if (comandaActiva.length > 0) {
+                    if (!confirm("Tienes productos en la comanda actual. ¿Deseas unificar las comandas?")) return;
+                }
+                
+                // Cargamos los datos guardados de vuelta
+                comandaActiva = pedido.itemsRaw || [];
+                document.getElementById('num-mesa').value = pedido.mesa;
+                document.getElementById('estado-pago').value = pedido.estado;
+                document.getElementById('comentario-orden').value = pedido.notas;
+                
+                // Remover temporalmente del monitor de cocina mientras se edita
+                historialPedidos = historialPedidos.filter(p => p.id !== id);
+                localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+
+                bitacoraAuditoria.unshift({
+                    id: Date.now(),
+                    mesa: pedido.mesa,
+                    total: pedido.total,
+                    detalles: pedido.detalles,
+                    fechaLog: new Date().toLocaleString(),
+                    accion: 'REABIERTO PARA MODIFICACIÓN'
+                });
+                localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
+
+                guardarYRenderComanda();
+                renderHistorial();
+                showToast("🛒 Productos devueltos a la Comanda para edición.");
+
+                if (window.innerWidth < 768) {
+                    switchView('view-comanda', document.getElementById('btn-tab-comanda'));
+                }
+            }
+        }
+
+        function archivarPedidoHistorial(id) {
+            const pedido = historialPedidos.find(p => p.id === id);
+            if(pedido) {
+                bitacoraAuditoria.unshift({
+                    id: Date.now(),
+                    mesa: pedido.mesa,
+                    total: pedido.total,
+                    detalles: pedido.detalles,
+                    fechaLog: new Date().toLocaleString(),
+                    accion: `ARCHIVADO/BORRADOR POR EMPLEADO (Mesa ${pedido.mesa})`
+                });
+                localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
+            }
+
             historialPedidos = historialPedidos.filter(p => p.id !== id);
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             renderHistorial();
-            showToast("Orden archivada 🗑️");
+            showToast("🗑️ Orden archivada.");
         }
 
         function renderHistorial() {
             const lista = document.getElementById('lista-historial');
             
-            const totalDinero = historialPedidos.reduce((acc, p) => acc + p.total, 0);
+            // El balance calcula todo el flujo real, evitando pérdidas si limpian pantalla
+            const totalDinero = historialPedidos.reduce((acc, p) => p.estado === 'Pagado' ? acc + p.total : acc, 0);
             document.getElementById('balance-dinero').innerText = `$${totalDinero.toLocaleString()}`;
-            document.getElementById('balance-cantidad').innerText = historialPedidos.length;
+            document.getElementById('balance-cantidad').innerText = historialPedidos.filter(p => p.estado === 'Pendiente').length;
 
             if(historialPedidos.length === 0) {
-                lista.innerHTML = `<div style="color:#aaa; text-align:center; padding:20px; font-size:0.9rem;">No hay mesas activas.</div>`;
+                lista.innerHTML = `<div style="color:#aaa; text-align:center; padding:35px; font-size:0.9rem;">No hay comandas activas en cocina.</div>`;
                 return;
             }
 
             lista.innerHTML = historialPedidos.map(p => `
                 <div class="pedido-ticket ${p.estado === 'Pagado' ? 'pagado' : ''}">
-                    <div class="ticket-header">
-                        <span>Mesa ${p.mesa}</span>
-                        <span>$${p.total.toLocaleString()}</span>
+                    <div class="ticket-info">
+                        <span style="font-weight:bold; font-size:0.9rem;">Mesa ${p.mesa} ➔ ${p.estado === 'Pagado' ? '✅ Pagado' : '⏳ En Cocina'}</span>
+                        <span style="color:#495057; margin-top:2px;">${p.detalles}</span>
+                        ${p.notas ? `<span class="ticket-notas">📌 ${p.notas}</span>` : ''}
                     </div>
-                    <div class="ticket-detalles">${p.detalles}</div>
-                    ${p.notas ? `<span class="ticket-notas">📌 ${p.notas}</span>` : ''}
                     <div class="ticket-acciones">
-                        <button class="btn-ticket-status" onclick="alternarEstadoPedido(${p.id})">
-                            ${p.estado === 'Pagado' ? 'Reabrir Cuenta' : '💵 Cobrar'}
-                        </button>
-                        <button class="btn-ticket-del" onclick="borrarPedidoHistorial(${p.id})">✕</button>
+                        <strong style="font-size:0.95rem;">$${p.total.toLocaleString()}</strong>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn-ticket-status" onclick="alternarEstadoPedido(${p.id})">
+                                ${p.estado === 'Pagado' ? 'Desmarcar' : '💵 Cobrar'}
+                            </button>
+                            <button class="btn-ticket-status" style="background:#f1f3f5;" onclick="reabrirCuentaParaEditar(${p.id})">
+                                ✏️ Editar
+                            </button>
+                        </div>
+                        <button class="btn-ticket-del" onclick="archivarPedidoHistorial(${p.id})">✕</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Carga Inicial Asegurada
+        // PANEL SECRETO DE CONTROL DE CAJA
+        function verHistorialAuditoria() {
+            const clave = prompt("Introduce la clave de administrador para auditar las cuentas:");
+            if(clave === "1234") { // Cambia esta contraseña cuando gustes
+                if(bitacoraAuditoria.length === 0) {
+                    alert("No hay registros financieros guardados el día de hoy.");
+                    return;
+                }
+                const informe = bitacoraAuditoria.map(b => `[${b.fechaLog}] - ${b.accion}\nDetalle: Mesa ${b.mesa} ($${b.total.toLocaleString()}) -> ${b.detalles}\n-----------------------`).join('\n');
+                alert(`--- BITÁCORA INMUNE DE AUDITORÍA ---\n\n${informe}`);
+            } else {
+                alert("❌ Clave incorrecta. Acceso denegado por seguridad.");
+            }
+        }
+
+        // Inicialización nativa
         initCategorias();
         renderGrid();
         guardarYRenderComanda();

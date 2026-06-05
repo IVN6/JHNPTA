@@ -27,6 +27,19 @@
             user-select: none;
         }
 
+        body {
+    margin: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg-interno);
+    color: var(--dark);
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    height: 100vh; /* ◄--- AGREGA ESTA LÍNEA */
+    overflow: hidden;
+    user-select: none;
+        }
+        
+
         /* --- COLUMNA IZQUIERDA: CATÁLOGO Y MONITOR --- */
         .catalogo-section {
             padding: 15px;
@@ -285,7 +298,7 @@
             transform: translateY(0);
         }
 
-        @media (max-width: 800px) {
+        @media (max-width: 400px) {
             body { grid-template-columns: 1fr; }
             .comanda-section { display: none; }
         }

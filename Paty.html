@@ -412,6 +412,18 @@ body {
     </div>
 </section>
 
+    <!-- Buscador Inteligente -->
+<div class="search-wrapper">
+    <div class="search-input-container">
+        <input type="text" id="txt-buscar" class="search-input" placeholder="Buscar postre, ingrediente o categoría...">
+        <button id="btn-limpiar-busqueda" class="clear-search-btn" onclick="limpiarBuscador()">✕</button>
+    </div>
+    <!-- Las categorías se generarán solas aquí adentro -->
+    <div id="contenedor-chips" class="categories-chips"></div>
+</div>
+
+
+
     <div id="feed-productos"></div>
 
     <div id="cart-sidebar">
@@ -806,8 +818,8 @@ body {
         let carrito = [];
         let firstTime = true; // Flag para los 3 segundos
 
-        // RENDERIZAR
-            const container = document.getElementById('feed-productos');
+        // Renderizar 
+        const container = document.getElementById('feed-productos');
 
 function render(productosAMostrar = listaProductos) {
     if (productosAMostrar.length === 0) {

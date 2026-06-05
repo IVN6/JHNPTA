@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Comandas - Interno Volátil</title>
+    <title>Panel de Comandas - Interno Premium</title>
     <style>
         :root {
             --primary: #d63384;
@@ -22,11 +22,10 @@
             color: var(--dark);
             display: grid;
             grid-template-columns: 1fr 380px;
-            
+            height: 100vh;
             overflow: hidden;
             user-select: none;
         }
-
         body {
     margin: 0;
     font-family: system-ui, -apple-system, sans-serif;
@@ -298,7 +297,7 @@
             transform: translateY(0);
         }
 
-        @media (max-width: 400px) {
+        @media (max-width: 360px) {
             body { grid-template-columns: 1fr; }
             .comanda-section { display: none; }
         }
@@ -313,7 +312,7 @@
         
         <!-- Monitor Fijo en Base -->
         <div class="historial-box">
-            <div class="historial-titulo">Monitor Activo de Mesas (Simulado)</div>
+            <div class="historial-titulo">Monitor Activo de Mesas</div>
             <div class="lista-historial-scroll" id="lista-historial"></div>
         </div>
     </main>
@@ -354,9 +353,9 @@
             { id: 17, categoria: "Horneaditos", nombre: "Rollitos Canela", precio: 6500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" }
         ];
 
-        // Arrays puros en memoria RAM (volátiles)
-        let comandaActiva = [];
-        let historialPedidos = [];
+        // Carga inicial leyendo desde LocalStorage
+        let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
+        let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [];
         let categoriaActual = "Todos";
 
         // Lanzador de avisos en pantalla (Toast)
@@ -403,7 +402,7 @@
                 const prod = listaProductos.find(p => p.id === id);
                 comandaActiva.push({ ...prod, cantidad: 1 });
             }
-            renderComanda();
+            guardarYRenderComanda();
         }
 
         function modificarCantidad(id, cambio) {
@@ -414,10 +413,11 @@
                     comandaActiva.splice(index, 1);
                 }
             }
-            renderComanda();
+            guardarYRenderComanda();
         }
 
-        function renderComanda() {
+        function guardarYRenderComanda() {
+            localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
             const contenedor = document.getElementById('items-comanda');
             
             contenedor.innerHTML = comandaActiva.map(item => `
@@ -449,6 +449,7 @@
             const notas = document.getElementById('comentario-orden').value;
             const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
 
+            // Generar objeto del pedido para el historial
             const nuevoPedido = {
                 id: Date.now(),
                 mesa: mesa,
@@ -459,27 +460,33 @@
             };
 
             historialPedidos.unshift(nuevoPedido);
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             renderHistorial();
 
-            // Limpieza express en memoria RAM
+            // Limpieza express de comanda para la siguiente orden
             comandaActiva = [];
+            localStorage.removeItem('comandaActiva');
             document.getElementById('comentario-orden').value = "";
-            renderComanda();
+            guardarYRenderComanda();
             
             showToast(`Mesa ${mesa} enviada correctamente`, "⚡");
         }
 
+        // Cambiar el estado directamente desde la celda del monitor
         function alternarEstadoPedido(id) {
             const pedido = historialPedidos.find(p => p.id === id);
             if (pedido) {
                 pedido.estado = (pedido.estado === 'Pagado') ? 'Pendiente' : 'Pagado';
+                localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
                 renderHistorial();
                 showToast("Estado de cuenta actualizado", "🔄");
             }
         }
 
+        // Eliminar pedido ya despachado o cerrado
         function borrarPedidoHistorial(id) {
             historialPedidos = historialPedidos.filter(p => p.id !== id);
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             renderHistorial();
             showToast("Orden archivada", "🗑️");
         }
@@ -503,16 +510,16 @@
                         <button class="btn-ticket-status" onclick="alternarEstadoPedido(${p.id})">
                             ${p.estado === 'Pagado' ? 'Reabrir' : 'Cobrar'}
                         </button>
-                        <button class="btn-ticket-del" onclick="borrarPedidoHistorial(${p.id})">✕</button>
+                        <button class="btn-ticket-del" onclick="borrarPedidoHistorial(${p.id})" title="Archivar Orden">✕</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Ejecución inicial limpia
+        // Carga inicial de la app
         initCategorias();
         renderGrid();
-        renderComanda();
+        guardarYRenderComanda();
         renderHistorial();
     </script>
 </body>

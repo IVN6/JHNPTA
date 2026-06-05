@@ -357,8 +357,10 @@
 </head>
 <body>
 
+    <!-- CONTENEDOR DE VISTAS -->
     <div class="app-container">
         
+        <!-- INTERFAZ 1: CATÁLOGO -->
         <main id="view-catalogo" class="section-view active">
             <div class="categorias-container">
                 <div class="categorias-bar" id="categorias-bar"></div>
@@ -368,6 +370,7 @@
             </div>
         </main>
 
+        <!-- INTERFAZ 2: COMANDA ACTIVA -->
         <aside id="view-comanda" class="section-view">
             <div class="comanda-wrapper">
                 <div class="comanda-header">
@@ -401,10 +404,12 @@
             </div>
         </aside>
 
+        <!-- INTERFAZ 3: MONITOR & REPORTES -->
         <section id="view-monitor" class="section-view">
             <div class="monitor-wrapper">
                 <h3 style="margin-bottom:10px;">Monitor de Mesas</h3>
                 
+                <!-- Caja de informes rápidos (Balance) -->
                 <div class="balance-box">
                     <span>Ventas de Hoy: <strong id="balance-dinero">$0</strong></span>
                     <span>Órdenes: <strong id="balance-cantidad">0</strong></span>
@@ -416,6 +421,7 @@
 
     </div>
 
+    <!-- NAVEGACIÓN MÓVIL (Sticky Bottom) -->
     <nav class="mobile-nav">
         <button class="nav-tab active" onclick="switchView('view-catalogo', this)">
             <span>📋</span> Menú
@@ -432,11 +438,11 @@
     <div id="toast-container"></div>
 
     <script>
-        // Reducido a 4 productos icónicos de tu lista original para simplificar el flujo
+        // Lista reducida de 4 productos solicitados
         const listaProductos = [
             { id: 1, categoria: "Hora del Postre", nombre: "Merengón", precio: 12000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
             { id: 2, categoria: "Hora del Postre", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 16, categoria: "Horneaditos", nombre: "Milhoja", precio: 12000, imgPostre: "https://png.pngtree.com/png-vector/20260115/ourmid/pngtree-delicate-millefeuille-pastry-with-custard-and-powdered-sugar-png-image_18528647.webp" },
+            { id: 16, categoria: "Horneaditos", nombre: "Milhoja", precio: 12000, imgPostre: "https://helenadelombana.com/wp-content/uploads/2023/08/Milhoja-Receta-Especial.webp" },
             { id: 27, categoria: "Café y Bebidas", nombre: "Americano", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20230413/ourmid/pngtree-americano-coffee-beans-transparent-white-background-png-image_6698453.png" }
         ];
 
@@ -464,6 +470,7 @@
 
         function initCategorias() {
             const bar = document.getElementById('categorias-bar');
+            // Mapea correctamente las categorías que existen en los productos reducidos
             const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
             bar.innerHTML = cats.map(c => `
                 <button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCategoria('${c}', this)">${c}</button>
@@ -481,6 +488,11 @@
             const grid = document.getElementById('grid-productos');
             const filtrados = listaProductos.filter(p => categoriaActual === "Todos" || p.categoria === categoriaActual);
             
+            if(filtrados.length === 0) {
+                grid.innerHTML = `<div style="padding:20px; color:#aaa;">No hay productos en esta categoría.</div>`;
+                return;
+            }
+
             grid.innerHTML = filtrados.map(p => `
                 <div class="producto-celda" onclick="agregarAComanda(${p.id})">
                     <img src="${p.imgPostre}" onerror="this.src='https://placehold.co/100'">
@@ -523,7 +535,7 @@
                     </div>
                     <div class="item-linea-controles">
                         <button onclick="modificarCantidad(${item.id}, -1)">-</button>
-                        <span style="font-weight:bold;">${item.cantidad}</span>
+                        <span style="font-weight:bold; min-width:20px; text-align:center;">${item.cantidad}</span>
                         <button onclick="modificarCantidad(${item.id}, 1)">+</button>
                     </div>
                 </div>
@@ -532,7 +544,7 @@
             const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
             document.getElementById('total-comanda').innerText = `$${total.toLocaleString()}`;
 
-            // Actualizar Badge flotante del botón móvil
+            // Actualizar número en la pestaña flotante de Comanda
             const badge = document.getElementById('badge-comanda');
             const totalItems = comandaActiva.reduce((acc, item) => acc + item.cantidad, 0);
             if(totalItems > 0) {
@@ -567,7 +579,6 @@
             historialPedidos.unshift(nuevoPedido);
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             
-            // resetear campos
             comandaActiva = [];
             localStorage.removeItem('comandaActiva');
             document.getElementById('comentario-orden').value = "";
@@ -597,7 +608,6 @@
         function renderHistorial() {
             const lista = document.getElementById('lista-historial');
             
-            // Calcular balances del día basados en lo guardado
             const totalDinero = historialPedidos.reduce((acc, p) => acc + p.total, 0);
             document.getElementById('balance-dinero').innerText = `$${totalDinero.toLocaleString()}`;
             document.getElementById('balance-cantidad').innerText = historialPedidos.length;
@@ -625,7 +635,7 @@
             `).join('');
         }
 
-        // Init App al cargar
+        // Carga Inicial Asegurada
         initCategorias();
         renderGrid();
         guardarYRenderComanda();

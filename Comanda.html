@@ -543,6 +543,7 @@
             }
         }
 
+        
         function procesarOrden() {
             if (comandaActiva.length === 0) {
                 showToast("¡La comanda está vacía! ⚠️");
@@ -568,186 +569,12 @@
             
             // resetear campos
             comandaActiva = [];
-            localStorage.removeItem('co      <div class="comanda-header">
-            <h3 style="margin:0; color: var(--dark);">Nueva Orden</h3>
-            <div class="meta-inputs">
-                <input type="number" id="num-mesa" placeholder="Mesa" min="1" value="1">
-                <select id="estado-pago">
-                    <option value="Pendiente">❌ Por Pagar</option>
-                    <option value="Pagado">✅ Ya Pagó</option>
-                </select>
-            </div>
-            <input type="text" id="comentario-orden" placeholder="Notas internas para cocina..." style="width:100%; margin-top:12px; padding:10px; box-sizing:border-box; border:1px solid var(--border); border-radius:8px; font-size: 0.9rem;">
-        </div>
-
-        <div class="items-lista" id="items-comanda"></div>
-
-        <div class="comanda-footer">
-            <div class="totales-row">
-                <span>Total:</span>
-                <span id="total-comanda">$0</span>
-            </div>
-            <button class="btn-enviar-pedido" onclick="procesarOrden()">Enviar a Cocina</button>
-        </div>
-    </aside>
-
-    <div id="toast-container"></div>
-
-    <script>
-        const listaProductos = [
-            { id: 1, categoria: "Hora del Postre", nombre: "Merengón", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" },
-            { id: 101, categoria: "Hora del Postre", nombre: "Merengón Especial", precio: 15000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" },
-            { id: 2, categoria: "Hora del Postre", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ" },
-            { id: 201, categoria: "Hora del Postre", nombre: "Fresas con crema Esp.", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv" },
-            { id: 3, categoria: "Hora del Postre", nombre: "Obleas", precio: 4500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 301, categoria: "Hora del Postre", nombre: "Obleas Especial", precio: 5500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 4, categoria: "Hora del Postre", nombre: "Cuajada", precio: 9800, imgPostre: "https://lh3.googleusercontent.com/d/1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq" },
-            { id: 5, categoria: "Hora del Postre", nombre: "Cheesecakes", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 6, categoria: "Hora del Postre", nombre: "Pie de limón", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf" },
-            { id: 7, categoria: "Hora del Postre", nombre: "Tiramisú", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh" },
-            { id: 8, categoria: "Hora del Postre", nombre: "Torta tres leches", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 9, categoria: "Hora del Postre", nombre: "Leche asada", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" },
-            { id: 10, categoria: "Hora del Postre", nombre: "Napoleón de coco", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" },
-            { id: 11, categoria: "Hora del Postre", nombre: "Mousse", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr" },
-            { id: 12, categoria: "Hora del Postre", nombre: "Cremitas Sabores", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ" },
-            { id: 13, categoria: "Hora del Postre", nombre: "Natilla", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 14, categoria: "Hora del Postre", nombre: "Algodón azúcar", precio: 4200, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 1401, categoria: "Hora del Postre", nombre: "Algodón Esp.", precio: 5200, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 15, categoria: "Hora del Postre", nombre: "Chicharrón Cuajada", precio: 13000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 16, categoria: "Horneaditos", nombre: "Milhoja", precio: 12000, imgPostre: "https://png.pngtree.com/png-vector/20260115/ourmid/pngtree-delicate-millefeuille-pastry-with-custard-and-powdered-sugar-png-image_18528647.webp" },
-            { id: 17, categoria: "Horneaditos", nombre: "Rollitos", precio: 6500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 1701, categoria: "Horneaditos", nombre: "Rollitos Especial", precio: 7500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 18, categoria: "Horneaditos", nombre: "Repollas und", precio: 8500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 19, categoria: "Horneaditos", nombre: "Eclair", precio: 8500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 20, categoria: "Horneaditos", nombre: "Corazones hojaldre", precio: 13000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 21, categoria: "Horneaditos", nombre: "Pan de yuca", precio: 5000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 22, categoria: "Dulces", nombre: "Postre de natas", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 23, categoria: "Dulces", nombre: "Arequipe coco", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 24, categoria: "Dulces", nombre: "Mielmesabe", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 25, categoria: "Dulces", nombre: "Arroz con leche", precio: 7000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 26, categoria: "Dulces", nombre: "Brevas + arequipe", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 27, categoria: "Café y Bebidas", nombre: "Americano", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20230413/ourmid/pngtree-americano-coffee-beans-transparent-white-background-png-image_6698453.png" },
-            { id: 28, categoria: "Café y Bebidas", nombre: "Cappuccino", precio: 4800, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 29, categoria: "Café y Bebidas", nombre: "Affogato", precio: 8500, imgPostre: "https://thumbs.dreamstime.com/b/caf%C3%A9-affogato-crema-de-hielo-con-fondo-transparente-384065281.jpg" },
-            { id: 30, categoria: "Café y Bebidas", nombre: "Malteadas", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 31, categoria: "Especiales", nombre: "Strawberry Dream", precio: 18500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 32, categoria: "Especiales", nombre: "Caja Tentación", precio: 32000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 33, categoria: "Especiales", nombre: "Macaron Supreme", precio: 12000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" }
-        ];
-
-        let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
-        let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [];
-        let categoriaActual = "Todos";
-
-        function showToast(mensaje, icon = "ℹ️") {
-            const toast = document.getElementById('toast-container');
-            toast.innerHTML = `<span>${icon}</span> ${mensaje}`;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2500);
-        }
-
-        function initCategorias() {
-            const bar = document.getElementById('categorias-bar');
-            const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
-            bar.innerHTML = cats.map(c => `
-                <button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCategoria('${c}', this)">${c}</button>
-            `).join('');
-        }
-
-        function cambiarCategoria(cat, btn) {
-            document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            categoriaActual = cat;
-            renderGrid();
-        }
-
-        function renderGrid() {
-            const grid = document.getElementById('grid-productos');
-            const filtrados = listaProductos.filter(p => categoriaActual === "Todos" || p.categoria === categoriaActual);
-            
-            grid.innerHTML = filtrados.map(p => `
-                <div class="producto-celda" onclick="agregarAComanda(${p.id})">
-                    <img src="${p.imgPostre}">
-                    <p class="prod-nombre">${p.nombre}</p>
-                    <p class="prod-precio">$${p.precio.toLocaleString()}</p>
-                </div>
-            `).join('');
-        }
-
-        function agregarAComanda(id) {
-            const existente = comandaActiva.find(item => item.id === id);
-            if (existente) {
-                existente.cantidad += 1;
-            } else {
-                const prod = listaProductos.find(p => p.id === id);
-                comandaActiva.push({ ...prod, quantity: 1, cantidad: 1 });
-            }
-            guardarYRenderComanda();
-        }
-
-        function modificarCantidad(id, cambio) {
-            const index = comandaActiva.findIndex(item => item.id === id);
-            if (index !== -1) {
-                comandaActiva[index].cantidad += cambio;
-                if (comandaActiva[index].cantidad <= 0) {
-                    comandaActiva.splice(index, 1);
-                }
-            }
-            guardarYRenderComanda();
-        }
-
-        function guardarYRenderComanda() {
-            localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
-            const contenedor = document.getElementById('items-comanda');
-            
-            contenedor.innerHTML = comandaActiva.map(item => `
-                <div class="item-linea">
-                    <div>
-                        <div style="font-weight:600; font-size:0.95rem;">${item.nombre}</div>
-                        <div style="font-size:0.85rem; color:#666;">$${(item.precio * item.cantidad).toLocaleString()}</div>
-                    </div>
-                    <div class="item-linea-controles">
-                        <button onclick="event.stopPropagation(); modificarCantidad(${item.id}, -1)">-</button>
-                        <span style="font-weight:bold; min-width:20px; text-align:center;">${item.cantidad}</span>
-                        <button onclick="event.stopPropagation(); modificarCantidad(${item.id}, 1)">+</button>
-                    </div>
-                </div>
-            `).join('');
-
-            const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
-            document.getElementById('total-comanda').innerText = `$${total.toLocaleString()}`;
-        }
-
-        function procesarOrden() {
-            if (comandaActiva.length === 0) {
-                showToast("La comanda no tiene productos.", "⚠️");
-                return;
-            }
-            
-            const mesa = document.getElementById('num-mesa').value || "S/M";
-            const estado = document.getElementById('estado-pago').value;
-            const notas = document.getElementById('comentario-orden').value;
-            const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
-
-            const nuevoPedido = {
-                id: Date.now(),
-                mesa: mesa,
-                estado: estado,
-                notas: notas,
-                total: total,
-                detalles: comandaActiva.map(i => `${i.cantidad}x ${i.nombre}`).join(', ')
-            };
-
-            historialPedidos.unshift(nuevoPedido);
-            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-            renderHistorial();
-
-            comandaActiva = [];
             localStorage.removeItem('comandaActiva');
             document.getElementById('comentario-orden').value = "";
-            guardarYRenderComanda();
             
-            showToast(`Mesa ${mesa} enviada correctamente`, "⚡");
+            guardarYRenderComanda();
+            renderHistorial();
+            showToast(`¡Mesa ${mesa} enviada! ⚡`);
         }
 
         function alternarEstadoPedido(id) {
@@ -756,7 +583,7 @@
                 pedido.estado = (pedido.estado === 'Pagado') ? 'Pendiente' : 'Pagado';
                 localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
                 renderHistorial();
-                showToast("Estado de cuenta actualizado", "🔄");
+                showToast("Estado actualizado 🔄");
             }
         }
 
@@ -764,27 +591,33 @@
             historialPedidos = historialPedidos.filter(p => p.id !== id);
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             renderHistorial();
-            showToast("Orden archivada", "🗑️");
+            showToast("Orden archivada 🗑️");
         }
 
         function renderHistorial() {
             const lista = document.getElementById('lista-historial');
+            
+            // Calcular balances del día basados en lo guardado
+            const totalDinero = historialPedidos.reduce((acc, p) => acc + p.total, 0);
+            document.getElementById('balance-dinero').innerText = `$${totalDinero.toLocaleString()}`;
+            document.getElementById('balance-cantidad').innerText = historialPedidos.length;
+
             if(historialPedidos.length === 0) {
-                lista.innerHTML = `<div style="color:#aaa; font-size:0.85rem; text-align:center; padding:20px;">No hay mesas activas.</div>`;
+                lista.innerHTML = `<div style="color:#aaa; text-align:center; padding:20px; font-size:0.9rem;">No hay mesas activas.</div>`;
                 return;
             }
 
             lista.innerHTML = historialPedidos.map(p => `
                 <div class="pedido-ticket ${p.estado === 'Pagado' ? 'pagado' : ''}">
-                    <div class="ticket-info">
-                        <span style="font-weight:bold; font-size:0.8rem;">Mesa ${p.mesa} ➔ ${p.estado === 'Pagado' ? 'PAGADO' : 'Pendiente'}</span>
-                        <span style="font-size:0.78rem; color:#495057;">${p.detalles}</span>
-                        ${p.notas ? `<span class="ticket-notas">Nota: ${p.notas}</span>` : ''}
+                    <div class="ticket-header">
+                        <span>Mesa ${p.mesa}</span>
+                        <span>$${p.total.toLocaleString()}</span>
                     </div>
+                    <div class="ticket-detalles">${p.detalles}</div>
+                    ${p.notas ? `<span class="ticket-notas">📌 ${p.notas}</span>` : ''}
                     <div class="ticket-acciones">
-                        <strong style="font-size:0.8rem;">$${p.total.toLocaleString()}</strong>
                         <button class="btn-ticket-status" onclick="alternarEstadoPedido(${p.id})">
-                            ${p.estado === 'Pagado' ? 'Reabrir' : 'Cobrar'}
+                            ${p.estado === 'Pagado' ? 'Reabrir Cuenta' : '💵 Cobrar'}
                         </button>
                         <button class="btn-ticket-del" onclick="borrarPedidoHistorial(${p.id})">✕</button>
                     </div>
@@ -792,7 +625,7 @@
             `).join('');
         }
 
-        // Carga inicial de la app
+        // Init App al cargar
         initCategorias();
         renderGrid();
         guardarYRenderComanda();

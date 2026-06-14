@@ -372,6 +372,89 @@
             }
             .section-view:last-child { border-right: none; }
         }
+        /* 1. Modifica la raíz para añadir la altura de las categorías */
+:root {
+    --primary: #d63384;
+    --success: #25D366;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --dark: #212529;
+    --bg-interno: #f8f9fa;
+    --border: #dee2e6;
+    --nav-height: 65px;
+    --cat-height: 55px; /* <-- AÑADE ESTA LÍNEA */
+}
+
+/* 2. Modifica el scroll del catálogo para que no se tape con los botones */
+.grid-productos-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: calc(var(--cat-height) + 20px); /* <-- CAMBIA ESTA LÍNEA */
+}
+
+/* 3. Reemplaza por completo el diseño de las categorías para bajarlas */
+.categorias-container {
+    background: white;
+    padding: 8px 15px;
+    border-top: 1px solid var(--border);
+    position: fixed;
+    bottom: var(--nav-height); /* Colocado justo arriba del menú inferior */
+    left: 0;
+    width: 100%;
+    height: var(--cat-height);
+    z-index: 1500;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.04);
+}
+
+.categorias-bar {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 0;
+    scrollbar-width: none;
+    height: 100%;
+    align-items: center;
+}
+.categorias-bar::-webkit-scrollbar { display: none; }
+
+.btn-categoria {
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    background: var(--bg-interno);
+    border-radius: 20px; /* Forma de píldora más ergonómica */
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: #495057;
+    height: 36px;
+    display: flex;
+    align-items: center;
+}
+
+.btn-categoria.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* 4. Ajuste para que en Computadora regrese a su sitio si lo deseas (Opcional) */
+@media (min-width: 768px) {
+    .categorias-container {
+        position: static;
+        width: 100%;
+        height: auto;
+        padding: 10px 0;
+        border-top: none;
+        border-bottom: 2px solid var(--border);
+        box-shadow: none;
+        order: -1; 
+    }
+    .grid-productos-scroll {
+        padding-bottom: 40px;
+    }
+}
+        
     </style>
 </head>
 <body>
@@ -379,11 +462,11 @@
     <div class="app-container">
         
         <main id="view-catalogo" class="section-view active">
-            <div class="categorias-container">
-                <div class="categorias-bar" id="categorias-bar"></div>
-            </div>
             <div class="grid-productos-scroll">
                 <div class="grid-productos" id="grid-productos"></div>
+            </div>
+            <div class="categorias-container">
+                <div class="categorias-bar" id="categorias-bar"></div>
             </div>
         </main>
 
@@ -450,48 +533,92 @@
     <div id="toast-container"></div>
 
     <script>
-        // Tu lista de productos original completa preservada
-        const listaProductos = [
-            { id: 1, categoria: "Hora del Postre", nombre: "Merengón", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" },
-            { id: 101, categoria: "Hora del Postre", nombre: "Merengón Especial", precio: 15000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" },
-            { id: 2, categoria: "Hora del Postre", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ" },
-            { id: 201, categoria: "Hora del Postre", nombre: "Fresas con crema Especial", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv" },
-            { id: 3, categoria: "Hora del Postre", nombre: "Obleas", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20240705/ourmid/pngtree-delicious-wafer-treats-a-guide-to-flavors-and-varieties-png-image_12952792.png" },
-            { id: 301, categoria: "Hora del Postre", nombre: "Obleas Especial", precio: 5500, imgPostre: "https://www.shutterstock.com/image-photo/wafer-oblea-arequipe-blackberry-sauce-260nw-2030844932.jpg" },
-            { id: 4, categoria: "Hora del Postre", nombre: "Cuajada", precio: 9800, imgPostre: "https://lh3.googleusercontent.com/d/1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq" },
-            { id: 5, categoria: "Hora del Postre", nombre: "Cheesecakes", precio: 9500, imgPostre: "https://png.pngtree.com/png-clipart/20250520/original/pngtree-red-strawberry-cheesecake-with-fruit-topping-creamy-dessert-sweet-treat-png-image_21036993.png" },
-            { id: 6, categoria: "Hora del Postre", nombre: "Pie de limón", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf" },
-            { id: 7, categoria: "Hora del Postre", nombre: "Tiramisú", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh" },
-            { id: 8, categoria: "Hora del Postre", nombre: "Torta tres leches", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 9, categoria: "Hora del Postre", nombre: "Leche asada", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" },
-            { id: 10, categoria: "Hora del Postre", nombre: "Napoleón de coco", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" },
-            { id: 11, categoria: "Hora del Postre", nombre: "Mousse", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr" },
-            { id: 12, categoria: "Hora del Postre", nombre: "Cremitas Sabores", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ" },
-            { id: 13, categoria: "Hora del Postre", nombre: "Natilla", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 14, categoria: "Hora del Postre", nombre: "Algodón azúcar", precio: 4200, imgPostre: "https://img.magnific.com/vector-gratis/composicion-realista-algodon-azucar-caramelo-realista-imagen-realista-muneca-humana-ilustracion-vector-palo-dulce_1284-30555.jpg" },
-            { id: 1401, categoria: "Hora del Postre", nombre: "Algodón azúcar Especial", precio: 5200, imgPostre: "https://us.123rf.com/450wm/warat42/warat421712/warat42171200258/92574838-cotton-candy-in-plastic-cup-isolated-on-white-background-clipping-path.jpg" },
-            { id: 15, categoria: "Hora del Postre", nombre: "Chicharrón Cuajada", precio: 13000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 16, categoria: "Horneaditos", nombre: "Milhoja", precio: 12000, imgPostre: "https://png.pngtree.com/png-vector/20260115/ourmid/pngtree-delicate-millefeuille-pastry-with-custard-and-powdered-sugar-png-image_18528647.webp" },
-            { id: 17, categoria: "Horneaditos", nombre: "Rollitos", precio: 6500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 1701, categoria: "Horneaditos", nombre: "Rollitos Especial", precio: 7500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-              { id: 18, categoria: "Horneaditos", nombre: "Repollas und",
- precio: 8500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 19, categoria: "Horneaditos", nombre: "Eclair", precio: 8500, imgPostre: "https://png.pngtree.com/png-vector/20241101/ourmid/pngtree-chocolate-eclair-pastry-filled-with-creamy-custard-png-image_14224677.png" },
-            { id: 20, categoria: "Horneaditos", nombre: "Corazones hojaldre", precio: 13000, imgPostre: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXiQIvzHppY3ECgO6dNVI21BxZgq4zKBI_H0z60KQB2g&s=10" },
-            { id: 21, categoria: "Horneaditos", nombre: "Pan de yuca", precio: 5000, imgPostre: "https://recetas.encolombia.com/wp-content/uploads/2021/03/Pan-de-Yuca.jpg" },
-            { id: 22, categoria: "Dulces", nombre: "Postre de natas", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 23, categoria: "Dulces", nombre: "Arequipe coco", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 24, categoria: "Dulces", nombre: "Mielmesabe", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 25, categoria: "Dulces", nombre: "Arroz con leche", precio: 7000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 26, categoria: "Dulces", nombre: "Brevas + arequipe", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 27, categoria: "Café y Bebidas", nombre: "Americano", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20230413/ourmid/pngtree-americano-coffee-beans-transparent-white-background-png-image_6698453.png" },
-            { id: 28, categoria: "Café y Bebidas", nombre: "Cappuccino", precio: 4800, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 29, categoria: "Café y Bebidas", nombre: "Affogato", precio: 8500, imgPostre: "https://thumbs.dreamstime.com/b/caf%C3%A9-affogato-crema-de-hielo-con-fondo-transparente-384065281.jpg" },
-            { id: 30, categoria: "Café y Bebidas", nombre: "Malteadas", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 31, categoria: "Especiales", nombre: "Strawberry Dream", precio: 18500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-            { id: 32, categoria: "Especiales", nombre: "Caja Tentación", precio: 32000, imgPostre: "https://tofuu.getjusto.com/orioneat-local/resized2/RZhk9D4enQb9mopmo-2400-x.webp" },
-            { id: 33, categoria: "Especiales", nombre: "Macaron Supreme", precio: 12000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" }
-        ];
+// Lista de productos completa y fiel a la carta física, manteniendo el formato original de imágenes
+const listaProductos = [
+    // --- POSTRES ---
+    { id: 1, categoria: "Postres", nombre: "Cremitas", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ" },
+    { id: 2, categoria: "Postres", nombre: "Gelatina Pequeña con LC", precio: 3000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 3, categoria: "Postres", nombre: "Gelatina Pequeña sin LC", precio: 3000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 4, categoria: "Postres", nombre: "Arequipe Casero", precio: 5000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 5, categoria: "Postres", nombre: "Arroz con Leche", precio: 7000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 6, categoria: "Postres", nombre: "Natilla", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 7, categoria: "Postres", nombre: "Gelatina Grande", precio: 8500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 8, categoria: "Postres", nombre: "Napoleón de Coco", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" },
+    { id: 9, categoria: "Postres", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ" },
+    { id: 10, categoria: "Postres", nombre: "Fresas Achocolatadas", precio: 12000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 11, categoria: "Postres", nombre: "Leche asada", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" },
+    { id: 12, categoria: "Postres", nombre: "Mousse", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr" },
+    { id: 13, categoria: "Postres", nombre: "Cheesecakes", precio: 9500, imgPostre: "https://png.pngtree.com/png-clipart/20250520/original/pngtree-red-strawberry-cheesecake-with-fruit-topping-creamy-dessert-sweet-treat-png-image_21036993.png" },
+    { id: 14, categoria: "Postres", nombre: "Pie de limón", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf" },
+    { id: 15, categoria: "Postres", nombre: "Tiramisú", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh" },
+    { id: 16, categoria: "Postres", nombre: "Torta tres leches", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 17, categoria: "Postres", nombre: "Cuajada", precio: 9800, imgPostre: "https://lh3.googleusercontent.com/d/1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq" },
+    { id: 18, categoria: "Postres", nombre: "Merengón Coguano", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" },
+    { id: 19, categoria: "Postres", nombre: "Merengón Especial", precio: 15000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn" },
+    { id: 20, categoria: "Postres", nombre: "Combo milhoja + Americano", precio: 15000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+
+    // --- DULCES ---
+    { id: 21, categoria: "Dulces", nombre: "Duraznos", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 22, categoria: "Dulces", nombre: "Brevas en almíbar", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 23, categoria: "Dulces", nombre: "Brevas + arequipe", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 24, categoria: "Dulces", nombre: "Mielmesabe", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 25, categoria: "Dulces", nombre: "Arequipe coco", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 26, categoria: "Dulces", nombre: "Natas", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 27, categoria: "Dulces", nombre: "Papayuela", precio: 9000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+
+    // --- HELADOS ---
+    { id: 28, categoria: "Helados", nombre: "Chocofresa con helado", precio: 14000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 29, categoria: "Helados", nombre: "Cono 1 bolita", precio: 4200, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 30, categoria: "Helados", nombre: "Cono 2 bolitas", precio: 6500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 31, categoria: "Helados", nombre: "Casero", precio: 5000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 32, categoria: "Helados", nombre: "Torta de Helado", precio: 8800, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+
+    // --- PASABOCAS ---
+    { id: 33, categoria: "Pasabocas", nombre: "Fresa con chocolate", precio: 1200, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 34, categoria: "Pasabocas", nombre: "Algodón pequeño", precio: 4200, imgPostre: "https://img.magnific.com/vector-gratis/composicion-realista-algodon-azucar-caramelo-realista-imagen-realista-muneca-humana-ilustracion-vector-palo-dulce_1284-30555.jpg" },
+    { id: 35, categoria: "Pasabocas", nombre: "Algodón grande", precio: 5200, imgPostre: "https://us.123rf.com/450wm/warat42/warat421712/warat42171200258/92574838-cotton-candy-in-plastic-cup-isolated-on-white-background-clipping-path.jpg" },
+    { id: 36, categoria: "Pasabocas", nombre: "Obleas", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20240705/ourmid/pngtree-delicious-wafer-treats-a-guide-to-flavors-and-varieties-png-image_12952792.png" },
+    { id: 37, categoria: "Pasabocas", nombre: "Obleas Especial", precio: 5500, imgPostre: "https://www.shutterstock.com/image-photo/wafer-oblea-arequipe-blackberry-sauce-260nw-2030844932.jpg" },
+    { id: 38, categoria: "Pasabocas", nombre: "Pan de yuca", precio: 5000, imgPostre: "https://recetas.encolombia.com/wp-content/uploads/2021/03/Pan-de-Yuca.jpg" },
+    { id: 39, categoria: "Pasabocas", nombre: "Merenguitos", precio: 6000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 40, categoria: "Pasabocas", nombre: "Rollitos Crema Chantilly", precio: 6500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 41, categoria: "Pasabocas", nombre: "Rollitos Arequipe", precio: 7500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 42, categoria: "Pasabocas", nombre: "Tortas Amapola - Chocolate", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 43, categoria: "Pasabocas", nombre: "Milhoja", precio: 12000, imgPostre: "https://png.pngtree.com/png-vector/20260115/ourmid/pngtree-delicate-millefeuille-pastry-with-custard-and-powdered-sugar-png-image_18528647.webp" },
+    { id: 44, categoria: "Pasabocas", nombre: "Chicharrón Cuajada", precio: 13000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 45, categoria: "Pasabocas", nombre: "Corazones hojaldre", precio: 13000, imgPostre: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXiQIvzHppY3ECgO6dNVI21BxZgq4zKBI_H0z60KQB2g&s=10" },
+    { id: 46, categoria: "Pasabocas", nombre: "Panelitas de leche", precio: 13000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 47, categoria: "Pasabocas", nombre: "Repollas und", precio: 8500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 48, categoria: "Pasabocas", nombre: "Eclair", precio: 8500, imgPostre: "https://png.pngtree.com/png-vector/20241101/ourmid/pngtree-chocolate-eclair-pastry-filled-with-creamy-custard-png-image_14224677.png" },
+    { id: 49, categoria: "Pasabocas", nombre: "Tortas con Helado", precio: 12500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+
+    // --- BEBIDAS FRÍAS ---
+    { id: 50, categoria: "Bebidas Frías", nombre: "Agua Pequeña", precio: 2000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 51, categoria: "Bebidas Frías", nombre: "Agua Grande", precio: 3000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 52, categoria: "Bebidas Frías", nombre: "Agua con Gas", precio: 2000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 53, categoria: "Bebidas Frías", nombre: "Coca Cola", precio: 3000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 54, categoria: "Bebidas Frías", nombre: "Jugo de Caja", precio: 2500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 55, categoria: "Bebidas Frías", nombre: "Jugo Natural en Agua", precio: 7000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 56, categoria: "Bebidas Frías", nombre: "Jugo Natural en Leche", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 57, categoria: "Bebidas Frías", nombre: "Malteadas", precio: 9500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 58, categoria: "Bebidas Frías", nombre: "Hatsu", precio: 12000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 59, categoria: "Bebidas Frías", nombre: "Coca Cola Zero", precio: 3500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+
+    // --- BEBIDAS CALIENTES ---
+    { id: 60, categoria: "Bebidas Calientes", nombre: "Aromática", precio: 4800, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 61, categoria: "Bebidas Calientes", nombre: "Americano", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20230413/ourmid/pngtree-americano-coffee-beans-transparent-white-background-png-image_6698453.png" },
+    { id: 62, categoria: "Bebidas Calientes", nombre: "Espresso", precio: 4500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 63, categoria: "Bebidas Calientes", nombre: "Milo", precio: 4800, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 64, categoria: "Bebidas Calientes", nombre: "Cappuccino", precio: 4800, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 65, categoria: "Bebidas Calientes", nombre: "Latte", precio: 4800, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 66, categoria: "Bebidas Calientes", nombre: "Moka", precio: 4800, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 67, categoria: "Bebidas Calientes", nombre: "Campesino", precio: 5500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 68, categoria: "Bebidas Calientes", nombre: "Affogato", precio: 8500, imgPostre: "https://thumbs.dreamstime.com/b/caf%C3%A9-affogato-crema-de-hielo-con-fondo-transparente-384065281.jpg" },
+
+    // --- ADICIONES ---
+    { id: 99, categoria: "Adiciones", nombre: "Adiciones", precio: 3000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" }
+];
+
 
         let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [];
@@ -515,6 +642,20 @@
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
+        // NUEVA FUNCIÓN OPTIMIZADORA DE IMÁGENES VIA WP CLOUD CDN
+function optimizarUrlImagen(urlOriginal) {
+    // Si la URL es por defecto, interna o de Google, aseguramos la foto base
+    if (!urlOriginal || urlOriginal.includes("googleusercontent.com")) {
+        urlOriginal = "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3";
+    }
+    
+    // Limpiamos el protocolo http/https para que lo procese el CDN de WordPress Jetpack
+    let urlLimpia = urlOriginal.replace(/^https?:\/\//, '');
+    
+    // Forzamos un ancho de 100px, borramos metadatos pesados (strip) y bajamos calidad al 60%
+    return `https://i0.wp.com/${urlLimpia}?w=100&strip=all&quality=60`;
+}
+        
 
         function initCategorias() {
             const bar = document.getElementById('categorias-bar');
@@ -532,17 +673,24 @@
         }
 
         function renderGrid() {
-            const grid = document.getElementById('grid-productos');
-            const filtrados = listaProductos.filter(p => categoriaActual === "Todos" || p.categoria === categoriaActual);
-            
-            grid.innerHTML = filtrados.map(p => `
-                <div class="producto-celda" onclick="agregarAComanda(${p.id})">
-                    <img src="${p.imgPostre}" onerror="this.src='https://placehold.co/100'">
-                    <p class="prod-nombre">${p.nombre}</p>
-                    <p class="prod-precio">$${p.precio.toLocaleString()}</p>
-                </div>
-            `).join('');
-        }
+    const grid = document.getElementById('grid-productos');
+    const filtrados = listaProductos.filter(p => categoriaActual === "Todos" || p.categoria === categoriaActual);
+    
+    grid.innerHTML = filtrados.map(p => {
+        // 1. Pasamos la imagen de la lista por el filtro optimizador de datos
+        const imagenOptimizada = optimizarUrlImagen(p.imgPostre);
+        
+        // 2. Pintamos la celda usando la nueva 'imagenOptimizada'
+        return `
+            <div class="producto-celda" onclick="agregarAComanda(${p.id})">
+                <img src="${imagenOptimizada}" onerror="this.src='https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3'">
+                <p class="prod-nombre">${p.nombre}</p>
+                <p class="prod-precio">$${p.precio.toLocaleString()}</p>
+            </div>
+        `;
+    }).join('');
+}
+
 
         function agregarAComanda(id) {
             const existente = comandaActiva.find(item => item.id === id);

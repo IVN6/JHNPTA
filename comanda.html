@@ -389,7 +389,7 @@
 .grid-productos-scroll {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: calc(var(--cat-height) + 20px); /* <-- CAMBIA ESTA LÍNEA */
+    padding-bottom: calc(var(--cat-height) + 100px); /* <-- CAMBIA ESTA LÍNEA */
 }
 
 /* 3. Reemplaza por completo el diseño de las categorías para bajarlas */
@@ -642,19 +642,28 @@ const listaProductos = [
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
-        // NUEVA FUNCIÓN OPTIMIZADORA DE IMÁGENES VIA WP CLOUD CDN
+        // NUEVA FUNCIÓN OPTIMIZADORA DE IMÁGENES REVISADA
 function optimizarUrlImagen(urlOriginal) {
-    // Si la URL es por defecto, interna o de Google, aseguramos la foto base
-    if (!urlOriginal || urlOriginal.includes("googleusercontent.com")) {
-        urlOriginal = "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3";
+    // 1. Si la URL está vacía o no existe, devolvemos la imagen por defecto inmediatamente
+    if (!urlOriginal) {
+        return "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3";
     }
     
-    // Limpiamos el protocolo http/https para que lo procese el CDN de WordPress Jetpack
+    // 2. DETECCIÓN DE GOOGLE: Si es de googleusercontent, usamos la optimización nativa de Google
+    if (urlOriginal.includes("googleusercontent.com")) {
+        // Removemos parámetros de tamaño antiguos si existieran (ej: =s96, =w200-h200) y forzamos ancho 100
+        let urlBase = urlOriginal.split('=')[0]; 
+        return `${urlBase}=w100`; 
+    }
+    
+    // 3. Para cualquier otra imagen de internet, aplicamos el CDN de WordPress Jetpack
+    // Limpiamos el protocolo http/https
     let urlLimpia = urlOriginal.replace(/^https?:\/\//, '');
     
     // Forzamos un ancho de 100px, borramos metadatos pesados (strip) y bajamos calidad al 60%
     return `https://i0.wp.com/${urlLimpia}?w=100&strip=all&quality=60`;
 }
+
         
 
         function initCategorias() {

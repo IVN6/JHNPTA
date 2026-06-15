@@ -389,7 +389,7 @@
 .grid-productos-scroll {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: calc(var(--cat-height) + 100px); /* <-- CAMBIA ESTA LÍNEA */
+    padding-bottom: calc(var(--cat-height) + 200px); /* <-- CAMBIA ESTA LÍNEA */
 }
 
 /* 3. Reemplaza por completo el diseño de las categorías para bajarlas */
@@ -398,7 +398,7 @@
     padding: 8px 15px;
     border-top: 1px solid var(--border);
     position: fixed;
-    bottom: var(--nav-height); /* Colocado justo arriba del menú inferior */
+    bottom: var(--nav-height) - 10px; /* Colocado justo arriba del menú inferior */
     left: 0;
     width: 100%;
     height: var(--cat-height);
@@ -542,10 +542,10 @@ const listaProductos = [
     { id: 4, categoria: "Postres", nombre: "Arequipe Casero", precio: 5000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
     { id: 5, categoria: "Postres", nombre: "Arroz con Leche", precio: 7000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
     { id: 6, categoria: "Postres", nombre: "Natilla", precio: 8000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
-    { id: 7, categoria: "Postres", nombre: "Gelatina Grande", precio: 8500, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 7, categoria: "Postres", nombre: "Gelatina Grande", precio: 8500, imgPostre: "https://lh3.googleusercontent.com/d/1rqIPaJrFMb1vIkPKRMWcEDkCoXNpJYAR" },
     { id: 8, categoria: "Postres", nombre: "Napoleón de Coco", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" },
     { id: 9, categoria: "Postres", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ" },
-    { id: 10, categoria: "Postres", nombre: "Fresas Achocolatadas", precio: 12000, imgPostre: "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3" },
+    { id: 10, categoria: "Postres", nombre: "Fresas Achocolatadas", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv" },
     { id: 11, categoria: "Postres", nombre: "Leche asada", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" },
     { id: 12, categoria: "Postres", nombre: "Mousse", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr" },
     { id: 13, categoria: "Postres", nombre: "Cheesecakes", precio: 9500, imgPostre: "https://png.pngtree.com/png-clipart/20250520/original/pngtree-red-strawberry-cheesecake-with-fruit-topping-creamy-dessert-sweet-treat-png-image_21036993.png" },

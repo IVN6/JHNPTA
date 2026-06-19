@@ -533,6 +533,7 @@
     <div id="toast-container"></div>
 
     <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyoZDZUmlaeBxsnGRW-ESnRFa5i2kAhSciFUCz8-NTKIjr6kcIzXUVceLW5Y_ISIUJ2/exec";
 // Lista de productos completa y fiel a la carta física, manteniendo el formato original de imágenes
 const listaProductos = [
     // --- POSTRES ---
@@ -619,318 +620,425 @@ const listaProductos = [
     // --- ADICIONES ---
     { id: 99, categoria: "Adiciones", nombre: "Adiciones", precio: 3000, imgPostre: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/800px-Good_Food_Display_-_NCI_Visuals_Online.jpg" }
 ];
+let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
+    let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [];
+    let bitacoraAuditoria = JSON.parse(localStorage.getItem('bitacoraAuditoria')) || [];
+    let categoriaActual = "Todos";
 
-
-        let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
-        let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [];
-        // Bitácora oculta e inborrable para el dueño del negocio
-        let bitacoraAuditoria = JSON.parse(localStorage.getItem('bitacoraAuditoria')) || [];
-        let categoriaActual = "Todos";
-
-        function switchView(viewId, button) {
-            if (window.innerWidth < 768) {
-                document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
-                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                
-                document.getElementById(viewId).classList.add('active');
-                button.classList.add('active');
-            }
-        }
-
-        function showToast(mensaje) {
-            const toast = document.getElementById('toast-container');
-            toast.innerText = mensaje;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-        // NUEVA FUNCIÓN OPTIMIZADORA DE IMÁGENES REVISADA
-function optimizarUrlImagen(urlOriginal) {
-    // 1. Si la URL está vacía o no existe, devolvemos la imagen por defecto inmediatamente
-    if (!urlOriginal) {
-        return "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3";
-    }
-    
-    // 2. DETECCIÓN DE GOOGLE: Si es de googleusercontent, usamos la optimización nativa de Google
-    if (urlOriginal.includes("googleusercontent.com")) {
-        // Removemos parámetros de tamaño antiguos si existieran (ej: =s96, =w200-h200) y forzamos ancho 100
-        let urlBase = urlOriginal.split('=')[0]; 
-        return `${urlBase}=w100`; 
-    }
-    
-    // 3. Para cualquier otra imagen de internet, aplicamos el CDN de WordPress Jetpack
-    // Limpiamos el protocolo http/https
-    let urlLimpia = urlOriginal.replace(/^https?:\/\//, '');
-    
-    // Forzamos un ancho de 100px, borramos metadatos pesados (strip) y bajamos calidad al 60%
-    return `https://i0.wp.com/${urlLimpia}?w=100&strip=all&quality=60`;
-}
-
-        
-
-        function initCategorias() {
-            const bar = document.getElementById('categorias-bar');
-            const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
-            bar.innerHTML = cats.map(c => `
-                <button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCategoria('${c}', this)">${c}</button>
-            `).join('');
-        }
-
-        function cambiarCategoria(cat, btn) {
-            document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            categoriaActual = cat;
-            renderGrid();
-        }
-
-        function renderGrid() {
-    const grid = document.getElementById('grid-productos');
-    const filtrados = listaProductos.filter(p => categoriaActual === "Todos" || p.categoria === categoriaActual);
-    
-    grid.innerHTML = filtrados.map(p => {
-        // 1. Pasamos la imagen de la lista por el filtro optimizador de datos
-        const imagenOptimizada = optimizarUrlImagen(p.imgPostre);
-        
-        // 2. Pintamos la celda usando la nueva 'imagenOptimizada'
-        return `
-            <div class="producto-celda" onclick="agregarAComanda(${p.id})">
-                <img src="${imagenOptimizada}" onerror="this.src='https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3'">
-                <p class="prod-nombre">${p.nombre}</p>
-                <p class="prod-precio">$${p.precio.toLocaleString()}</p>
-            </div>
-        `;
-    }).join('');
-}
-
-
-        function agregarAComanda(id) {
-            const existente = comandaActiva.find(item => item.id === id);
-            if (existente) {
-                existente.cantidad += 1;
-            } else {
-                const prod = listaProductos.find(p => p.id === id);
-                comandaActiva.push({ ...prod, cantidad: 1 });
-            }
-            guardarYRenderComanda();
-            showToast("Agregado a la orden 🛒");
-        }
-
-        function modificarCantidad(id, cambio) {
-            const index = comandaActiva.findIndex(item => item.id === id);
-            if (index !== -1) {
-                comandaActiva[index].cantidad += cambio;
-                if (comandaActiva[index].cantidad <= 0) comandaActiva.splice(index, 1);
-            }
-            guardarYRenderComanda();
-        }
-
-        function guardarYRenderComanda() {
-            localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
-            const contenedor = document.getElementById('items-comanda');
+    function switchView(viewId, button) {
+        if (window.innerWidth < 768) {
+            document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             
-            contenedor.innerHTML = comandaActiva.map(item => `
-                <div class="item-linea">
-                    <div>
-                        <div style="font-weight:600; font-size:0.95rem;">${item.nombre}</div>
-                        <div style="font-size:0.85rem; color:#666;">$${(item.precio * item.cantidad).toLocaleString()}</div>
-                    </div>
-                    <div class="item-linea-controles">
-                        <button onclick="modificarCantidad(${item.id}, -1)">-</button>
-                        <span style="font-weight:bold;">${item.cantidad}</span>
-                        <button onclick="modificarCantidad(${item.id}, 1)">+</button>
-                    </div>
+            document.getElementById(viewId).classList.add('active');
+            button.classList.add('active');
+        }
+    }
+
+    function showToast(mensaje) {
+        const toast = document.getElementById('toast-container');
+        toast.innerText = mensaje;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function optimizarUrlImagen(urlOriginal) {
+        if (!urlOriginal) {
+            return "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3";
+        }
+        if (urlOriginal.includes("googleusercontent.com")) {
+            let urlBase = urlOriginal.split('=')[0];
+            return `${urlBase}=w100`;
+        }
+        let urlLimpia = urlOriginal.replace(/^https?:\/\//, '');
+        return `https://i0.wp.com/${urlLimpia}?w=100&strip=all&quality=60`;
+    }
+
+    function initCategorias() {
+        const bar = document.getElementById('categorias-bar');
+        const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
+        bar.innerHTML = cats.map(c => `
+            <button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCategoria('${c}', this)">${c}</button>
+        `).join('');
+    }
+
+    function cambiarCategoria(cat, btn) {
+        document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        categoriaActual = cat;
+        renderGrid();
+    }
+
+    function renderGrid() {
+        const grid = document.getElementById('grid-productos');
+        const filtrados = listaProductos.filter(p => categoriaActual === "Todos" || p.categoria === categoriaActual);
+        
+        grid.innerHTML = filtrados.map(p => {
+            const imagenOptimizada = optimizarUrlImagen(p.imgPostre);
+            return `
+                <div class="producto-celda" onclick="agregarAComanda(${p.id})">
+                    <img src="${imagenOptimizada}" onerror="this.src='https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3'">
+                    <p class="prod-nombre">${p.nombre}</p>
+                    <p class="prod-precio">$${p.precio.toLocaleString()}</p>
                 </div>
-            `).join('');
+            `;
+        }).join('');
+    }
 
-            const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
-            document.getElementById('total-comanda').innerText = `$${total.toLocaleString()}`;
+    function agregarAComanda(id) {
+        const existente = comandaActiva.find(item => item.id === id);
+        if (existente) {
+            existente.cantidad += 1;
+        } else {
+            const prod = listaProductos.find(p => p.id === id);
+            comandaActiva.push({ ...prod, cantidad: 1 });
+        }
+        guardarYRenderComanda();
+        showToast("Agregado a la orden 🛒");
+    }
 
-            const badge = document.getElementById('badge-comanda');
-            const totalItems = comandaActiva.reduce((acc, item) => acc + item.cantidad, 0);
-            if(totalItems > 0) {
-                badge.innerText = totalItems;
-                badge.style.display = "block";
-            } else {
-                badge.style.display = "none";
-            }
+    function modificarCantidad(id, cambio) {
+        const index = comandaActiva.findIndex(item => item.id === id);
+        if (index !== -1) {
+            comandaActiva[index].cantidad += cambio;
+            if (comandaActiva[index].cantidad <= 0) comandaActiva.splice(index, 1);
+        }
+        guardarYRenderComanda();
+    }
+
+    function guardarYRenderComanda() {
+        localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
+        const contenedor = document.getElementById('items-comanda');
+        
+        contenedor.innerHTML = comandaActiva.map(item => `
+            <div class="item-linea">
+                <div>
+                    <div style="font-weight:600; font-size:0.95rem;">${item.nombre}</div>
+                    <div style="font-size:0.85rem; color:#666;">$${(item.precio * item.cantidad).toLocaleString()}</div>
+                </div>
+                <div class="item-linea-controles">
+                    <button onclick="modificarCantidad(${item.id}, -1)">-</button>
+                    <span style="font-weight:bold;">${item.cantidad}</span>
+                    <button onclick="modificarCantidad(${item.id}, 1)">+</button>
+                </div>
+            </div>
+        `).join('');
+
+        const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+        document.getElementById('total-comanda').innerText = `$${total.toLocaleString()}`;
+
+        const badge = document.getElementById('badge-comanda');
+        const totalItems = comandaActiva.reduce((acc, item) => acc + item.cantidad, 0);
+        if(totalItems > 0) {
+            badge.innerText = totalItems;
+            badge.style.display = "block";
+        } else {
+            badge.style.display = "none";
+        }
+    }
+
+    // ==========================================
+    // 🌐 PROCESAR ORDEN: ENVIAR A SHEETS + LOCAL STORAGE (OFFLINE)
+    // ==========================================
+    async function procesarOrden() {
+        if (comandaActiva.length === 0) {
+            showToast("⚠️ La comanda está vacía.");
+            return;
+        }
+        
+        const mesa = document.getElementById('num-mesa').value || "S/M";
+        const estado = document.getElementById('estado-pago').value;
+        const notas = document.getElementById('comentario-orden').value;
+        const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+        const textoItems = comandaActiva.map(i => `${i.cantidad}x ${i.nombre}`).join(', ');
+
+        // Creamos la orden con un marcador para saber si ya subió a Google Sheets
+        const nuevoPedido = {
+            id: Date.now(),
+            mesa: mesa,
+            estado: estado,
+            notas: notas,
+            total: total,
+            detalles: textoItems,
+            itemsRaw: [...comandaActiva], // Guardamos estructura original por si editamos
+            sincronizado: "NO" // <-- Flag Offline-First clave
+        };
+
+        // 1. Guardar de forma inmediata a nivel local (Tolerancia a fallas)
+        historialPedidos.unshift(nuevoPedido);
+        localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+        
+        bitacoraAuditoria.unshift({...nuevoPedido, fechaLog: new Date().toLocaleString(), accion: 'CREADO'});
+        localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
+
+        // Limpiar carrito
+        comandaActiva = [];
+        localStorage.removeItem('comandaActiva');
+        document.getElementById('comentario-orden').value = "";
+        
+        guardarYRenderComanda();
+        renderHistorial(); // Se pinta en la pantalla del celular al instante
+        showToast(`⚡ Mesa ${mesa} guardada localmente...`);
+
+        if (window.innerWidth < 768) {
+            switchView('view-monitor', document.getElementById('btn-tab-monitor'));
         }
 
-        function procesarOrden() {
-            if (comandaActiva.length === 0) {
-                showToast("⚠️ La comanda está vacía.");
-                return;
-            }
-            
-            const mesa = document.getElementById('num-mesa').value || "S/M";
-            const estado = document.getElementById('estado-pago').value;
-            const notas = document.getElementById('comentario-orden').value;
-            const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+        // 2. Intentar subirlo a Google en segundo plano
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify({
+                    accion: "nuevoPedido",
+                    mesa: nuevoPedido.mesa,
+                    total: nuevoPedido.total,
+                    items: nuevoPedido.detalles,
+                    notas: nuevoPedido.notas,
+                    metodoPago: "Efectivo",
+                    mesero: "Dispositivo Móvil"
+                })
+            });
+            const resultado = await response.json();
 
-            const nuevoPedido = {
-                id: Date.now(),
-                mesa: mesa,
-                estado: estado,
-                notas: notas,
-                total: total,
-                detalles: comandaActiva.map(i => `${i.cantidad}x ${i.nombre}`).join(', '),
-                itemsRaw: [...comandaActiva] // Salvaguardamos los objetos para reedición posterior
-            };
-
-            historialPedidos.unshift(nuevoPedido);
-            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-            
-            // Duplicamos a la bitácora inmune de auditoría de caja
-            bitacoraAuditoria.unshift({...nuevoPedido, fechaLog: new Date().toLocaleString(), accion: 'CREADO'});
-            localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
-
-            comandaActiva = [];
-            localStorage.removeItem('comandaActiva');
-            document.getElementById('comentario-orden').value = "";
-            
-            guardarYRenderComanda();
-            renderHistorial();
-            showToast(`⚡ ¡Mesa ${mesa} enviada!`);
-
-            // Redirección visual amigable si estamos en smartphone
-            if (window.innerWidth < 768) {
-                switchView('view-monitor', document.getElementById('btn-tab-monitor'));
-            }
-        }
-
-        function alternarEstadoPedido(id) {
-            const pedido = historialPedidos.find(p => p.id === id);
-            if (pedido) {
-                pedido.estado = (pedido.estado === 'Pagado') ? 'Pendiente' : 'Pagado';
+            if (resultado.ok) {
+                nuevoPedido.sincronizado = "SI";
                 localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-                
-                bitacoraAuditoria.unshift({
-                    id: Date.now(),
-                    mesa: pedido.mesa,
-                    total: pedido.total,
-                    detalles: pedido.detalles,
-                    fechaLog: new Date().toLocaleString(),
-                    accion: `CAMBIO ESTADO A ${pedido.estado}`
-                });
-                localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
+                showToast(`✅ Mesa ${mesa} sincronizada en la nube.`);
+            }
+        } catch (error) {
+            console.warn("Fallo de red. El pedido se queda local de momento.");
+            showToast(`⚠️ Guardado offline. Se subirá al recuperar internet.`);
+        }
+    }
 
-                renderHistorial();
-                showToast("🔄 Estado de pago actualizado.");
+    // ==========================================
+    // 🔄 SINCRONIZADOR INTERNO (REINTENTOS AUTOMÁTICOS)
+    // ==========================================
+    async function sincronizarPedidosPendientes() {
+        const pendientes = historialPedidos.filter(p => p.sincronizado === "NO");
+        if (pendientes.length === 0) return;
+
+        for (let pedido of pendientes) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({
+                        accion: "nuevoPedido",
+                        mesa: pedido.mesa,
+                        total: pedido.total,
+                        items: pedido.detalles,
+                        notas: pedido.notas
+                    })
+                });
+                const resultado = await response.json();
+                
+                if (resultado.ok) {
+                    pedido.sincronizado = "SI";
+                    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+                    showToast(`🔄 ¡Pedido de Mesa ${pedido.mesa} subido automáticamente!`);
+                }
+            } catch (error) {
+                console.log("El dispositivo sigue sin internet.");
+                break; // Detener bucle momentáneamente hasta el próximo ciclo
             }
         }
+    }
 
-        // REABRIR CUENTA: Devuelve los artículos al carrito/comanda activa para editar de verdad
-        function reabrirCuentaParaEditar(id) {
-            const pedido = historialPedidos.find(p => p.id === id);
-            if (pedido) {
-                if (comandaActiva.length > 0) {
-                    if (!confirm("Tienes productos en la comanda actual. ¿Deseas unificar las comandas?")) return;
-                }
+    // ==========================================
+    // 📡 CARGAR DESDE LA NUBE (MONITOR EN VIVO)
+    // ==========================================
+    async function cargarPedidosDesdeSheets() {
+        // Ejecutamos reintentos por si hay pendientes
+        await sincronizarPedidosPendientes();
+
+        try {
+            const response = await fetch(`${API_URL}?accion=obtenerPedidos`);
+            const data = await response.json();
+            
+            if (data.ok) {
+                // Preservamos las que hayamos creado offline en este celular y que no hayan subido
+                const localesNoSincronizados = historialPedidos.filter(p => p.sincronizado === "NO");
                 
-                // Cargamos los datos guardados de vuelta
-                comandaActiva = pedido.itemsRaw || [];
-                document.getElementById('num-mesa').value = pedido.mesa;
-                document.getElementById('estado-pago').value = pedido.estado;
-                document.getElementById('comentario-orden').value = pedido.notas;
-                
-                // Remover temporalmente del monitor de cocina mientras se edita
-                historialPedidos = historialPedidos.filter(p => p.id !== id);
+                // Mezclamos lo que bajó de Google Sheets + lo pendiente local
+                historialPedidos = [...localesNoSincronizados, ...data.pedidos];
                 localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-
-                bitacoraAuditoria.unshift({
-                    id: Date.now(),
-                    mesa: pedido.mesa,
-                    total: pedido.total,
-                    detalles: pedido.detalles,
-                    fechaLog: new Date().toLocaleString(),
-                    accion: 'REABIERTO PARA MODIFICACIÓN'
-                });
-                localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
-
-                guardarYRenderComanda();
                 renderHistorial();
-                showToast("🛒 Productos devueltos a la Comanda para edición.");
-
-                if (window.innerWidth < 768) {
-                    switchView('view-comanda', document.getElementById('btn-tab-comanda'));
-                }
             }
+        } catch (error) {
+            console.log("Operando en modo offline. Usando datos guardados.");
+            renderHistorial(); // En caso de error de red, usamos lo que haya en LocalStorage
         }
+    }
 
-        function archivarPedidoHistorial(id) {
-            const pedido = historialPedidos.find(p => p.id === id);
-            if(pedido) {
-                bitacoraAuditoria.unshift({
-                    id: Date.now(),
-                    mesa: pedido.mesa,
-                    total: pedido.total,
-                    detalles: pedido.detalles,
-                    fechaLog: new Date().toLocaleString(),
-                    accion: `ARCHIVADO/BORRADOR POR EMPLEADO (Mesa ${pedido.mesa})`
-                });
-                localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
+    // Opciones del monitor: Cobrar / Cambiar estado
+    async function alternarEstadoPedido(id) {
+        const pedido = historialPedidos.find(p => p.id === id);
+        if (!pedido) return;
+
+        const nuevoEstado = (pedido.estado === 'Pagado') ? 'Pendiente' : 'Pagado';
+
+        // Cambio inmediato visual
+        pedido.estado = nuevoEstado;
+        renderHistorial();
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify({
+                    accion: "cambiarEstado",
+                    id: id,
+                    estado: nuevoEstado
+                })
+            });
+            const data = await response.json();
+            if (data.ok) {
+                showToast("🔄 Estado actualizado en la nube.");
+                cargarPedidosDesdeSheets();
             }
+        } catch (error) {
+            showToast("⚠️ Estado cambiado localmente. Sin conexión.");
+        }
+    }
 
+    // Reabrir cuenta local para reedición rápida
+    function reabrirCuentaParaEditar(id) {
+        const pedido = historialPedidos.find(p => p.id === id);
+        if (pedido) {
+            if (comandaActiva.length > 0) {
+                if (!confirm("Tienes productos en la comanda actual. ¿Deseas unificar las comandas?")) return;
+            }
+            
+            comandaActiva = pedido.itemsRaw || [];
+            document.getElementById('num-mesa').value = pedido.mesa;
+            document.getElementById('estado-pago').value = pedido.estado;
+            document.getElementById('comentario-orden').value = pedido.notas;
+            
             historialPedidos = historialPedidos.filter(p => p.id !== id);
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+
+            bitacoraAuditoria.unshift({
+                id: Date.now(),
+                mesa: pedido.mesa,
+                total: pedido.total,
+                detalles: pedido.detalles,
+                fechaLog: new Date().toLocaleString(),
+                accion: 'REABIERTO PARA MODIFICACIÓN'
+            });
+            localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
+
+            guardarYRenderComanda();
             renderHistorial();
-            showToast("🗑️ Orden archivada.");
+            showToast("🛒 Devuelto a la comanda activa.");
+
+            if (window.innerWidth < 768) {
+                switchView('view-comanda', document.getElementById('btn-tab-comanda'));
+            }
+        }
+    }
+
+    // Archivar pedido en el backend
+    async function archivarPedidoHistorial(id) {
+        if (!confirm("¿Deseas archivar este pedido? Elminará el ticket del monitor en vivo.")) return;
+
+        const pedido = historialPedidos.find(p => p.id === id);
+        if(pedido) {
+            bitacoraAuditoria.unshift({
+                id: Date.now(),
+                mesa: pedido.mesa,
+                total: pedido.total,
+                detalles: pedido.detalles,
+                fechaLog: new Date().toLocaleString(),
+                accion: `ARCHIVADO POR EMPLEADO (Mesa ${pedido.mesa})`
+            });
+            localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
         }
 
-        function renderHistorial() {
-            const lista = document.getElementById('lista-historial');
-            
-            // El balance calcula todo el flujo real, evitando pérdidas si limpian pantalla
-            const totalDinero = historialPedidos.reduce((acc, p) => p.estado === 'Pagado' ? acc + p.total : acc, 0);
-            document.getElementById('balance-dinero').innerText = `$${totalDinero.toLocaleString()}`;
-            document.getElementById('balance-cantidad').innerText = historialPedidos.filter(p => p.estado === 'Pendiente').length;
+        // Remover visualmente rápido
+        historialPedidos = historialPedidos.filter(p => p.id !== id);
+        localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+        renderHistorial();
 
-            if(historialPedidos.length === 0) {
-                lista.innerHTML = `<div style="color:#aaa; text-align:center; padding:35px; font-size:0.9rem;">No hay comandas activas en cocina.</div>`;
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify({
+                    accion: "archivarPedido",
+                    id: id
+                })
+            });
+            const data = await response.json();
+            if (data.ok) {
+                showToast("🗑️ Orden archivada de forma permanente.");
+                cargarPedidosDesdeSheets();
+            }
+        } catch (error) {
+            showToast("⚠️ Eliminado localmente. Se actualizará en la nube luego.");
+        }
+    }
+
+    function renderHistorial() {
+        const lista = document.getElementById('lista-historial');
+        
+        const totalDinero = historialPedidos.reduce((acc, p) => p.estado === 'Pagado' ? acc + Number(p.total) : acc, 0);
+        document.getElementById('balance-dinero').innerText = `$${totalDinero.toLocaleString()}`;
+        document.getElementById('balance-cantidad').innerText = historialPedidos.filter(p => p.estado === 'Pendiente').length;
+
+        if(historialPedidos.length === 0) {
+            lista.innerHTML = `<div style="color:#aaa; text-align:center; padding:35px; font-size:0.9rem;">No hay comandas activas en cocina.</div>`;
+            return;
+        }
+
+        lista.innerHTML = historialPedidos.map(p => `
+            <div class="pedido-ticket ${p.estado === 'Pagado' ? 'pagado' : ''}">
+                <div class="ticket-info">
+                    <span style="font-weight:bold; font-size:0.9rem;">Mesa ${p.mesa} ➔ ${p.estado === 'Pagado' ? '✅ Pagado' : '⏳ En Cocina'}</span>
+                    <span style="color:#495057; margin-top:2px;">${p.detalles}</span>
+                    ${p.notas ? `<span class="ticket-notas">📌 ${p.notas}</span>` : ''}
+                </div>
+                <div class="ticket-acciones">
+                    <strong style="font-size:0.95rem;">$${Number(p.total).toLocaleString()}</strong>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn-ticket-status" onclick="alternarEstadoPedido(${p.id})">
+                            ${p.estado === 'Pagado' ? 'Desmarcar' : '💵 Cobrar'}
+                        </button>
+                        <button class="btn-ticket-status" style="background:#f1f3f5;" onclick="reabrirCuentaParaEditar(${p.id})">
+                            ✏️ Editar
+                        </button>
+                    </div>
+                    <button class="btn-ticket-del" onclick="archivarPedidoHistorial(${p.id})">✕</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function verHistorialAuditoria() {
+        const clave = prompt("Introduce la clave de administrador para auditar las cuentas:");
+        if(clave === "1234") {
+            if(bitacoraAuditoria.length === 0) {
+                alert("No hay registros financieros guardados el día de hoy.");
                 return;
             }
-
-            lista.innerHTML = historialPedidos.map(p => `
-                <div class="pedido-ticket ${p.estado === 'Pagado' ? 'pagado' : ''}">
-                    <div class="ticket-info">
-                        <span style="font-weight:bold; font-size:0.9rem;">Mesa ${p.mesa} ➔ ${p.estado === 'Pagado' ? '✅ Pagado' : '⏳ En Cocina'}</span>
-                        <span style="color:#495057; margin-top:2px;">${p.detalles}</span>
-                        ${p.notas ? `<span class="ticket-notas">📌 ${p.notas}</span>` : ''}
-                    </div>
-                    <div class="ticket-acciones">
-                        <strong style="font-size:0.95rem;">$${p.total.toLocaleString()}</strong>
-                        <div style="display:flex; gap:6px;">
-                            <button class="btn-ticket-status" onclick="alternarEstadoPedido(${p.id})">
-                                ${p.estado === 'Pagado' ? 'Desmarcar' : '💵 Cobrar'}
-                            </button>
-                            <button class="btn-ticket-status" style="background:#f1f3f5;" onclick="reabrirCuentaParaEditar(${p.id})">
-                                ✏️ Editar
-                            </button>
-                        </div>
-                        <button class="btn-ticket-del" onclick="archivarPedidoHistorial(${p.id})">✕</button>
-                    </div>
-                </div>
-            `).join('');
+            const informe = bitacoraAuditoria.map(b => `[${b.fechaLog}] - ${b.accion}\nDetalle: Mesa ${b.mesa} ($${Number(b.total).toLocaleString()}) -> ${b.detalles}\n-----------------------`).join('\n');
+            alert(`--- BITÁCORA INMUNE DE AUDITORÍA ---\n\n${informe}`);
+        } else {
+            alert("❌ Clave incorrecta. Acceso denegado por seguridad.");
         }
+    }
 
-        // PANEL SECRETO DE CONTROL DE CAJA
-        function verHistorialAuditoria() {
-            const clave = prompt("Introduce la clave de administrador para auditar las cuentas:");
-            if(clave === "1234") { // Cambia esta contraseña cuando gustes
-                if(bitacoraAuditoria.length === 0) {
-                    alert("No hay registros financieros guardados el día de hoy.");
-                    return;
-                }
-                const informe = bitacoraAuditoria.map(b => `[${b.fechaLog}] - ${b.accion}\nDetalle: Mesa ${b.mesa} ($${b.total.toLocaleString()}) -> ${b.detalles}\n-----------------------`).join('\n');
-                alert(`--- BITÁCORA INMUNE DE AUDITORÍA ---\n\n${informe}`);
-            } else {
-                alert("❌ Clave incorrecta. Acceso denegado por seguridad.");
-            }
-        }
-
-        // Inicialización nativa
-        initCategorias();
-        renderGrid();
-        guardarYRenderComanda();
-        renderHistorial();
-    </script>
-</body>
-</html>
+    // ==========================================
+    // ⚙️ INICIALIZACIÓN Y BUCLE DE SINCRONIZACIÓN
+    // ==========================================
+    initCategorias();
+    renderGrid();
+    guardarYRenderComanda();
+    
+    // Cambiamos renderHistorial() por la función que consulta a Google Sheets
+    cargarPedidosDesdeSheets();
+    
+    // Monitor activo en tiempo real: Se actualiza solo cada 12 segundos
+    setInterval(cargarPedidosDesdeSheets, 12000);
+</script>

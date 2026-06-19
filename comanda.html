@@ -1040,6 +1040,6 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
     // Cambiamos renderHistorial() por la función que consulta a Google Sheets
     cargarPedidosDesdeSheets();
     
-    // Monitor activo en tiempo real: Se actualiza solo cada 12 segundos
-    setInterval(cargarPedidosDesdeSheets, 12000);
+    // Monitor activo en tiempo real: Se actualiza solo cada 30 segundos
+    setInterval(cargarPedidosDesdeSheets, 30000);
 </script>

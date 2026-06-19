@@ -752,7 +752,6 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
         const textoItems = comandaActiva.map(i => `${i.cantidad}x ${i.nombre}`).join(', ');
 
-        // Creamos la orden con un marcador para saber si ya subió a Google Sheets
         const nuevoPedido = {
             id: Date.now(),
             mesa: mesa,
@@ -760,44 +759,43 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
             notas: notas,
             total: total,
             detalles: textoItems,
-            itemsRaw: [...comandaActiva], // Guardamos estructura original por si editamos
-            sincronizado: "NO" // <-- Flag Offline-First clave
+            itemsRaw: [...comandaActiva], 
+            sincronizado: "NO" 
         };
 
-        // 1. Guardar de forma inmediata a nivel local (Tolerancia a fallas)
         historialPedidos.unshift(nuevoPedido);
         localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
         
         bitacoraAuditoria.unshift({...nuevoPedido, fechaLog: new Date().toLocaleString(), accion: 'CREADO'});
         localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
 
-        // Limpiar carrito
         comandaActiva = [];
         localStorage.removeItem('comandaActiva');
         document.getElementById('comentario-orden').value = "";
         
         guardarYRenderComanda();
-        renderHistorial(); // Se pinta en la pantalla del celular al instante
+        renderHistorial(); 
         showToast(`⚡ Mesa ${mesa} guardada localmente...`);
 
         if (window.innerWidth < 768) {
             switchView('view-monitor', document.getElementById('btn-tab-monitor'));
         }
 
-        // 2. Intentar subirlo a Google en segundo plano
+        // USO DE URLSearchParams (Igual que en tu código funcional)
+        const params = new URLSearchParams({
+            accion: "nuevoPedido",
+            mesa: nuevoPedido.mesa,
+            total: nuevoPedido.total,
+            items: nuevoPedido.detalles,
+            notas: nuevoPedido.notas,
+            metodoPago: "Efectivo",
+            mesero: "Dispositivo Móvil"
+        });
+
         try {
             const response = await fetch(API_URL, {
                 method: "POST",
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify({
-                    accion: "nuevoPedido",
-                    mesa: nuevoPedido.mesa,
-                    total: nuevoPedido.total,
-                    items: nuevoPedido.detalles,
-                    notas: nuevoPedido.notas,
-                    metodoPago: "Efectivo",
-                    mesero: "Dispositivo Móvil"
-                })
+                body: params
             });
             const resultado = await response.json();
 
@@ -811,7 +809,6 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
             showToast(`⚠️ Guardado offline. Se subirá al recuperar internet.`);
         }
     }
-
     // ==========================================
     // 🔄 SINCRONIZADOR INTERNO (REINTENTOS AUTOMÁTICOS)
     // ==========================================
@@ -820,17 +817,20 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         if (pendientes.length === 0) return;
 
         for (let pedido of pendientes) {
+            const params = new URLSearchParams({
+                accion: "nuevoPedido",
+                mesa: pedido.mesa,
+                total: pedido.total,
+                items: pedido.detalles,
+                notas: pedido.notas,
+                metodoPago: "Efectivo",
+                mesero: "Dispositivo Móvil"
+            });
+
             try {
                 const response = await fetch(API_URL, {
                     method: "POST",
-                    headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify({
-                        accion: "nuevoPedido",
-                        mesa: pedido.mesa,
-                        total: pedido.total,
-                        items: pedido.detalles,
-                        notas: pedido.notas
-                    })
+                    body: params
                 });
                 const resultado = await response.json();
                 
@@ -841,7 +841,7 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
                 }
             } catch (error) {
                 console.log("El dispositivo sigue sin internet.");
-                break; // Detener bucle momentáneamente hasta el próximo ciclo
+                break; 
             }
         }
     }
@@ -879,19 +879,19 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
 
         const nuevoEstado = (pedido.estado === 'Pagado') ? 'Pendiente' : 'Pagado';
 
-        // Cambio inmediato visual
         pedido.estado = nuevoEstado;
         renderHistorial();
+
+        const params = new URLSearchParams({
+            accion: "cambiarEstado",
+            id: id,
+            estado: nuevoEstado
+        });
 
         try {
             const response = await fetch(API_URL, {
                 method: "POST",
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify({
-                    accion: "cambiarEstado",
-                    id: id,
-                    estado: nuevoEstado
-                })
+                body: params
             });
             const data = await response.json();
             if (data.ok) {
@@ -941,7 +941,7 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
 
     // Archivar pedido en el backend
     async function archivarPedidoHistorial(id) {
-        if (!confirm("¿Deseas archivar este pedido? Elminará el ticket del monitor en vivo.")) return;
+        if (!confirm("¿Deseas archivar este pedido? Eliminará el ticket del monitor en vivo.")) return;
 
         const pedido = historialPedidos.find(p => p.id === id);
         if(pedido) {
@@ -956,19 +956,19 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
             localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
         }
 
-        // Remover visualmente rápido
         historialPedidos = historialPedidos.filter(p => p.id !== id);
         localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
         renderHistorial();
 
+        const params = new URLSearchParams({
+            accion: "archivarPedido",
+            id: id
+        });
+
         try {
             const response = await fetch(API_URL, {
                 method: "POST",
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify({
-                    accion: "archivarPedido",
-                    id: id
-                })
+                body: params
             });
             const data = await response.json();
             if (data.ok) {
@@ -980,6 +980,7 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         }
     }
 
+        
     function renderHistorial() {
         const lista = document.getElementById('lista-historial');
         

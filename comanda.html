@@ -498,7 +498,12 @@
 
         <section id="view-monitor" class="section-view">
             <div class="monitor-wrapper">
-                <h3 style="margin-bottom:10px; font-size: 1.15rem;">Monitor en Vivo</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
+    <h3 style="font-size: 1.15rem; margin: 0;">Monitor en Vivo</h3>
+    <button onclick="cargarPedidosDesdeSheets()" style="background: var(--success); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">
+        🔄 Actualizar
+    </button>
+</div>
                 
                 <div class="balance-box">
                     <span>Caja Recaudada: <strong id="balance-dinero">$0</strong></span>
@@ -758,7 +763,7 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
             estado: estado,
             notas: notas,
             total: total,
-            detalles: textoItems,
+            items: textoItems,
             itemsRaw: [...comandaActiva], 
             sincronizado: "NO" 
         };
@@ -781,22 +786,23 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
             switchView('view-monitor', document.getElementById('btn-tab-monitor'));
         }
 
-        // USO DE URLSearchParams (Igual que en tu código funcional)
-        const params = new URLSearchParams({
-            accion: "nuevoPedido",
-            mesa: nuevoPedido.mesa,
-            total: nuevoPedido.total,
-            items: nuevoPedido.detalles,
-            notas: nuevoPedido.notas,
-            metodoPago: "Efectivo",
-            mesero: "Dispositivo Móvil"
-        });
+        const payload = {
+    accion: "nuevoPedido",
+    mesa: nuevoPedido.mesa, 
+    total: nuevoPedido.total,
+    items: nuevoPedido.items,
+    notas: nuevoPedido.notas,
+    metodoPago: "Efectivo",
+    mesero: "Dispositivo Móvil"
+};
 
         try {
             const response = await fetch(API_URL, {
                 method: "POST",
-                body: params
+                redirect: "follow", // <-- Mantenlo, es buena práctica en Apps Script
+                body: JSON.stringify(payload) // <-- Aquí está la magia
             });
+
             const resultado = await response.json();
 
             if (resultado.ok) {
@@ -817,21 +823,22 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         if (pendientes.length === 0) return;
 
         for (let pedido of pendientes) {
-            const params = new URLSearchParams({
-                accion: "nuevoPedido",
-                mesa: pedido.mesa,
-                total: pedido.total,
-                items: pedido.detalles,
-                notas: pedido.notas,
-                metodoPago: "Efectivo",
-                mesero: "Dispositivo Móvil"
-            });
+            const payload = {
+    accion: "nuevoPedido",
+    mesa: nuevoPedido.mesa, 
+    total: nuevoPedido.total,
+    items: nuevoPedido.items,
+    notas: nuevoPedido.notas,
+    metodoPago: "Efectivo",
+    mesero: "Dispositivo Móvil"
+};
 
-            try {
-                const response = await fetch(API_URL, {
-                    method: "POST",
-                    body: params
-                });
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                redirect: "follow", // <-- Mantenlo, es buena práctica en Apps Script
+                body: JSON.stringify(payload) // <-- Aquí está la magia
+            });
                 const resultado = await response.json();
                 
                 if (resultado.ok) {
@@ -850,27 +857,33 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
     // 📡 CARGAR DESDE LA NUBE (MONITOR EN VIVO)
     // ==========================================
     async function cargarPedidosDesdeSheets() {
-        // Ejecutamos reintentos por si hay pendientes
-        await sincronizarPedidosPendientes();
+    // Ejecutamos reintentos por si hay pendientes
+    await sincronizarPedidosPendientes();
 
-        try {
-            const response = await fetch(`${API_URL}?accion=obtenerPedidos`);
-            const data = await response.json();
+    try {
+        const response = await fetch(`${API_URL}?accion=obtenerPedidos`);
+        const data = await response.json();
+        
+        if (data.ok) {
+            // Preservamos las que hayamos creado offline en este celular y que no hayan subido
+            const localesNoSincronizados = historialPedidos.filter(p => p.sincronizado === "NO");
             
-            if (data.ok) {
-                // Preservamos las que hayamos creado offline en este celular y que no hayan subido
-                const localesNoSincronizados = historialPedidos.filter(p => p.sincronizado === "NO");
-                
-                // Mezclamos lo que bajó de Google Sheets + lo pendiente local
-                historialPedidos = [...localesNoSincronizados, ...data.pedidos];
-                localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-                renderHistorial();
-            }
-        } catch (error) {
-            console.log("Operando en modo offline. Usando datos guardados.");
-            renderHistorial(); // En caso de error de red, usamos lo que haya en LocalStorage
+            // Mezclamos lo que bajó de Google Sheets + lo pendiente local
+            // .sort((a,b) => b.id - a.id) asegura que los más recientes salgan arriba o viceversa
+            const pedidosCombinados = [...localesNoSincronizados, ...data.pedidos];
+            
+            // Ordenamos de más viejo a más nuevo usando el ID (Timestamp de creación)
+            // Esto le ayuda a los meseros a ver qué pedidos llevan más tiempo esperando
+            historialPedidos = pedidosCombinados.sort((a, b) => a.id - b.id);
+            
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+            renderHistorial();
         }
+    } catch (error) {
+        console.log("Operando en modo offline. Usando datos guardados.");
+        renderHistorial(); // En caso de error de red, usamos lo que haya en LocalStorage
     }
+}
 
     // Opciones del monitor: Cobrar / Cambiar estado
     async function alternarEstadoPedido(id) {
@@ -882,16 +895,17 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         pedido.estado = nuevoEstado;
         renderHistorial();
 
-        const params = new URLSearchParams({
+        const payload = {
             accion: "cambiarEstado",
             id: id,
             estado: nuevoEstado
-        });
+        };
 
         try {
             const response = await fetch(API_URL, {
                 method: "POST",
-                body: params
+                redirect: "follow",
+                body: JSON.stringify(payload)
             });
             const data = await response.json();
             if (data.ok) {
@@ -905,39 +919,40 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
 
     // Reabrir cuenta local para reedición rápida
     function reabrirCuentaParaEditar(id) {
-        const pedido = historialPedidos.find(p => p.id === id);
-        if (pedido) {
-            if (comandaActiva.length > 0) {
-                if (!confirm("Tienes productos en la comanda actual. ¿Deseas unificar las comandas?")) return;
-            }
-            
-            comandaActiva = pedido.itemsRaw || [];
-            document.getElementById('num-mesa').value = pedido.mesa;
-            document.getElementById('estado-pago').value = pedido.estado;
-            document.getElementById('comentario-orden').value = pedido.notas;
-            
-            historialPedidos = historialPedidos.filter(p => p.id !== id);
-            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (pedido) {
+        if (comandaActiva.length > 0) {
+            if (!confirm("Tienes productos en la comanda actual. ¿Deseas unificar las comandas?")) return;
+        }
+        
+        // Al haber mapeado itemsRaw desde el Apps Script, aquí ya no será undefined 🎉
+        comandaActiva = pedido.itemsRaw || []; 
+        document.getElementById('num-mesa').value = pedido.mesa;
+        document.getElementById('estado-pago').value = pedido.estado;
+        document.getElementById('comentario-orden').value = pedido.notas;
+        
+        historialPedidos = historialPedidos.filter(p => p.id !== id);
+        localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
 
-            bitacoraAuditoria.unshift({
-                id: Date.now(),
-                mesa: pedido.mesa,
-                total: pedido.total,
-                detalles: pedido.detalles,
-                fechaLog: new Date().toLocaleString(),
-                accion: 'REABIERTO PARA MODIFICACIÓN'
-            });
-            localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
+        bitacoraAuditoria.unshift({
+            id: Date.now(),
+            mesa: pedido.mesa,
+            total: pedido.total,
+            items: pedido.items,
+            fechaLog: new Date().toLocaleString(),
+            accion: 'REABIERTO PARA MODIFICACIÓN'
+        });
+        localStorage.setItem('bitacoraAuditoria', JSON.stringify(bitacoraAuditoria));
 
-            guardarYRenderComanda();
-            renderHistorial();
-            showToast("🛒 Devuelto a la comanda activa.");
+        guardarYRenderComanda();
+        renderHistorial();
+        showToast("🛒 Devuelto a la comanda activa.");
 
-            if (window.innerWidth < 768) {
-                switchView('view-comanda', document.getElementById('btn-tab-comanda'));
-            }
+        if (window.innerWidth < 768) {
+            switchView('view-comanda', document.getElementById('btn-tab-comanda'));
         }
     }
+}
 
     // Archivar pedido en el backend
     async function archivarPedidoHistorial(id) {
@@ -949,7 +964,7 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
                 id: Date.now(),
                 mesa: pedido.mesa,
                 total: pedido.total,
-                detalles: pedido.detalles,
+                items: pedido.items,
                 fechaLog: new Date().toLocaleString(),
                 accion: `ARCHIVADO POR EMPLEADO (Mesa ${pedido.mesa})`
             });
@@ -960,15 +975,16 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
         renderHistorial();
 
-        const params = new URLSearchParams({
+        const payload = {
             accion: "archivarPedido",
             id: id
-        });
+        };
 
         try {
             const response = await fetch(API_URL, {
                 method: "POST",
-                body: params
+                redirect: "follow",
+                body: JSON.stringify(payload)
             });
             const data = await response.json();
             if (data.ok) {
@@ -992,28 +1008,54 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
             lista.innerHTML = `<div style="color:#aaa; text-align:center; padding:35px; font-size:0.9rem;">No hay comandas activas en cocina.</div>`;
             return;
         }
+        
 
-        lista.innerHTML = historialPedidos.map(p => `
-            <div class="pedido-ticket ${p.estado === 'Pagado' ? 'pagado' : ''}">
-                <div class="ticket-info">
-                    <span style="font-weight:bold; font-size:0.9rem;">Mesa ${p.mesa} ➔ ${p.estado === 'Pagado' ? '✅ Pagado' : '⏳ En Cocina'}</span>
-                    <span style="color:#495057; margin-top:2px;">${p.detalles}</span>
-                    ${p.notas ? `<span class="ticket-notas">📌 ${p.notas}</span>` : ''}
-                </div>
-                <div class="ticket-acciones">
-                    <strong style="font-size:0.95rem;">$${Number(p.total).toLocaleString()}</strong>
-                    <div style="display:flex; gap:6px;">
-                        <button class="btn-ticket-status" onclick="alternarEstadoPedido(${p.id})">
-                            ${p.estado === 'Pagado' ? 'Desmarcar' : '💵 Cobrar'}
-                        </button>
-                        <button class="btn-ticket-status" style="background:#f1f3f5;" onclick="reabrirCuentaParaEditar(${p.id})">
-                            ✏️ Editar
-                        </button>
-                    </div>
-                    <button class="btn-ticket-del" onclick="archivarPedidoHistorial(${p.id})">✕</button>
-                </div>
+        lista.innerHTML = historialPedidos.map(p => {
+    // 1. Ponemos la lógica de la hora AQUÍ ADENTRO (así sabe quién es 'p' en cada vuelta)
+    let horaFormateada = "--:--";
+
+    if (p.hora) {
+        // Convertimos el formato raro a un objeto de fecha de JavaScript
+        const fechaObjeto = new Date(p.hora);
+        
+        if (!isNaN(fechaObjeto.getTime())) {
+            // Le damos formato limpio: HH:mm:ss (ej: 14:30:15)
+            horaFormateada = fechaObjeto.toLocaleTimeString('es-CO', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        } else {
+            // Si por alguna razón Google Sheets nos mandó texto plano en vez de fecha
+            horaFormateada = p.hora; 
+        }
+    }
+
+    // 2. Ahora sí, devolvemos el HTML del ticket con la variable "horaFormateada"
+    return `
+        <div class="pedido-ticket ${p.estado === 'Pagado' ? 'pagado' : ''}">
+            <div class="ticket-info">
+                <span style="font-weight:bold; font-size:0.9rem;">Mesa ${p.mesa} ➔ ${p.estado === 'Pagado' ? '✅ Pagado' : '⏳ En Cocina'}</span>
+                <span style="color:#495057; margin-top:2px;">${p.items}</span>
+                ${p.notas ? `<span class="ticket-notas">📌 ${p.notas}</span>` : ''}
             </div>
-        `).join('');
+            <div class="ticket-acciones">
+                <strong style="font-size:0.95rem;">$${Number(p.total).toLocaleString()}</strong>
+                <span class="pedido-hora">⏱️ ${horaFormateada}</span>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn-ticket-status" onclick="alternarEstadoPedido(${p.id})">
+                        ${p.estado === 'Pagado' ? 'Desmarcar' : '💵 Cobrar'}
+                    </button>
+                    <button class="btn-ticket-status" style="background:#f1f3f5;" onclick="reabrirCuentaParaEditar(${p.id})">
+                        ✏️ Editar
+                    </button>
+                </div>
+                <button class="btn-ticket-del" onclick="archivarPedidoHistorial(${p.id})">✕</button>
+            </div>
+        </div>
+    `;
+}).join('');
     }
 
     function verHistorialAuditoria() {
@@ -1023,7 +1065,7 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
                 alert("No hay registros financieros guardados el día de hoy.");
                 return;
             }
-            const informe = bitacoraAuditoria.map(b => `[${b.fechaLog}] - ${b.accion}\nDetalle: Mesa ${b.mesa} ($${Number(b.total).toLocaleString()}) -> ${b.detalles}\n-----------------------`).join('\n');
+            const informe = bitacoraAuditoria.map(b => `[${b.fechaLog}] - ${b.accion}\nDetalle: Mesa ${b.mesa} ($${Number(b.total).toLocaleString()}) -> ${b.items}\n-----------------------`).join('\n');
             alert(`--- BITÁCORA INMUNE DE AUDITORÍA ---\n\n${informe}`);
         } else {
             alert("❌ Clave incorrecta. Acceso denegado por seguridad.");
@@ -1039,7 +1081,5 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
     
     // Cambiamos renderHistorial() por la función que consulta a Google Sheets
     cargarPedidosDesdeSheets();
-    
-    // Monitor activo en tiempo real: Se actualiza solo cada 30 segundos
-    setInterval(cargarPedidosDesdeSheets, 30000);
+        
 </script>

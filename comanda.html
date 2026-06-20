@@ -475,7 +475,24 @@
                 <div class="comanda-header">
                     <h3 style="color: var(--dark); font-size: 1.15rem;">Nueva Comanda</h3>
                     <div class="meta-inputs">
-                        <input type="number" id="num-mesa" placeholder="Mesa" min="1" value="1">
+                        <select id="num-mesa">
+    <option value="" disabled selected>📍 Seleccionar Mesa</option>
+    <option value="Mesa 1">🪑 Mesa 1</option>
+    <option value="Mesa 2">🪑 Mesa 2</option>
+    <option value="Mesa 3">🪑 Mesa 3</option>
+    <option value="Mesa 4">🪑 Mesa 4</option>
+    <option value="Mesa 5">🪑 Mesa 5</option>
+    <option value="Mesa 6">🪑 Mesa 6</option>
+    <option value="Mesa 7">🪑 Mesa 7</option>
+    <option value="Mesa 8">🪑 Mesa 8</option>
+    <option value="Mesa 9">🪑 Mesa 9</option>
+    <option value="Mesa 10">🪑 Mesa 10</option>
+    <option value="Mesa 11">🪑 Mesa 11</option>
+    <option value="Mesa 12">🪑 Mesa 12</option>
+    <option value="Para Llevar">🛍️ Para Llevar</option>
+    <option value="Domicilio">🛵 Domicilio</option>
+</select>
+
                         <select id="estado-pago">
                             <option value="Pendiente">❌ Por Pagar</option>
                             <option value="Pagado">✅ Ya Pagó</option>
@@ -751,7 +768,14 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
             return;
         }
         
-        const mesa = document.getElementById('num-mesa').value || "S/M";
+        const mesa = document.getElementById('num-mesa').value;
+        if (!mesa) {
+            showToast("⚠️ ¡Debes seleccionar una Mesa, Llevar o Domicilio!");
+            // Resalta visualmente el selector para llamar la atención del pulgar
+            document.getElementById('num-mesa').style.borderColor = "var(--danger)";
+            setTimeout(() => document.getElementById('num-mesa').style.borderColor = "var(--border)", 1500);
+            return;
+        }
         const estado = document.getElementById('estado-pago').value;
         const notas = document.getElementById('comentario-orden').value;
         const total = comandaActiva.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
@@ -1037,7 +1061,15 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         <div class="pedido-ticket ${p.estado === 'Pagado' ? 'pagado' : ''}">
             <div class="ticket-info">
                 <span style="font-weight:bold; font-size:0.9rem;">Mesa ${p.mesa} ➔ ${p.estado === 'Pagado' ? '✅ Pagado' : '⏳ En Cocina'}</span>
-                <span style="color:#495057; margin-top:2px;">${p.items}</span>
+                <div style="color: var(--dark); margin-top: 6px; font-size: 1.05rem; font-weight: 500; display: flex; flex-direction: column; gap: 4px; background: #fff8fa; padding: 8px; border-radius: 6px; border: 1px dashed #e8ccd7;">
+    ${p.items.split(', ').map(item => `
+        <div style="display: flex; align-items: center; border-bottom: 1px dotted #eee; padding-bottom: 2px;">
+            <span style="color: var(--primary); font-weight: bold; margin-right: 8px; font-size: 1.1rem;">• ${item.split('x ')[0]}x</span>
+            <span>${item.split('x ')[1]}</span>
+        </div>
+    `).join('')}
+</div>
+
                 ${p.notas ? `<span class="ticket-notas">📌 ${p.notas}</span>` : ''}
             </div>
             <div class="ticket-acciones">

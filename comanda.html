@@ -849,10 +849,10 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         for (let pedido of pendientes) {
             const payload = {
     accion: "nuevoPedido",
-    mesa: nuevoPedido.mesa, 
-    total: nuevoPedido.total,
-    items: nuevoPedido.items,
-    notas: nuevoPedido.notas,
+    mesa: pedido.mesa, 
+    total: pedido.total,
+    items: pedido.items,
+    notas: pedido.notas,
     metodoPago: "Efectivo",
     mesero: "Dispositivo Móvil"
 };

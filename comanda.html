@@ -949,8 +949,41 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
             if (!confirm("Tienes productos en la comanda actual. ¿Deseas unificar las comandas?")) return;
         }
         
-        // Al haber mapeado itemsRaw desde el Apps Script, aquí ya no será undefined 🎉
-        comandaActiva = pedido.itemsRaw || []; 
+        // --- RECONSTRUCTOR INTELIGENTE DESDE TEXTO (OPCIÓN A) ---
+        // Si viene de la nube, itemsRaw no existirá, así que recreamos el array leyendo el texto de 'items'
+        if (!pedido.itemsRaw || pedido.itemsRaw.length === 0) {
+            const nuevaComandaReconstruida = [];
+            // Separamos por coma cada producto (Ej: "2x Cremitas, 1x Milo" -> ["2x Cremitas", " 1x Milo"])
+            const partes = pedido.items.split(',');
+            
+            partes.forEach(parte => {
+                const fragmento = parte.trim();
+                if (!fragmento) return;
+                
+                // Buscamos dónde termina la 'x' del "1x " o "2x "
+                const posicionX = fragmento.indexOf('x');
+                if (posicionX !== -1) {
+                    const cantidad = parseInt(fragmento.substring(0, posicionX).trim()) || 1;
+                    const nombreProducto = fragmento.substring(posicionX + 1).trim();
+                    
+                    // Buscamos el producto en tu lista interna por su nombre exacto
+                    const prodOriginal = listaProductos.find(p => p.nombre.toLowerCase() === nombreProducto.toLowerCase());
+                    
+                    if (prodOriginal) {
+                        nuevaComandaReconstruida.push({
+                            ...prodOriginal,
+                            cantidad: cantidad
+                        });
+                    }
+                }
+            });
+            comandaActiva = nuevaComandaReconstruida;
+        } else {
+            // Si es un pedido local que sí tiene el objeto guardado, lo usa directamente
+            comandaActiva = pedido.itemsRaw;
+        }
+        // ---------------------------------------------------------
+
         document.getElementById('num-mesa').value = pedido.mesa;
         document.getElementById('estado-pago').value = pedido.estado;
         document.getElementById('comentario-orden').value = pedido.notas;
@@ -977,6 +1010,7 @@ let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
         }
     }
 }
+
 
     // Archivar pedido en el backend
     async function archivarPedidoHistorial(id) {

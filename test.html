@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Comanda Pro</title>
+    <style>
+        :root {
+            --primary: #d63384;
+            --primary-light: #fff0f6;
+            --success: #25D366;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #1a1a2e;
+            --bg: #f4f4f8;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text-muted: #64748b;
+            --nav-height: 65px;
+            --cat-height: 56px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* ── NAV MÓVIL ── */
+        .mobile-nav {
+            display: flex;
+            background: white;
+            border-top: 1px solid var(--border);
+            height: var(--nav-height);
+            position: fixed;
+            bottom: 0; width: 100%;
+            z-index: 2000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+        }
+        .nav-tab {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-size: 0.78rem; font-weight: 600;
+            color: #94a3b8; background: none; border: none;
+            cursor: pointer; position: relative; gap: 3px;
+            transition: color 0.15s;
+        }
+        .nav-tab .icon { font-size: 1.3rem; }
+        .nav-tab.active { color: var(--primary); }
+        .nav-tab.active::after {
+            content: ''; position: absolute; top: 0; left: 20%; right: 20%;
+            height: 3px; background: var(--primary); border-radius: 0 0 4px 4px;
+        }
+        .badge {
+            position: absolute; top: 6px; right: 22%;
+            background: var(--primary); color: white;
+            font-size: 0.7rem; padding: 1px 6px;
+            border-radius: 10px; font-weight: 700;
+            display: none;
+        }
+
+        /* ── LAYOUT ── */
+        .app-container {
+            display: flex; flex: 1;
+            height: calc(100vh - var(--nav-height));
+            overflow: hidden;
+        }
+        .section-view {
+            display: none; flex-direction: column;
+            width: 100%; height: 100%;
+            padding: 12px 12px 0;
+            overflow: hidden;
+        }
+        .section-view.active { display: flex; }
+
+        /* ── CATÁLOGO ── */
+        .search-bar {
+            display: flex; align-items: center;
+            background: white; border: 1px solid var(--border);
+            border-radius: 10px; padding: 0 12px;
+            margin-bottom: 10px; flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .search-bar input {
+            flex: 1; border: none; outline: none;
+            padding: 11px 8px; font-size: 0.95rem;
+            background: transparent; color: var(--dark);
+        }
+        .search-bar .clear-btn {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-muted); font-size: 1rem; padding: 4px;
+        }
+        .grid-productos-scroll {
+            flex: 1; overflow-y: auto;
+            padding-bottom: calc(var(--cat-height) + 80px);
+        }
+        .grid-productos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        .producto-celda {
+            background: white; border: 1.5px solid var(--border);
+            border-radius: 12px; padding: 10px 8px;
+            text-align: center; cursor: pointer;
+            display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center;
+            min-height: 148px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: transform 0.1s, border-color 0.1s;
+            position: relative;
+        }
+        .producto-celda:active { transform: scale(0.96); background: var(--primary-light); border-color: var(--primary); }
+        .producto-celda img {
+            width: 68px; height: 68px; object-fit: cover;
+            border-radius: 8px; margin-bottom: 6px; pointer-events: none;
+        }
+        .prod-nombre { font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
+        .prod-precio { font-size: 0.85rem; color: var(--primary); font-weight: 700; }
+        .prod-tiene-opciones {
+            position: absolute; top: 6px; right: 6px;
+            background: var(--warning); color: white;
+            font-size: 0.6rem; font-weight: 700;
+            padding: 2px 5px; border-radius: 4px;
+        }
+
+        /* ── CATEGORÍAS (barra fija abajo en móvil) ── */
+        .categorias-container {
+            background: white; padding: 8px 12px;
+            border-top: 1px solid var(--border);
+            position: fixed; bottom: var(--nav-height);
+            left: 0; width: 100%; height: var(--cat-height);
+            z-index: 1500;
+            box-shadow: 0 -3px 8px rgba(0,0,0,0.05);
+        }
+        .categorias-bar {
+            display: flex; gap: 8px;
+            overflow-x: auto; height: 100%;
+            align-items: center; scrollbar-width: none;
+        }
+        .categorias-bar::-webkit-scrollbar { display: none; }
+        .btn-categoria {
+            padding: 7px 16px; border: 1.5px solid var(--border);
+            background: var(--bg); border-radius: 20px;
+            cursor: pointer; font-weight: 600;
+            white-space: nowrap; font-size: 0.82rem;
+            color: var(--text-muted); flex-shrink: 0;
+            transition: all 0.15s;
+        }
+        .btn-categoria.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+        }
+
+        /* ── MODAL PERSONALIZACIÓN ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55); z-index: 9000;
+            display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: white; border-radius: 20px 20px 0 0;
+            padding: 20px; width: 100%; max-width: 480px;
+            max-height: 80vh; overflow-y: auto;
+            transform: translateY(30px); transition: transform 0.25s ease;
+        }
+        .modal-overlay.open .modal-box { transform: translateY(0); }
+        .modal-title {
+            font-size: 1.1rem; font-weight: 700;
+            color: var(--dark); margin-bottom: 4px;
+        }
+        .modal-precio {
+            color: var(--primary); font-weight: 700;
+            font-size: 1rem; margin-bottom: 16px;
+        }
+        .modal-section-label {
+            font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em;
+            text-transform: uppercase; color: var(--text-muted);
+            margin: 14px 0 8px;
+        }
+        .opciones-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px; margin-bottom: 8px;
+        }
+        .opcion-btn {
+            padding: 10px 8px; border: 1.5px solid var(--border);
+            border-radius: 10px; background: var(--bg);
+            cursor: pointer; font-size: 0.85rem; font-weight: 500;
+            text-align: center; transition: all 0.12s; color: var(--dark);
+        }
+        .opcion-btn.selected {
+            border-color: var(--primary); background: var(--primary-light);
+            color: var(--primary); font-weight: 700;
+        }
+        .adicion-btn {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 10px 12px;
+            border: 1.5px solid var(--border); border-radius: 10px;
+            background: var(--bg); cursor: pointer;
+            font-size: 0.85rem; transition: all 0.12s; margin-bottom: 6px;
+        }
+        .adicion-btn.selected {
+            border-color: var(--success); background: #f0fdf4;
+        }
+        .adicion-precio { color: var(--success); font-weight: 700; font-size: 0.82rem; }
+        .modal-nota-input {
+            width: 100%; padding: 10px 12px;
+            border: 1.5px solid var(--border); border-radius: 10px;
+            font-size: 0.9rem; outline: none; resize: none;
+            font-family: inherit; color: var(--dark);
+            background: var(--bg); margin-top: 6px;
+        }
+        .modal-nota-input:focus { border-color: var(--primary); background: white; }
+        .modal-footer {
+            display: flex; gap: 10px; margin-top: 18px;
+        }
+        .btn-modal-cancel {
+            flex: 1; padding: 13px;
+            border: 1.5px solid var(--border);
+            background: white; border-radius: 10px;
+            font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; color: var(--text-muted);
+        }
+        .btn-modal-confirm {
+            flex: 2; padding: 13px;
+            background: var(--primary); color: white;
+            border: none; border-radius: 10px;
+            font-size: 0.95rem; font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* ── COMANDA ── */
+        .comanda-wrapper {
+            display: flex; flex-direction: column; height: 100%;
+            background: white; border-radius: 14px;
+            border: 1px solid var(--border); overflow: hidden;
+        }
+        .comanda-header {
+            padding: 14px; border-bottom: 1px solid var(--border);
+            background: white; flex-shrink: 0;
+        }
+        .comanda-header h3 { font-size: 1.05rem; margin-bottom: 10px; }
+        .meta-inputs {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        }
+        .meta-inputs select, .meta-inputs input {
+            padding: 10px; border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 0.9rem;
+            outline: none; background: white; color: var(--dark);
+            font-family: inherit;
+        }
+        .meta-inputs select:focus, .meta-inputs input:focus {
+            border-color: var(--primary);
+        }
+        .campo-mesero {
+            margin-top: 8px;
+            padding: 10px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 0.9rem;
+            width: 100%; outline: none; font-family: inherit;
+        }
+        .campo-mesero:focus { border-color: var(--primary); }
+        .campo-nota-orden {
+            width: 100%; margin-top: 8px; padding: 9px 12px;
+            border: 1.5px solid var(--border); border-radius: 8px;
+            font-size: 0.85rem; outline: none; background: white;
+            font-family: inherit;
+        }
+        .campo-nota-orden:focus { border-color: var(--primary); }
+        .items-lista {
+            flex: 1; overflow-y: auto; padding: 12px;
+            background: #fafbfc; padding-bottom: 20px;
+        }
+        .vacia-msg {
+            text-align: center; color: var(--text-muted);
+            padding: 30px 20px; font-size: 0.9rem;
+        }
+        .vacia-msg .icon { font-size: 2.5rem; display: block; margin-bottom: 8px; }
+        .item-linea {
+            background: white; border: 1px solid var(--border);
+            border-radius: 10px; padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+        .item-linea-top {
+            display: flex; justify-content: space-between;
+            align-items: flex-start;
+        }
+        .item-nombre { font-weight: 600; font-size: 0.9rem; }
+        .item-specs {
+            font-size: 0.78rem; color: var(--text-muted);
+            margin-top: 3px; line-height: 1.4;
+        }
+        .item-precio { font-weight: 700; color: var(--primary); font-size: 0.9rem; white-space: nowrap; margin-left: 8px; }
+        .item-controles {
+            display: flex; align-items: center;
+            gap: 8px; margin-top: 8px;
+        }
+        .item-controles button {
+            width: 30px; height: 30px;
+            border: 1.5px solid var(--border);
+            background: white; border-radius: 7px;
+            font-weight: 700; cursor: pointer; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.1s;
+        }
+        .item-controles button:active { background: var(--primary-light); }
+        .item-cantidad { font-weight: 700; font-size: 1rem; min-width: 24px; text-align: center; }
+        .btn-eliminar-item {
+            margin-left: auto; background: none !important;
+            border: none !important; color: var(--danger);
+            font-size: 1rem; cursor: pointer; padding: 4px !important;
+            width: auto !important; height: auto !important;
+        }
+        .comanda-footer {
+            padding: 14px; border-top: 2px solid var(--border);
+            background: white; flex-shrink: 0;
+        }
+        .pago-row {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px; margin-bottom: 12px;
+        }
+        .pago-btn {
+            padding: 9px; border: 1.5px solid var(--border);
+            border-radius: 8px; background: var(--bg);
+            cursor: pointer; font-size: 0.82rem;
+            font-weight: 600; color: var(--text-muted);
+            text-align: center; transition: all 0.12s;
+        }
+        .pago-btn.active {
+            border-color: var(--info); background: #eff6ff;
+            color: var(--info);
+        }
+        .totales-row {
+            display: flex; justify-content: space-between;
+            font-size: 1.2rem; font-weight: 700;
+            margin-bottom: 12px; color: var(--dark);
+        }
+        .totales-row span:last-child { color: var(--primary); }
+        .btn-enviar {
+            width: 100%; background: var(--success); color: white;
+            border: none; padding: 14px; font-size: 1rem;
+            font-weight: 700; border-radius: 10px; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37,211,102,0.25);
+            transition: opacity 0.15s;
+        }
+        .btn-enviar:active { opacity: 0.85; }
+        .btn-vaciar {
+            width: 100%; background: none; color: var(--text-muted);
+            border: 1.5px solid var(--border); padding: 10px;
+            font-size: 0.85rem; font-weight: 600; border-radius: 8px;
+            cursor: pointer; margin-top: 8px;
+        }
+
+        /* ── MONITOR ── */
+        .monitor-wrapper {
+            display: flex; flex-direction: column; height: 100%;
+        }
+        .monitor-top {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 10px; flex-shrink: 0;
+        }
+        .monitor-top h3 { font-size: 1.05rem; }
+        .btn-refresh {
+            background: var(--success); color: white;
+            border: none; padding: 7px 13px; border-radius: 7px;
+            cursor: pointer; font-weight: 700; font-size: 0.82rem;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .balance-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px; margin-bottom: 10px; flex-shrink: 0;
+        }
+        .balance-card {
+            background: var(--dark); color: white;
+            border-radius: 10px; padding: 10px;
+            text-align: center;
+        }
+        .balance-card .label {
+            font-size: 0.7rem; opacity: 0.7;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .balance-card .valor {
+            font-size: 1rem; font-weight: 700; margin-top: 2px;
+        }
+        .balance-card.pagado { background: #15803d; }
+        .balance-card.pendiente { background: #b45309; }
+        .lista-pedidos-scroll {
+            flex: 1; overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        /* Tickets */
+        .pedido-ticket {
+            background: white; border-radius: 12px;
+            border-left: 5px solid var(--warning);
+            margin-bottom: 10px; overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .pedido-ticket.preparando { border-left-color: var(--info); }
+        .pedido-ticket.listo { border-left-color: var(--primary); }
+        .pedido-ticket.pagado { border-left-color: var(--success); }
+        .ticket-head {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 10px 12px 6px;
+        }
+        .ticket-mesa {
+            font-weight: 700; font-size: 0.95rem;
+        }
+        .ticket-estado-badge {
+            font-size: 0.7rem; font-weight: 700;
+            padding: 3px 9px; border-radius: 10px;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .badge-pendiente { background: #fef3c7; color: #92400e; }
+        .badge-preparando { background: #dbeafe; color: #1e40af; }
+        .badge-listo { background: #fce7f3; color: #9d174d; }
+        .badge-pagado { background: #dcfce7; color: #166534; }
+        .ticket-items {
+            padding: 6px 12px 8px;
+            border-top: 1px dashed var(--border);
+        }
+        .ticket-item-linea {
+            display: flex; align-items: flex-start;
+            gap: 6px; padding: 4px 0;
+            font-size: 0.85rem;
+            border-bottom: 1px dotted #f0f0f0;
+        }
+        .ticket-item-linea:last-child { border-bottom: none; }
+        .tick-qty {
+            font-weight: 700; color: var(--primary);
+            min-width: 22px;
+        }
+        .tick-nombre { flex: 1; }
+        .tick-specs {
+            font-size: 0.75rem; color: var(--text-muted);
+            display: block; margin-top: 1px;
+        }
+        .ticket-nota {
+            padding: 4px 12px 8px;
+            font-size: 0.78rem; color: var(--text-muted);
+            font-style: italic;
+        }
+        .ticket-foot {
+            display: flex; align-items: center;
+            padding: 8px 12px; border-top: 1px solid var(--border);
+            background: #fafbfc; gap: 6px; flex-wrap: wrap;
+        }
+        .ticket-total { font-weight: 700; font-size: 0.95rem; margin-right: auto; }
+        .ticket-hora { font-size: 0.75rem; color: var(--text-muted); }
+        .ticket-pago-badge {
+            font-size: 0.7rem; padding: 3px 8px;
+            border-radius: 8px; font-weight: 600;
+            background: #f1f5f9; color: var(--text-muted);
+        }
+        .btn-estado-ticket {
+            padding: 6px 11px; border-radius: 7px;
+            border: 1.5px solid var(--border); background: white;
+            font-size: 0.78rem; font-weight: 700; cursor: pointer;
+            transition: all 0.12s;
+        }
+        .btn-estado-ticket:hover { background: var(--bg); }
+        .btn-editar-ticket {
+            padding: 6px 11px; border-radius: 7px;
+            border: 1.5px solid var(--border); background: white;
+            font-size: 0.78rem; font-weight: 700; cursor: pointer;
+        }
+        .btn-archivar-ticket {
+            background: none; border: none; cursor: pointer;
+            color: var(--danger); font-size: 1.1rem; padding: 2px 4px;
+        }
+        .ticket-alerta-tiempo {
+            font-size: 0.72rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 6px;
+            background: #fee2e2; color: #991b1b;
+            animation: pulsar 1.5s infinite;
+        }
+        @keyframes pulsar { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+        /* ── TOAST ── */
+        #toast-container {
+            position: fixed; bottom: calc(var(--nav-height) + 80px);
+            left: 50%; transform: translateX(-50%) translateY(8px);
+            background: rgba(26,26,46,0.95); color: white;
+            padding: 10px 22px; border-radius: 30px;
+            font-size: 0.88rem; z-index: 9999;
+            opacity: 0; transition: all 0.2s ease;
+            pointer-events: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            white-space: nowrap;
+        }
+        #toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── DESKTOP ── */
+        @media (min-width: 768px) {
+            .mobile-nav { display: none; }
+            .app-container {
+                height: 100vh;
+                display: grid;
+                grid-template-columns: 1fr 360px 340px;
+            }
+            .section-view {
+                display: flex !important;
+                border-right: 1px solid var(--border);
+                height: 100vh; padding: 14px;
+            }
+            .section-view:last-child { border-right: none; }
+            .categorias-container {
+                position: static; width: 100%;
+                height: auto; border-top: none;
+                border-bottom: 1px solid var(--border);
+                box-shadow: none; padding: 8px 0 10px;
+                margin-bottom: 10px;
+            }
+            .grid-productos-scroll { padding-bottom: 20px; }
+            .comanda-footer { padding-bottom: 14px; }
+            .btn-enviar { margin-bottom: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- ════════════════════ CATÁLOGO ════════════════════ -->
+    <main id="view-catalogo" class="section-view active">
+        <div class="categorias-container">
+            <div class="categorias-bar" id="categorias-bar"></div>
+        </div>
+        <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" id="buscador" placeholder="Buscar producto..." oninput="buscarProducto(this.value)">
+            <button class="clear-btn" onclick="limpiarBusqueda()">✕</button>
+        </div>
+        <div class="grid-productos-scroll">
+            <div class="grid-productos" id="grid-productos"></div>
+        </div>
+    </main>
+
+    <!-- ════════════════════ COMANDA ════════════════════ -->
+    <aside id="view-comanda" class="section-view">
+        <div class="comanda-wrapper">
+            <div class="comanda-header">
+                <h3>📋 Nueva Comanda</h3>
+                <div class="meta-inputs">
+                    <select id="num-mesa">
+                        <option value="" disabled selected>📍 Mesa / Destino</option>
+                        <option value="Mesa 1">🪑 Mesa 1</option>
+                        <option value="Mesa 2">🪑 Mesa 2</option>
+                        <option value="Mesa 3">🪑 Mesa 3</option>
+                        <option value="Mesa 4">🪑 Mesa 4</option>
+                        <option value="Mesa 5">🪑 Mesa 5</option>
+                        <option value="Mesa 6">🪑 Mesa 6</option>
+                        <option value="Mesa 7">🪑 Mesa 7</option>
+                        <option value="Mesa 8">🪑 Mesa 8</option>
+                        <option value="Mesa 9">🪑 Mesa 9</option>
+                        <option value="Mesa 10">🪑 Mesa 10</option>
+                        <option value="Mesa 11">🪑 Mesa 11</option>
+                        <option value="Mesa 12">🪑 Mesa 12</option>
+                        <option value="Para Llevar">🛍️ Para Llevar</option>
+                        <option value="Domicilio">🛵 Domicilio</option>
+                    </select>
+                    <input type="text" id="campo-mesero" class="campo-mesero" placeholder="👤 Nombre mesero" style="margin-top:0;">
+                </div>
+                <input type="text" id="comentario-orden" class="campo-nota-orden" placeholder="📌 Nota general de la orden...">
+            </div>
+
+            <div class="items-lista" id="items-comanda">
+                <div class="vacia-msg">
+                    <span class="icon">🛒</span>
+                    Toca un producto para agregarlo
+                </div>
+            </div>
+
+            <div class="comanda-footer">
+                <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">Método de pago</div>
+                <div class="pago-row" id="pago-btns">
+                    <button class="pago-btn active" data-pago="Efectivo" onclick="seleccionarPago(this)">💵 Efectivo</button>
+                    <button class="pago-btn" data-pago="Nequi" onclick="seleccionarPago(this)">📱 Nequi</button>
+                    <button class="pago-btn" data-pago="Tarjeta" onclick="seleccionarPago(this)">💳 Tarjeta</button>
+                    <button class="pago-btn" data-pago="Datafono" onclick="seleccionarPago(this)">🖥️ Datafono</button>
+                </div>
+                <div class="totales-row">
+                    <span>Total</span>
+                    <span id="total-comanda">$0</span>
+                </div>
+                <button class="btn-enviar" onclick="procesarOrden()">⚡ Enviar a Cocina</button>
+                <button class="btn-vaciar" onclick="vaciarComanda()">🗑️ Limpiar comanda</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ════════════════════ MONITOR ════════════════════ -->
+    <section id="view-monitor" class="section-view">
+        <div class="monitor-wrapper">
+            <div class="monitor-top">
+                <h3>🖥️ Monitor en Vivo</h3>
+                <button class="btn-refresh" onclick="cargarPedidos()">🔄 Actualizar</button>
+            </div>
+            <div class="balance-grid">
+                <div class="balance-card">
+                    <div class="label">Comandas</div>
+                    <div class="valor" id="bal-count">0</div>
+                </div>
+                <div class="balance-card pagado">
+                    <div class="label">Pagado</div>
+                    <div class="valor" id="bal-pagado">$0</div>
+                </div>
+                <div class="balance-card pendiente">
+                    <div class="label">Pendiente</div>
+                    <div class="valor" id="bal-pendiente">$0</div>
+                </div>
+            </div>
+            <div class="lista-pedidos-scroll" id="lista-historial"></div>
+        </div>
+    </section>
+
+</div><!-- fin app-container -->
+
+<!-- NAV MÓVIL -->
+<nav class="mobile-nav">
+    <button class="nav-tab active" id="btn-tab-catalogo" onclick="switchView('view-catalogo', this)">
+        <span class="icon">📋</span> Menú
+    </button>
+    <button class="nav-tab" id="btn-tab-comanda" onclick="switchView('view-comanda', this)">
+        <span class="icon">🛒</span> Comanda
+        <span class="badge" id="badge-comanda">0</span>
+    </button>
+    <button class="nav-tab" id="btn-tab-monitor" onclick="switchView('view-monitor', this)">
+        <span class="icon">🖥️</span> Monitor
+    </button>
+</nav>
+
+<!-- MODAL PERSONALIZACIÓN -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModal(event)">
+    <div class="modal-box" id="modal-box">
+        <div class="modal-title" id="modal-titulo"></div>
+        <div class="modal-precio" id="modal-precio-base"></div>
+        <div id="modal-contenido"></div>
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="cerrarModalBtn()">Cancelar</button>
+            <button class="btn-modal-confirm" id="btn-confirmar-modal" onclick="confirmarModal()">Agregar ✓</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+const API_URL = "https://script.google.com/macros/s/AKfycbyTgsY2YYD5IZCmDXC_QjDTdFntpTG11VQrQbukrb19xSPjIx9F3JT1B5JOqO7jtU0x/exec";
+const POLLING_MS = 25000; // actualización automática del monitor cada 25s
+let metodoPagoActual = "Efectivo";
+let pollingTimer = null;
+
+// ═══════════════════════════════════════════════════════════
+//  CATÁLOGO — con campo "opciones" para personalización
+// ═══════════════════════════════════════════════════════════
+/*
+  Estructura de opciones:
+  {
+    grupos: [
+      {
+        label: "Sabor",           // texto que ve el mesero
+        tipo: "unico" | "multiple",  // unico = radio, multiple = checkbox
+        requerido: true,          // si es true, no se puede confirmar sin elegir
+        opciones: ["Vainilla","Fresa","Chocolate"]
+      }
+    ],
+    adiciones: [
+      { nombre: "Arequipe", precio: 3000 },
+      ...
+    ]
+  }
+*/
+
+const ADICIONES_GENERALES = [
+    { nombre: "Arequipe", precio: 3000 },
+    { nombre: "Chantilly", precio: 3000 },
+    { nombre: "Salsa de mora", precio: 3000 },
+    { nombre: "Salsa de maracuyá", precio: 3000 }
+];
+
+const SABORES_HELADO = ["Vainilla","Fresa","Chocolate","Mora","Mango","Maracuyá","Arequipe","Coco"];
+const SALSAS_MERENGON = ["Mora","Maracuyá","Frutos rojos","Lulo","Guanábana","Curuba"];
+const SABORES_CREMITAS = ["Vainilla","Chocolate","Café","Coco","Arequipe","Limón"];
+
+const listaProductos = [
+    // POSTRES
+    { id: 1,  categoria: "Postres", nombre: "Cremitas", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ",
+      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_CREMITAS }] } },
+    { id: 2,  categoria: "Postres", nombre: "Gelatina Pequeña con LC", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/1a9Gy3hm-oAUamMZnlKJiHrB1oEX0DsTC" },
+    { id: 3,  categoria: "Postres", nombre: "Gelatina Pequeña sin LC", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/1bpMy0TKOgvB7OQGXkE9AEbDJlcl7vNt4" },
+    { id: 4,  categoria: "Postres", nombre: "Arequipe Casero", precio: 5000, imgPostre: "https://statics.basalam.com/public/users/OxKxzw/01-04/8sZij0OXxnKSbfNHds1GNhqv4VbFhmS7h1TBzqmW4HElDG2X8P.jpg_256X256X70.jpg" },
+    { id: 5,  categoria: "Postres", nombre: "Arroz con Leche", precio: 7000, imgPostre: "https://centrolac.wordpress.com/wp-content/uploads/2014/02/post19-12.png?w=256&h=256" },
+    { id: 6,  categoria: "Postres", nombre: "Natilla", precio: 8000, imgPostre: "https://colmaiz.co/wp-content/uploads/2019/03/Producto-Preparacion-Natilla-1024x1024-1.png" },
+    { id: 7,  categoria: "Postres", nombre: "Gelatina Grande", precio: 8500, imgPostre: "https://lh3.googleusercontent.com/d/1rqIPaJrFMb1vIkPKRMWcEDkCoXNpJYAR" },
+    { id: 8,  categoria: "Postres", nombre: "Napoleón de Coco", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" },
+    { id: 9,  categoria: "Postres", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ",
+      opciones: { adiciones: ADICIONES_GENERALES } },
+    { id: 10, categoria: "Postres", nombre: "Fresas Achocolatadas", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv",
+      opciones: { adiciones: ADICIONES_GENERALES } },
+    { id: 11, categoria: "Postres", nombre: "Leche asada", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" },
+    { id: 12, categoria: "Postres", nombre: "Mousse", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr" },
+    { id: 13, categoria: "Postres", nombre: "Cheesecakes", precio: 9500, imgPostre: "https://img.freepik.com/psd-premium/deliciosa-rebanada-pastel-queso-fresa-aislada-sobre-fondo-transparente_1290427-9886.jpg" },
+    { id: 14, categoria: "Postres", nombre: "Pie de limón", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf" },
+    { id: 15, categoria: "Postres", nombre: "Tiramisú", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh" },
+    { id: 16, categoria: "Postres", nombre: "Torta tres leches", precio: 9500, imgPostre: "https://i.etsystatic.com/64503388/r/il/9d0573/7804607087/il_300x300.7804607087_kb0z.jpg" },
+    { id: 17, categoria: "Postres", nombre: "Cuajada", precio: 9800, imgPostre: "https://lh3.googleusercontent.com/d/1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq" },
+    { id: 18, categoria: "Postres", nombre: "Merengón Coguano", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn",
+      opciones: {
+        grupos: [{ label: "Salsa (elige hasta 3)", tipo: "multiple", requerido: true, max: 3, opciones: SALSAS_MERENGON }],
+        adiciones: ADICIONES_GENERALES
+      }
+    },
+    { id: 19, categoria: "Postres", nombre: "Merengón Especial", precio: 15000, imgPostre: "https://corporativo.heladospopsy.com/wp-content/uploads/2023/07/Miniaturas-17.png",
+      opciones: {
+        grupos: [
+          { label: "Salsa (elige hasta 3)", tipo: "multiple", requerido: true, max: 3, opciones: SALSAS_MERENGON },
+          { label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }
+        ],
+        adiciones: ADICIONES_GENERALES
+      }
+    },
+    { id: 20, categoria: "Postres", nombre: "Combo milhoja + Americano", precio: 15000, imgPostre: "https://thumbs.dreamstime.com/b/trozos-de-delicioso-pastel-kiev-servido-con-caf%C3%A9-sobre-una-mesa-madera-un-trozo-torta-vibrante-dos-ruedas-claro-color-amarillo-y-393125447.jpg" },
+    // DULCES
+    { id: 21, categoria: "Dulces", nombre: "Duraznos", precio: 8000, imgPostre: "https://www.shutterstock.com/image-photo/sliced-peaches-syrup-served-bowl-260nw-2681012909.jpg" },
+    { id: 22, categoria: "Dulces", nombre: "Brevas en almíbar", precio: 8000, imgPostre: "https://media.anmar.com.co/5145-home_default/brevas-en-almibar.jpg" },
+    { id: 23, categoria: "Dulces", nombre: "Brevas + arequipe", precio: 9000, imgPostre: "https://elrinconcolombiano.com/wp-content/uploads/2024/03/Brevas-con-arequipe-receta-500x500.jpg" },
+    { id: 24, categoria: "Dulces", nombre: "Mielmesabe", precio: 8000, imgPostre: "https://i.ytimg.com/vi/eoX2ZbKLLwU/sddefault.jpg" },
+    { id: 25, categoria: "Dulces", nombre: "Arequipe coco", precio: 9000, imgPostre: "https://www.recetasnestle.com.do/sites/default/files/srh_recipes/e52d42c50cefea31742607f58bb80381.png" },
+    { id: 26, categoria: "Dulces", nombre: "Natas", precio: 9000, imgPostre: "https://2.bp.blogspot.com/-SYAqJ7jyq8I/VVj1pGdgYDI/AAAAAAAACPo/kYUyWfT7vdw/s1600/Postre%2BNatas%2BSySPMS.jpg" },
+    { id: 27, categoria: "Dulces", nombre: "Papayuela", precio: 9000, imgPostre: "https://imagenes2.eltiempo.com/files/image_600_455/uploads/2023/05/27/64727c8bd05a9.jpeg" },
+    // HELADOS
+    { id: 28, categoria: "Helados", nombre: "Chocofresa con helado", precio: 14000, imgPostre: "https://images.rappi.com/restaurants_logo/choco-logo-1-1622671201005.png",
+      opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+    { id: 29, categoria: "Helados", nombre: "Cono 1 bolita", precio: 4200, imgPostre: "https://lamaletadecarla.com/wp-content/uploads/2020/02/helado-de-1-bola.png",
+      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+    { id: 30, categoria: "Helados", nombre: "Cono 2 bolitas", precio: 6500, imgPostre: "https://lamaletadecarla.com/wp-content/uploads/2020/02/helado-de-2-bolas.png",
+      opciones: { grupos: [{ label: "Sabores (elige 2)", tipo: "multiple", requerido: true, max: 2, opciones: SABORES_HELADO }] } },
+    { id: 31, categoria: "Helados", nombre: "Casero (paleta)", precio: 5000, imgPostre: "https://images.vexels.com/media/users/3/255392/isolated/lists/c184470777d169b68d15076bb5df383d-trazo-de-color-de-polo-de-hielo.png",
+      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+    { id: 32, categoria: "Helados", nombre: "Torta de Helado", precio: 8800, imgPostre: "https://www.laneveria.com.sv/wp-content/uploads/2021/07/2-porcion-helado.jpg",
+      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+    // PASABOCAS
+    { id: 33, categoria: "Pasabocas", nombre: "Fresa con chocolate", precio: 1200, imgPostre: "https://images.stockcake.com/public/7/5/f/75f513a5-78ba-45bf-b429-7731fb0944b8_medium/chocolate-dipped-pixel-stockcake.jpg" },
+    { id: 34, categoria: "Pasabocas", nombre: "Algodón pequeño", precio: 4200, imgPostre: "https://img.magnific.com/vector-gratis/composicion-realista-algodon-azucar-caramelo-realista-imagen-realista-muneca-humana-ilustracion-vector-palo-dulce_1284-30555.jpg" },
+    { id: 35, categoria: "Pasabocas", nombre: "Algodón grande", precio: 5200, imgPostre: "https://us.123rf.com/450wm/warat42/warat421712/warat42171200258/92574838-cotton-candy-in-plastic-cup-isolated-on-white-background-clipping-path.jpg" },
+    { id: 36, categoria: "Pasabocas", nombre: "Obleas", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20240705/ourmid/pngtree-delicious-wafer-treats-a-guide-to-flavors-and-varieties-png-image_12952792.png" },
+    { id: 37, categoria: "Pasabocas", nombre: "Obleas Especial", precio: 5500, imgPostre: "https://www.shutterstock.com/image-photo/wafer-oblea-arequipe-blackberry-sauce-260nw-2030844932.jpg" },
+    { id: 38, categoria: "Pasabocas", nombre: "Pan de yuca", precio: 5000, imgPostre: "https://st4.depositphotos.com/7622586/22524/i/450/depositphotos_225243534-stock-photo-baked-colombian-cassava-bread-pandeyuca.jpg" },
+    { id: 39, categoria: "Pasabocas", nombre: "Merenguitos", precio: 6000, imgPostre: "https://kudocook.com/wp-content/uploads/2024/09/627cc40a1aef0.jpg" },
+    { id: 40, categoria: "Pasabocas", nombre: "Rollitos Crema Chantilly", precio: 6500, imgPostre: "https://media.mdzol.com/p/061bc71dbd5d09a232566965768c8623/adjuntos/373/imagenes/001/604/0001604192/760x0/smart/si-lo-deseas-puedes-jugar-los-rellenos-y-la-decoracion-los-canoncitos.jpg" },
+    { id: 41, categoria: "Pasabocas", nombre: "Rollitos Arequipe", precio: 7500, imgPostre: "https://media.mdzol.com/p/57810ebd0ac5b1cb41597f1e382090f7/adjuntos/373/imagenes/001/913/0001913445/760x0/smart/receta-canoncitos-dulce-leche.png" },
+    { id: 42, categoria: "Pasabocas", nombre: "Torta Amapola", precio: 8000, imgPostre: "https://recetasjudias.com/wp-content/uploads/2018/11/Bizcocho-con-Semillas-de-Amapola2.jpg" },
+    { id: 142,categoria: "Pasabocas", nombre: "Torta Chocolate", precio: 8000, imgPostre: "https://www.shutterstock.com/image-photo/piece-chocolate-cake-on-white-260nw-2632078161.jpg" },
+    { id: 43, categoria: "Pasabocas", nombre: "Milhoja", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1TyDC2l6wmKUMP7qXpiovnDFw9tTgALEZ=w469-ra?authuser=0" },
+    { id: 44, categoria: "Pasabocas", nombre: "Chicharrón Cuajada", precio: 13000, imgPostre: "https://static.wixstatic.com/media/5419d5_afbe98bf0e744f5c92cf6f9f33ef19fe~mv2.jpg" },
+    { id: 45, categoria: "Pasabocas", nombre: "Corazones hojaldre", precio: 13000, imgPostre: "https://www.shutterstock.com/image-vector/sugar-palmier-illustration-isolated-on-260nw-2232529437.jpg" },
+    { id: 46, categoria: "Pasabocas", nombre: "Panelitas de leche", precio: 13000, imgPostre: "https://www.shutterstock.com/image-photo/handcrafted-blocks-milk-panelita-cut-600w-2662257409.jpg" },
+    { id: 47, categoria: "Pasabocas", nombre: "Repollas (unidad)", precio: 8500, imgPostre: "https://static.wixstatic.com/media/b808f3_7dc8c85bb0c34953b2f6c78aabd5aa40~mv2.jpg" },
+    { id: 48, categoria: "Pasabocas", nombre: "Eclair", precio: 8500, imgPostre: "https://png.pngtree.com/png-vector/20241101/ourmid/pngtree-chocolate-eclair-pastry-filled-with-creamy-custard-png-image_14224677.png" },
+    { id: 49, categoria: "Pasabocas", nombre: "Tortas con Helado", precio: 12500, imgPostre: "https://i.pinimg.com/originals/9d/60/92/9d609240b92a21e8d2d3e6bc73dcab94.png",
+      opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+    // BEBIDAS FRÍAS
+    { id: 50, categoria: "Bebidas Frías", nombre: "Agua Pequeña", precio: 2000, imgPostre: "https://licoresmedellin.com/cdn/shop/files/agua-cristal-personal-300mlagua-cristal-personal-300mlcristallicores-medellin-2467011.jpg?width=1214" },
+    { id: 51, categoria: "Bebidas Frías", nombre: "Agua Grande", precio: 3000, imgPostre: "https://tomatelavida.com.co/wp-content/uploads/2023/03/Agua-Cristal-2023-P.png" },
+    { id: 52, categoria: "Bebidas Frías", nombre: "Agua con Gas", precio: 2000, imgPostre: "https://api.lalicorera.com/storage/productos/licores/83601997-agua-cristal-con-gas.webp" },
+    { id: 53, categoria: "Bebidas Frías", nombre: "Coca Cola", precio: 3000, imgPostre: "https://www.coca-cola.com/content/dam/onexp/hn/es/brands/coca-cola/ccso_botella500ml.png" },
+    { id: 54, categoria: "Bebidas Frías", nombre: "Jugo de Caja", precio: 2500, imgPostre: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpuCEz0-E8m0UWNWiuP2lOewiURiw1iAewsg&s" },
+    { id: 55, categoria: "Bebidas Frías", nombre: "Jugo Natural en Agua", precio: 7000, imgPostre: "https://w7.pngwing.com/pngs/928/391/png-transparent-three-assorted-flavor-shakes-orange-juice-smoothie-cocktail-milkshake-strawberry-milkshake-material-png-material-food-strawberries.png",
+      opciones: { grupos: [{ label: "Fruta", tipo: "unico", requerido: true, opciones: ["Mora","Maracuyá","Lulo","Guanábana","Mango","Fresa","Guayaba","Mezcla"] }] } },
+    { id: 56, categoria: "Bebidas Frías", nombre: "Jugo Natural en Leche", precio: 8000, imgPostre: "https://w7.pngwing.com/pngs/938/40/png-transparent-smoothie-milkshake-orange-juice-fruit-juice-food-recipe-nutrition-thumbnail.png",
+      opciones: { grupos: [{ label: "Fruta", tipo: "unico", requerido: true, opciones: ["Mora","Maracuyá","Lulo","Guanábana","Mango","Fresa","Guayaba","Mezcla"] }] } },
+    { id: 57, categoria: "Bebidas Frías", nombre: "Malteadas", precio: 9500, imgPostre: "https://static.vecteezy.com/system/resources/thumbnails/053/349/437/small/colorful-drink-trio-in-glassware-png.png",
+      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: ["Vainilla","Fresa","Chocolate","Mora","Oreo","Arequipe"] }] } },
+    { id: 58, categoria: "Bebidas Frías", nombre: "Hatsu", precio: 12000, imgPostre: "https://mercasur.com.co/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6ODQ4NjUsInB1ciI6ImJsb2JfaWQifX0=--67f1e5358012f66bde25b9d79f558106d38bed99/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJqcGciLCJyZXNpemVfdG9fZml0IjpbNjAwLDYwMF19LCJwdXIiOiJ2YXJpYXRpb24ifX0=--121ebfcd4293f99df590ac1a60ec2d53d6f75b42/7702090048643" },
+    { id: 59, categoria: "Bebidas Frías", nombre: "Coca Cola Zero", precio: 3500, imgPostre: "https://nocomasmasmentiras.org/wp-content/uploads/2023/10/Coca-cola-sin-azucar-540x510-c-default.jpg" },
+    // BEBIDAS CALIENTES
+    { id: 60, categoria: "Bebidas Calientes", nombre: "Aromática", precio: 4800, imgPostre: "https://w7.pngwing.com/pngs/1007/585/png-transparent-green-tea-fizzy-drinks-ginger-tea-lemon-juice-tea-tea-cocktail-non-alcoholic-beverage-thumbnail.png" },
+    { id: 61, categoria: "Bebidas Calientes", nombre: "Americano", precio: 4500, imgPostre: "https://static.vecteezy.com/system/resources/thumbnails/069/564/525/small/hot-coffee-cup-with-saucer-and-coffee-beans-steam-rising-isolated-png.png" },
+    { id: 62, categoria: "Bebidas Calientes", nombre: "Espresso", precio: 4500, imgPostre: "https://www.shutterstock.com/image-photo/glass-espresso-coffee-splash-drop-600nw-2727091059.jpg" },
+    { id: 63, categoria: "Bebidas Calientes", nombre: "Milo", precio: 4800, imgPostre: "https://www.freepnglogos.com/uploads/logo-milo-png/logo-milo-long-john-silver-10.png" },
+    { id: 64, categoria: "Bebidas Calientes", nombre: "Cappuccino", precio: 4800, imgPostre: "https://photoshop-kopona.com/uploads/posts/2018-09/1537260549_im2.jpg" },
+    { id: 65, categoria: "Bebidas Calientes", nombre: "Latte", precio: 4800, imgPostre: "https://png.pngtree.com/png-vector/20250327/ourmid/pngtree-assorted-coffee-cups-including-cappuccino-cup-with-heart-png-image_15878581.png" },
+    { id: 66, categoria: "Bebidas Calientes", nombre: "Moka", precio: 4800, imgPostre: "https://img.magnific.com/psd-gratis/disfrute-lujosa-experiencia-chocolate-caliente-rico-crema-rematado-virutas-chocolate_191095-83178.jpg" },
+    { id: 67, categoria: "Bebidas Calientes", nombre: "Campesino", precio: 5500, imgPostre: "https://static.vecteezy.com/system/resources/previews/048/112/478/non_2x/cup-of-coffee-without-background-transparent-free-png.png" },
+    { id: 68, categoria: "Bebidas Calientes", nombre: "Affogato", precio: 8500, imgPostre: "https://thumbs.dreamstime.com/b/caf%C3%A9-affogato-crema-de-hielo-con-fondo-transparente-384065281.jpg",
+      opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+];
+
+// ═══════════════════════════════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════════════════════════════
+let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
+let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [];
+let categoriaActual = "Todos";
+let busquedaActual = "";
+
+// Estado del modal
+let modalProducto = null;
+let modalSelecciones = {}; // { grupoIndex: [opciones elegidas] }
+let modalAdiciones = [];   // [{ nombre, precio }]
+let modalNotaItem = "";
+
+// ═══════════════════════════════════════════════════════════
+//  UTILIDADES
+// ═══════════════════════════════════════════════════════════
+function optimizarUrl(url) {
+    if (!url) return fallbackImg();
+    if (url.includes("googleusercontent.com")) return url.split('=')[0] + "=w100";
+    const limpia = url.replace(/^https?:\/\//, '');
+    return `https://i0.wp.com/${limpia}?w=100&strip=all&quality=60`;
+}
+function fallbackImg() {
+    return "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3";
+}
+function formatPeso(n) { return '$' + Number(n).toLocaleString('es-CO'); }
+function showToast(msg, ms = 2200) {
+    const t = document.getElementById('toast-container');
+    t.innerText = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), ms);
+}
+function switchView(viewId, btn) {
+    if (window.innerWidth < 768) {
+        document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        btn.classList.add('active');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CATÁLOGO
+// ═══════════════════════════════════════════════════════════
+function initCategorias() {
+    const bar = document.getElementById('categorias-bar');
+    const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
+    bar.innerHTML = cats.map(c =>
+        `<button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCategoria('${c}', this)">${c}</button>`
+    ).join('');
+}
+function cambiarCategoria(cat, btn) {
+    document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    categoriaActual = cat;
+    renderGrid();
+}
+function buscarProducto(texto) {
+    busquedaActual = texto.toLowerCase().trim();
+    renderGrid();
+}
+function limpiarBusqueda() {
+    document.getElementById('buscador').value = '';
+    busquedaActual = '';
+    renderGrid();
+}
+function renderGrid() {
+    const grid = document.getElementById('grid-productos');
+    let filtrados = listaProductos.filter(p =>
+        (categoriaActual === "Todos" || p.categoria === categoriaActual) &&
+        (busquedaActual === "" || p.nombre.toLowerCase().includes(busquedaActual))
+    );
+    if (filtrados.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:30px; font-size:0.9rem;">No se encontraron productos</div>`;
+        return;
+    }
+    grid.innerHTML = filtrados.map(p => {
+        const tieneOpciones = p.opciones && (p.opciones.grupos?.length || p.opciones.adiciones?.length);
+        return `
+        <div class="producto-celda" onclick="tocaProducto(${p.id})">
+            ${tieneOpciones ? '<span class="prod-tiene-opciones">OPC</span>' : ''}
+            <img src="${optimizarUrl(p.imgPostre)}" onerror="this.src='${fallbackImg()}'">
+            <p class="prod-nombre">${p.nombre}</p>
+            <p class="prod-precio">${formatPeso(p.precio)}</p>
+        </div>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODAL PERSONALIZACIÓN
+// ═══════════════════════════════════════════════════════════
+function tocaProducto(id) {
+    const prod = listaProductos.find(p => p.id === id);
+    if (!prod) return;
+
+    const tieneOpciones = prod.opciones && (prod.opciones.grupos?.length || prod.opciones.adiciones?.length);
+    if (!tieneOpciones) {
+        // Sin opciones → agregar directo
+        agregarItemSimple(prod);
+        return;
+    }
+    // Con opciones → abrir modal
+    abrirModal(prod);
+}
+
+function agregarItemSimple(prod) {
+    const existente = comandaActiva.find(i => i.id === prod.id && !i.specs && !i.notaItem);
+    if (existente) {
+        existente.cantidad++;
+    } else {
+        comandaActiva.push({ ...prod, cantidad: 1, specs: '', adicionesSelec: [], notaItem: '', precioFinal: prod.precio });
+    }
+    guardarYRender();
+    showToast(`✅ ${prod.nombre} agregado`);
+}
+
+function abrirModal(prod) {
+    modalProducto = prod;
+    modalSelecciones = {};
+    modalAdiciones = [];
+    modalNotaItem = '';
+
+    document.getElementById('modal-titulo').textContent = prod.nombre;
+    document.getElementById('modal-precio-base').textContent = formatPeso(prod.precio);
+
+    let html = '';
+    const opts = prod.opciones;
+
+    if (opts.grupos) {
+        opts.grupos.forEach((grupo, gi) => {
+            modalSelecciones[gi] = [];
+            const esMultiple = grupo.tipo === 'multiple';
+            const maxLabel = grupo.max ? ` (máx. ${grupo.max})` : '';
+            html += `<div class="modal-section-label">${grupo.label}${maxLabel}${grupo.requerido ? ' *' : ''}</div>`;
+            html += `<div class="opciones-grid" id="grupo-${gi}">`;
+            grupo.opciones.forEach(op => {
+                html += `<button class="opcion-btn" data-grupo="${gi}" data-opcion="${op}" onclick="toggleOpcion(this, ${gi}, '${op}', ${esMultiple}, ${grupo.max || 99})">${op}</button>`;
+            });
+            html += `</div>`;
+        });
+    }
+
+    if (opts.adiciones) {
+        html += `<div class="modal-section-label">Adiciones (+${formatPeso(3000)} c/u)</div>`;
+        opts.adiciones.forEach(ad => {
+            html += `<div class="adicion-btn" id="ad-${ad.nombre.replace(/\s/g,'_')}" onclick="toggleAdicion(this, '${ad.nombre}', ${ad.precio})">
+                <span>${ad.nombre}</span>
+                <span class="adicion-precio">+${formatPeso(ad.precio)}</span>
+            </div>`;
+        });
+    }
+
+    html += `<div class="modal-section-label">Nota para cocina (opcional)</div>
+    <textarea class="modal-nota-input" id="modal-nota" rows="2" placeholder="Sin azúcar, sin hielo, término medio..." oninput="modalNotaItem = this.value"></textarea>`;
+
+    document.getElementById('modal-contenido').innerHTML = html;
+    document.getElementById('modal-overlay').classList.add('open');
+}
+
+function toggleOpcion(btn, grupoIdx, opcion, esMultiple, max) {
+    const grupo = modalProducto.opciones.grupos[grupoIdx];
+    if (!modalSelecciones[grupoIdx]) modalSelecciones[grupoIdx] = [];
+
+    if (esMultiple) {
+        const idx = modalSelecciones[grupoIdx].indexOf(opcion);
+        if (idx !== -1) {
+            modalSelecciones[grupoIdx].splice(idx, 1);
+            btn.classList.remove('selected');
+        } else {
+            if (modalSelecciones[grupoIdx].length >= max) {
+                showToast(`⚠️ Solo puedes elegir ${max}`);
+                return;
+            }
+            modalSelecciones[grupoIdx].push(opcion);
+            btn.classList.add('selected');
+        }
+    } else {
+        // Radio: deseleccionar los demás
+        document.querySelectorAll(`[data-grupo="${grupoIdx}"]`).forEach(b => b.classList.remove('selected'));
+        modalSelecciones[grupoIdx] = [opcion];
+        btn.classList.add('selected');
+    }
+}
+
+function toggleAdicion(btn, nombre, precio) {
+    const idx = modalAdiciones.findIndex(a => a.nombre === nombre);
+    if (idx !== -1) {
+        modalAdiciones.splice(idx, 1);
+        btn.classList.remove('selected');
+    } else {
+        modalAdiciones.push({ nombre, precio });
+        btn.classList.add('selected');
+    }
+}
+
+function confirmarModal() {
+    const prod = modalProducto;
+    const opts = prod.opciones;
+
+    // Validar grupos requeridos
+    if (opts.grupos) {
+        for (let i = 0; i < opts.grupos.length; i++) {
+            const g = opts.grupos[i];
+            if (g.requerido && (!modalSelecciones[i] || modalSelecciones[i].length === 0)) {
+                showToast(`⚠️ Debes elegir: ${g.label}`);
+                return;
+            }
+        }
+    }
+
+    // Construir descripción de specs
+    const partes = [];
+    if (opts.grupos) {
+        opts.grupos.forEach((g, i) => {
+            if (modalSelecciones[i]?.length) partes.push(modalSelecciones[i].join(' + '));
+        });
+    }
+    if (modalAdiciones.length) partes.push('+ ' + modalAdiciones.map(a => a.nombre).join(', '));
+    const nota = document.getElementById('modal-nota')?.value || '';
+
+    const precioAdiciones = modalAdiciones.reduce((s, a) => s + a.precio, 0);
+    const precioFinal = prod.precio + precioAdiciones;
+    const specs = partes.join(' | ');
+
+    // Cada item con opciones es único → siempre push (no merge)
+    comandaActiva.push({
+        ...prod,
+        cantidad: 1,
+        specs: specs,
+        adicionesSelec: [...modalAdiciones],
+        notaItem: nota,
+        precioFinal: precioFinal
+    });
+
+    guardarYRender();
+    cerrarModalBtn();
+    showToast(`✅ ${prod.nombre} agregado`);
+}
+
+function cerrarModal(e) {
+    if (e.target === document.getElementById('modal-overlay')) cerrarModalBtn();
+}
+function cerrarModalBtn() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    modalProducto = null;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  COMANDA
+// ═══════════════════════════════════════════════════════════
+function modificarCantidad(idx, cambio) {
+    if (!comandaActiva[idx]) return;
+    comandaActiva[idx].cantidad += cambio;
+    if (comandaActiva[idx].cantidad <= 0) comandaActiva.splice(idx, 1);
+    guardarYRender();
+}
+function eliminarItem(idx) {
+    comandaActiva.splice(idx, 1);
+    guardarYRender();
+}
+function vaciarComanda() {
+    if (comandaActiva.length === 0) return;
+    if (!confirm('¿Limpiar toda la comanda?')) return;
+    comandaActiva = [];
+    guardarYRender();
+}
+
+function seleccionarPago(btn) {
+    document.querySelectorAll('.pago-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    metodoPagoActual = btn.dataset.pago;
+}
+
+function guardarYRender() {
+    localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
+    const contenedor = document.getElementById('items-comanda');
+
+    if (comandaActiva.length === 0) {
+        contenedor.innerHTML = `<div class="vacia-msg"><span class="icon">🛒</span>Toca un producto para agregarlo</div>`;
+        document.getElementById('total-comanda').textContent = '$0';
+        const badge = document.getElementById('badge-comanda');
+        badge.style.display = 'none';
+        return;
+    }
+
+    contenedor.innerHTML = comandaActiva.map((item, idx) => {
+        const precio = (item.precioFinal || item.precio) * item.cantidad;
+        return `
+        <div class="item-linea">
+            <div class="item-linea-top">
+                <div>
+                    <div class="item-nombre">${item.nombre}</div>
+                    ${item.specs ? `<div class="item-specs">📌 ${item.specs}</div>` : ''}
+                    ${item.notaItem ? `<div class="item-specs">✏️ ${item.notaItem}</div>` : ''}
+                </div>
+                <div class="item-precio">${formatPeso(precio)}</div>
+            </div>
+            <div class="item-controles">
+                <button onclick="modificarCantidad(${idx}, -1)">−</button>
+                <span class="item-cantidad">${item.cantidad}</span>
+                <button onclick="modificarCantidad(${idx}, 1)">+</button>
+                <button class="btn-eliminar-item" onclick="eliminarItem(${idx})">🗑️</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    const total = comandaActiva.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
+    document.getElementById('total-comanda').textContent = formatPeso(total);
+
+    const totalItems = comandaActiva.reduce((s, i) => s + i.cantidad, 0);
+    const badge = document.getElementById('badge-comanda');
+    badge.textContent = totalItems;
+    badge.style.display = totalItems > 0 ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROCESAR ORDEN
+// ═══════════════════════════════════════════════════════════
+async function procesarOrden() {
+    if (comandaActiva.length === 0) { showToast("⚠️ La comanda está vacía."); return; }
+    const mesa = document.getElementById('num-mesa').value;
+    if (!mesa) {
+        showToast("⚠️ Selecciona una mesa o destino.");
+        document.getElementById('num-mesa').style.borderColor = 'var(--danger)';
+        setTimeout(() => document.getElementById('num-mesa').style.borderColor = 'var(--border)', 1500);
+        return;
+    }
+
+    const mesero = document.getElementById('campo-mesero').value.trim() || "—";
+    const notas = document.getElementById('comentario-orden').value.trim();
+    const total = comandaActiva.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
+
+    // Texto de ítems enriquecido con specs
+    const textoItems = comandaActiva.map(i => {
+        let linea = `${i.cantidad}x ${i.nombre}`;
+        if (i.specs) linea += ` [${i.specs}]`;
+        if (i.notaItem) linea += ` (${i.notaItem})`;
+        return linea;
+    }).join(', ');
+
+    const nuevoPedido = {
+        id: Date.now(),
+        idSheets: null,        // se llenará cuando Sheets responda
+        mesa, mesero, notas,
+        total, items: textoItems,
+        itemsRaw: JSON.parse(JSON.stringify(comandaActiva)),
+        metodoPago: metodoPagoActual,
+        estado: "Pendiente",
+        horaLocal: new Date().toISOString(),
+        sincronizado: "NO"
+    };
+
+    historialPedidos.unshift(nuevoPedido);
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+
+    // Reset comanda
+    comandaActiva = [];
+    localStorage.removeItem('comandaActiva');
+    document.getElementById('comentario-orden').value = '';
+    document.getElementById('num-mesa').value = '';
+    guardarYRender();
+    renderHistorial();
+    showToast(`⚡ Enviando a cocina…`);
+
+    if (window.innerWidth < 768) switchView('view-monitor', document.getElementById('btn-tab-monitor'));
+
+    // Enviar a Sheets
+    const payload = {
+        accion: "nuevoPedido",
+        mesa, mesero, total,
+        items: textoItems,
+        notas,
+        metodoPago: metodoPagoActual
+    };
+    try {
+        const res = await fetch(API_URL, { method: "POST", redirect: "follow", body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.ok) {
+            nuevoPedido.idSheets = data.id;
+            nuevoPedido.sincronizado = "SI";
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+            showToast(`✅ Mesa ${mesa} en la nube.`);
+            renderHistorial();
+        }
+    } catch {
+        showToast("⚠️ Guardado offline. Subirá al recuperar internet.");
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MONITOR
+// ═══════════════════════════════════════════════════════════
+function calcularMinutosEspera(pedido) {
+    const ref = pedido.horaLocal || pedido.hora;
+    if (!ref) return 0;
+    const origen = new Date(ref);
+    if (isNaN(origen)) return 0;
+    return Math.floor((Date.now() - origen.getTime()) / 60000);
+}
+
+function renderHistorial() {
+    const lista = document.getElementById('lista-historial');
+    const pagados = historialPedidos.filter(p => p.estado === 'Pagado');
+    const pendientes = historialPedidos.filter(p => p.estado !== 'Pagado');
+
+    const totalPagado = pagados.reduce((s, p) => s + Number(p.total), 0);
+    const totalPendiente = pendientes.reduce((s, p) => s + Number(p.total), 0);
+    document.getElementById('bal-count').textContent = historialPedidos.length;
+    document.getElementById('bal-pagado').textContent = formatPeso(totalPagado);
+    document.getElementById('bal-pendiente').textContent = formatPeso(totalPendiente);
+
+    if (historialPedidos.length === 0) {
+        lista.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:35px; font-size:0.9rem;">Sin comandas activas.</div>`;
+        return;
+    }
+
+    // Ordenar: pendientes primero (por hora de llegada ascendente)
+    const ordenados = [...historialPedidos].sort((a, b) => {
+        if (a.estado !== 'Pagado' && b.estado === 'Pagado') return -1;
+        if (a.estado === 'Pagado' && b.estado !== 'Pagado') return 1;
+        return a.id - b.id;
+    });
+
+    lista.innerHTML = ordenados.map(p => {
+        const minutos = calcularMinutosEspera(p);
+        const tiempoLabel = minutos > 0 ? `${minutos} min` : 'Recién';
+        const alertaTiempo = (p.estado !== 'Pagado' && minutos >= 20)
+            ? `<span class="ticket-alerta-tiempo">⚠️ ${minutos}min</span>` : '';
+
+        const claseTk = p.estado === 'Pagado' ? 'pagado'
+            : p.estado === 'Listo' ? 'listo'
+            : p.estado === 'Preparando' ? 'preparando' : '';
+        const badgeMap = {
+            'Pendiente': 'badge-pendiente', 'Preparando': 'badge-preparando',
+            'Listo': 'badge-listo', 'Pagado': 'badge-pagado'
+        };
+        const estadoEmoji = {
+            'Pendiente': '⏳ Pendiente', 'Preparando': '👨‍🍳 Preparando',
+            'Listo': '✅ Listo', 'Pagado': '💰 Pagado'
+        };
+
+        // Siguiente estado lógico
+        const flujo = ['Pendiente', 'Preparando', 'Listo', 'Pagado'];
+        const idxActual = flujo.indexOf(p.estado);
+        const siguienteEstado = idxActual < flujo.length - 1 ? flujo[idxActual + 1] : null;
+        const btnCambio = siguienteEstado
+            ? `<button class="btn-estado-ticket" onclick="avanzarEstado(${p.id})">${siguienteEstado === 'Preparando' ? '👨‍🍳 Preparar' : siguienteEstado === 'Listo' ? '✅ Listo' : '💵 Cobrar'}</button>`
+            : `<button class="btn-estado-ticket" style="color:var(--text-muted);" onclick="regresarEstado(${p.id})">↩ Reabrir</button>`;
+
+        // Renderizar items línea por línea
+        const itemsHtml = p.items.split(', ').map(it => {
+            // Separar "2x Nombre [specs] (nota)"
+            const matchQty = it.match(/^(\d+)x (.+)$/);
+            if (!matchQty) return `<div class="ticket-item-linea"><span>${it}</span></div>`;
+            const qty = matchQty[1];
+            const resto = matchQty[2];
+            const matchSpecs = resto.match(/^(.+?)\s*\[(.+?)\]?\s*(\((.+)\))?$/);
+            if (matchSpecs) {
+                const nombre = matchSpecs[1];
+                const specs = matchSpecs[2];
+                const nota = matchSpecs[4] || '';
+                return `<div class="ticket-item-linea">
+                    <span class="tick-qty">${qty}x</span>
+                    <span class="tick-nombre">${nombre}<span class="tick-specs">${specs}${nota ? ' · ' + nota : ''}</span></span>
+                </div>`;
+            }
+            return `<div class="ticket-item-linea"><span class="tick-qty">${qty}x</span><span class="tick-nombre">${resto}</span></div>`;
+        }).join('');
+
+        return `
+        <div class="pedido-ticket ${claseTk}">
+            <div class="ticket-head">
+                <span class="ticket-mesa">📍 ${p.mesa} ${p.mesero && p.mesero !== '—' ? `· ${p.mesero}` : ''}</span>
+                <span class="ticket-estado-badge ${badgeMap[p.estado] || 'badge-pendiente'}">${estadoEmoji[p.estado] || p.estado}</span>
+            </div>
+            <div class="ticket-items">${itemsHtml}</div>
+            ${p.notas ? `<div class="ticket-nota">📌 ${p.notas}</div>` : ''}
+            <div class="ticket-foot">
+                <span class="ticket-total">${formatPeso(p.total)}</span>
+                <span class="ticket-pago-badge">${p.metodoPago || 'Efectivo'}</span>
+                <span class="ticket-hora">⏱ ${tiempoLabel}</span>
+                ${alertaTiempo}
+                ${btnCambio}
+                <button class="btn-editar-ticket" onclick="reabrirParaEditar(${p.id})">✏️</button>
+                <button class="btn-archivar-ticket" onclick="archivarPedido(${p.id})">✕</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Estados
+function avanzarEstado(id) {
+    const flujo = ['Pendiente', 'Preparando', 'Listo', 'Pagado'];
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido) return;
+    const idx = flujo.indexOf(pedido.estado);
+    if (idx < flujo.length - 1) {
+        pedido.estado = flujo[idx + 1];
+        localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+        renderHistorial();
+        sincronizarEstado(id, pedido.estado);
+    }
+}
+function regresarEstado(id) {
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido) return;
+    pedido.estado = 'Pendiente';
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    renderHistorial();
+    sincronizarEstado(id, 'Pendiente');
+}
+async function sincronizarEstado(id, estado) {
+    const pedido = historialPedidos.find(p => p.id === id);
+    const idRef = pedido?.idSheets || id;
+    try {
+        const res = await fetch(API_URL, { method: "POST", redirect: "follow",
+            body: JSON.stringify({ accion: "cambiarEstado", id: idRef, estado }) });
+        const data = await res.json();
+        if (!data.ok) console.warn("Estado no actualizado en Sheets.");
+    } catch { /* offline OK */ }
+}
+
+// Archivar
+async function archivarPedido(id) {
+    if (!confirm("¿Archivar este pedido? Desaparecerá del monitor (queda en Sheets).")) return;
+    const idRef = historialPedidos.find(p => p.id === id)?.idSheets || id;
+    historialPedidos = historialPedidos.filter(p => p.id !== id);
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    renderHistorial();
+    try {
+        await fetch(API_URL, { method: "POST", redirect: "follow",
+            body: JSON.stringify({ accion: "archivarPedido", id: idRef }) });
+    } catch { /* offline OK */ }
+}
+
+// Reabrir para editar
+function reabrirParaEditar(id) {
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido) return;
+    if (comandaActiva.length > 0 && !confirm("Tienes ítems en la comanda actual. ¿Unificar?")) return;
+
+    if (pedido.itemsRaw && pedido.itemsRaw.length > 0) {
+        comandaActiva = pedido.itemsRaw;
+    } else {
+        // Reconstruir desde texto (pedidos venidos de la nube)
+        comandaActiva = [];
+        pedido.items.split(', ').forEach(parte => {
+            const m = parte.match(/^(\d+)x ([^\[]+)/);
+            if (m) {
+                const cantidad = parseInt(m[1]);
+                const nombre = m[2].trim();
+                const prod = listaProductos.find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
+                if (prod) comandaActiva.push({ ...prod, cantidad, specs: '', notaItem: '', precioFinal: prod.precio });
+            }
+        });
+    }
+    document.getElementById('num-mesa').value = pedido.mesa || '';
+    document.getElementById('campo-mesero').value = pedido.mesero || '';
+    document.getElementById('comentario-orden').value = pedido.notas || '';
+    // Método de pago
+    const pagoBtn = document.querySelector(`.pago-btn[data-pago="${pedido.metodoPago}"]`);
+    if (pagoBtn) seleccionarPago(pagoBtn);
+
+    historialPedidos = historialPedidos.filter(p => p.id !== id);
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    guardarYRender();
+    renderHistorial();
+    showToast("✏️ Comanda abierta para editar.");
+    if (window.innerWidth < 768) switchView('view-comanda', document.getElementById('btn-tab-comanda'));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SINCRONIZACIÓN CON SHEETS
+// ═══════════════════════════════════════════════════════════
+async function sincronizarPendientes() {
+    const pendientes = historialPedidos.filter(p => p.sincronizado === "NO");
+    for (const pedido of pendientes) {
+        try {
+            const res = await fetch(API_URL, {
+                method: "POST", redirect: "follow",
+                body: JSON.stringify({
+                    accion: "nuevoPedido",
+                    mesa: pedido.mesa, mesero: pedido.mesero,
+                    total: pedido.total, items: pedido.items,
+                    notas: pedido.notas, metodoPago: pedido.metodoPago
+                })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                pedido.idSheets = data.id;
+                pedido.sincronizado = "SI";
+                localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+            }
+        } catch { break; }
+    }
+}
+
+async function cargarPedidos() {
+    await sincronizarPendientes();
+    try {
+        const res = await fetch(`${API_URL}?accion=obtenerPedidos`);
+        const data = await res.json();
+        if (data.ok) {
+            const noSync = historialPedidos.filter(p => p.sincronizado === "NO");
+            // Mezclar nube + locales no sincronizados, evitando duplicados por idSheets
+            const idsSheets = new Set(noSync.map(p => p.idSheets).filter(Boolean));
+            const deLaNube = data.pedidos.filter(p => !idsSheets.has(String(p.id)));
+            // Enriquecer pedidos de nube con horaLocal si tienen 'hora'
+            deLaNube.forEach(p => {
+                if (!p.horaLocal && p.hora) p.horaLocal = p.hora;
+                p.sincronizado = "SI";
+                p.idSheets = p.id;
+            });
+            historialPedidos = [...noSync, ...deLaNube].sort((a, b) => a.id - b.id);
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+            renderHistorial();
+        }
+    } catch {
+        renderHistorial(); // modo offline
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  POLLING AUTOMÁTICO
+// ═══════════════════════════════════════════════════════════
+function iniciarPolling() {
+    if (pollingTimer) clearInterval(pollingTimer);
+    pollingTimer = setInterval(() => {
+        cargarPedidos();
+    }, POLLING_MS);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+initCategorias();
+renderGrid();
+guardarYRender();
+cargarPedidos();
+iniciarPolling();
+</script>
+</body>
+</html>

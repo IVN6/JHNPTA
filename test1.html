@@ -456,13 +456,17 @@
             display: flex; justify-content: space-between;
             align-items: center; padding: 10px 12px 6px;
         }
+        .ticket-head-left {
+            display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+        }
         .ticket-num {
             font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em;
             background: var(--dark); color: white;
-            padding: 2px 7px; border-radius: 6px; margin-right: 6px;
+            padding: 2px 7px; border-radius: 6px;
+            display: inline-flex; align-items: center;
         }
         .ticket-mesa {
-            font-weight: 700; font-size: 0.95rem; display: flex; align-items: center;
+            font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
         }
         .ticket-estado-badge {
             font-size: 0.7rem; font-weight: 700;
@@ -1416,9 +1420,9 @@ function renderHistorial() {
         return `
         <div class="pedido-ticket ${claseTk}" style="${estiloTarjetaAlerta}">
             <div class="ticket-head">
-                <div style="display:flex; flex-direction:column; gap:2px;">
+                <div class="ticket-head-left">
                     <span class="ticket-mesa">📍 ${p.mesa} ${p.mesero && p.mesero !== '—' ? `· ${p.mesero}` : ''}</span>
-                    <span style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">Orden #${String(obtenerNumeroPedido(p)).slice(-4)}</span>
+                    <span class="ticket-num">Orden #${String(obtenerNumeroPedido(p)).slice(-4)}</span>
                 </div>
                 <span class="ticket-estado-badge ${badgeMap[p.estado] || 'badge-pendiente'}">${estadoEmoji[p.estado] || p.estado}</span>
             </div>

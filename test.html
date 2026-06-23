@@ -319,9 +319,9 @@
             width: auto !important; height: auto !important;
         }
         .comanda-footer {
-            padding: 14px; border-top: 2px solid var(--border);
-            background: white; flex-shrink: 0;
-        }
+    padding: 14px 14px 120px; border-top: 2px solid var(--border);
+    background: white; flex-shrink: 0;
+}
         .pago-row {
             display: grid; grid-template-columns: 1fr 1fr;
             gap: 8px; margin-bottom: 12px;
@@ -511,17 +511,42 @@
                 height: 100vh; padding: 14px;
             }
             .section-view:last-child { border-right: none; }
-            .categorias-container {
-                position: static; width: 100%;
-                height: auto; border-top: none;
-                border-bottom: 1px solid var(--border);
-                box-shadow: none; padding: 8px 0 10px;
-                margin-bottom: 10px;
-            }
-            .grid-productos-scroll { padding-bottom: 20px; }
-            .comanda-footer { padding-bottom: 14px; }
-            .btn-enviar { margin-bottom: 0; }
-        }
+            :root {
+    --cat-height: 100px;
+}
+.categorias-container {
+    background: white;
+    border-top: 1px solid var(--border);
+    position: fixed; bottom: var(--nav-height);
+    left: 0; width: 100%; height: var(--cat-height);
+    z-index: 1500;
+    box-shadow: 0 -3px 8px rgba(0,0,0,0.05);
+    display: flex; flex-direction: column;
+    padding: 6px 10px 6px;
+    gap: 6px;
+}
+.barra-inferior-catalogo {
+    display: flex; flex-direction: column; gap: 5px; height: 100%;
+}
+.search-bar-mini {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg); border: 1.5px solid var(--border);
+    border-radius: 8px; padding: 0 10px; height: 34px; flex-shrink: 0;
+}
+.search-bar-mini input {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-size: 0.88rem; color: var(--dark);
+}
+.categorias-bar {
+    display: flex; gap: 8px;
+    overflow-x: auto; flex: 1;
+    align-items: center; scrollbar-width: none;
+}
+.categorias-bar::-webkit-scrollbar { display: none; }
+            .grid-productos-scroll {
+    flex: 1; overflow-y: auto;
+    padding-bottom: calc(var(--cat-height) + var(--nav-height) + 80px);
+}
     </style>
 </head>
 <body>
@@ -530,17 +555,20 @@
 
     <!-- ════════════════════ CATÁLOGO ════════════════════ -->
     <main id="view-catalogo" class="section-view active">
-        <div class="categorias-container">
-            <div class="categorias-bar" id="categorias-bar"></div>
-        </div>
-        <div class="search-bar">
-            <span>🔍</span>
-            <input type="text" id="buscador" placeholder="Buscar producto..." oninput="buscarProducto(this.value)">
-            <button class="clear-btn" onclick="limpiarBusqueda()">✕</button>
-        </div>
+       
         <div class="grid-productos-scroll">
             <div class="grid-productos" id="grid-productos"></div>
         </div>
+        <div class="categorias-container">
+    <div class="barra-inferior-catalogo">
+        <div class="search-bar-mini">
+            <span style="font-size:0.9rem;">🔍</span>
+            <input type="text" id="buscador" placeholder="Buscar…" oninput="buscarProducto(this.value)">
+            <button onclick="limpiarBusqueda()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.9rem;">✕</button>
+        </div>
+        <div class="categorias-bar" id="categorias-bar"></div>
+    </div>
+</div>
     </main>
 
     <!-- ════════════════════ COMANDA ════════════════════ -->
@@ -580,12 +608,7 @@
 
             <div class="comanda-footer">
                 <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">Método de pago</div>
-                <div class="pago-row" id="pago-btns">
-                    <button class="pago-btn active" data-pago="Efectivo" onclick="seleccionarPago(this)">💵 Efectivo</button>
-                    <button class="pago-btn" data-pago="Nequi" onclick="seleccionarPago(this)">📱 Nequi</button>
-                    <button class="pago-btn" data-pago="Tarjeta" onclick="seleccionarPago(this)">💳 Tarjeta</button>
-                    <button class="pago-btn" data-pago="Datafono" onclick="seleccionarPago(this)">🖥️ Datafono</button>
-                </div>
+                
                 <div class="totales-row">
                     <span>Total</span>
                     <span id="total-comanda">$0</span>
@@ -603,20 +626,11 @@
                 <h3>🖥️ Monitor en Vivo</h3>
                 <button class="btn-refresh" onclick="cargarPedidos()">🔄 Actualizar</button>
             </div>
-            <div class="balance-grid">
-                <div class="balance-card">
-                    <div class="label">Comandas</div>
-                    <div class="valor" id="bal-count">0</div>
-                </div>
-                <div class="balance-card pagado">
-                    <div class="label">Pagado</div>
-                    <div class="valor" id="bal-pagado">$0</div>
-                </div>
-                <div class="balance-card pendiente">
-                    <div class="label">Pendiente</div>
-                    <div class="valor" id="bal-pendiente">$0</div>
-                </div>
-            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--dark); color:white; border-radius:10px; padding:10px 14px; margin-bottom:10px; flex-shrink:0;">
+    <span style="font-size:0.82rem; opacity:0.7;">Comandas activas</span>
+    <span style="font-size:1.1rem; font-weight:700;" id="bal-count">0</span>
+    <button onclick="verResumenDia()" style="background:rgba(255,255,255,0.15); border:none; color:white; padding:5px 10px; border-radius:6px; font-size:0.75rem; cursor:pointer;">📊 Resumen del día</button>
+</div>
             <div class="lista-pedidos-scroll" id="lista-historial"></div>
         </div>
     </section>
@@ -1152,7 +1166,17 @@ async function procesarOrden() {
     };
 
     historialPedidos.unshift(nuevoPedido);
-    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+
+// Si estamos editando un pedido existente, archivar el original en Sheets
+if (window._pedidoEditandoIdSheets) {
+    const idArchivar = window._pedidoEditandoIdSheets;
+    window._pedidoEditandoIdSheets = null;
+    window._pedidoEditandoId = null;
+    fetch(API_URL, { method:"POST", redirect:"follow",
+        body: JSON.stringify({ accion:"archivarPedido", id: idArchivar })
+    }).catch(() => {});
+}
 
     // Reset comanda
     comandaActiva = [];
@@ -1207,8 +1231,7 @@ function renderHistorial() {
     const totalPagado = pagados.reduce((s, p) => s + Number(p.total), 0);
     const totalPendiente = pendientes.reduce((s, p) => s + Number(p.total), 0);
     document.getElementById('bal-count').textContent = historialPedidos.length;
-    document.getElementById('bal-pagado').textContent = formatPeso(totalPagado);
-    document.getElementById('bal-pendiente').textContent = formatPeso(totalPendiente);
+    
 
     if (historialPedidos.length === 0) {
         lista.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:35px; font-size:0.9rem;">Sin comandas activas.</div>`;
@@ -1296,11 +1319,62 @@ function avanzarEstado(id) {
     if (!pedido) return;
     const idx = flujo.indexOf(pedido.estado);
     if (idx < flujo.length - 1) {
-        pedido.estado = flujo[idx + 1];
+        const siguiente = flujo[idx + 1];
+        if (siguiente === 'Pagado') {
+            elegirMetodoPagoYCobrar(id);
+            return;
+        }
+        pedido.estado = siguiente;
         localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
         renderHistorial();
         sincronizarEstado(id, pedido.estado);
     }
+}
+
+function elegirMetodoPagoYCobrar(id) {
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido) return;
+    // Mini modal de cobro
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center;`;
+    const metodos = [
+        { k:'Efectivo', e:'💵' }, { k:'Nequi', e:'📱' },
+        { k:'Daviplata', e:'🔵' }, { k:'Tarjeta', e:'💳' },
+        { k:'Datafono', e:'🖥️' }, { k:'Llave', e:'🔑' }
+    ];
+    overlay.innerHTML = `
+    <div style="background:white;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;">
+        <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">💵 ¿Cómo paga la mesa ${pedido.mesa}?</div>
+        <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">Total: <strong>${formatPeso(pedido.total)}</strong></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+            ${metodos.map(m => `
+            <button onclick="confirmarCobro(${id},'${m.k}',this.parentElement.parentElement.parentElement)"
+                style="padding:12px 6px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);cursor:pointer;font-size:0.85rem;font-weight:600;">
+                ${m.e}<br>${m.k}
+            </button>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input id="otro-pago-input" type="text" placeholder="Otro método..."
+                style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;outline:none;">
+            <button onclick="confirmarCobro(${id},document.getElementById('otro-pago-input').value||'Otro',this.parentElement.parentElement.parentElement)"
+                style="padding:10px 14px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">OK</button>
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()"
+            style="width:100%;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;color:var(--text-muted);cursor:pointer;font-size:0.9rem;">Cancelar</button>
+    </div>`;
+    document.body.appendChild(overlay);
+}
+
+function confirmarCobro(id, metodoPago, overlay) {
+    overlay.remove();
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido || !metodoPago.trim()) return;
+    pedido.estado = 'Pagado';
+    pedido.metodoPago = metodoPago;
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    renderHistorial();
+    sincronizarEstado(id, 'Pagado');
+    showToast(`✅ Cobrado con ${metodoPago}`);
 }
 function regresarEstado(id) {
     const pedido = historialPedidos.find(p => p.id === id);
@@ -1341,9 +1415,8 @@ function reabrirParaEditar(id) {
     if (comandaActiva.length > 0 && !confirm("Tienes ítems en la comanda actual. ¿Unificar?")) return;
 
     if (pedido.itemsRaw && pedido.itemsRaw.length > 0) {
-        comandaActiva = pedido.itemsRaw;
+        comandaActiva = JSON.parse(JSON.stringify(pedido.itemsRaw));
     } else {
-        // Reconstruir desde texto (pedidos venidos de la nube)
         comandaActiva = [];
         pedido.items.split(', ').forEach(parte => {
             const m = parte.match(/^(\d+)x ([^\[]+)/);
@@ -1351,16 +1424,18 @@ function reabrirParaEditar(id) {
                 const cantidad = parseInt(m[1]);
                 const nombre = m[2].trim();
                 const prod = listaProductos.find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
-                if (prod) comandaActiva.push({ ...prod, cantidad, specs: '', notaItem: '', precioFinal: prod.precio });
+                if (prod) comandaActiva.push({ ...prod, cantidad, specs:'', notaItem:'', precioFinal: prod.precio });
             }
         });
     }
+
     document.getElementById('num-mesa').value = pedido.mesa || '';
     document.getElementById('campo-mesero').value = pedido.mesero || '';
     document.getElementById('comentario-orden').value = pedido.notas || '';
-    // Método de pago
-    const pagoBtn = document.querySelector(`.pago-btn[data-pago="${pedido.metodoPago}"]`);
-    if (pagoBtn) seleccionarPago(pagoBtn);
+
+    // Guardamos el idSheets del pedido original para archivarlo al reenviar
+    window._pedidoEditandoIdSheets = pedido.idSheets || pedido.id;
+    window._pedidoEditandoId = id;
 
     historialPedidos = historialPedidos.filter(p => p.id !== id);
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
@@ -1430,7 +1505,21 @@ function iniciarPolling() {
         cargarPedidos();
     }, POLLING_MS);
 }
-
+function verResumenDia() {
+    const clave = prompt("Clave de administrador:");
+    if (clave !== "1234") { showToast("❌ Clave incorrecta."); return; }
+    const pagados   = historialPedidos.filter(p => p.estado === 'Pagado');
+    const pendientes = historialPedidos.filter(p => p.estado !== 'Pagado');
+    const totalPag  = pagados.reduce((s,p) => s + Number(p.total), 0);
+    const totalPend = pendientes.reduce((s,p) => s + Number(p.total), 0);
+    const porMetodo = {};
+    historialPedidos.forEach(p => {
+        const m = p.metodoPago || 'Efectivo';
+        porMetodo[m] = (porMetodo[m] || 0) + Number(p.total);
+    });
+    const desglose = Object.entries(porMetodo).map(([k,v]) => `${k}: ${formatPeso(v)}`).join('\n');
+    alert(`📊 RESUMEN DEL DÍA\n\n✅ Pagado: ${formatPeso(totalPag)}\n⏳ Pendiente: ${formatPeso(totalPend)}\n\nPor método de pago:\n${desglose}\n\nTotal comandas: ${historialPedidos.length}`);
+}
 // ═══════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════

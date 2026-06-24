@@ -737,16 +737,50 @@ let pollingTimer = null;
   }
 */
 
-const ADICIONES_GENERALES = [
+// 1. Sabores del Merengón
+const SALSAS_MERENGON = ["Mora", "Fresa", "Salsa Inglesa", "Uchuva", "Tomate de árbol rojo", "Tomate de árbol amarillo", "Mango", "Guayaba"];
+
+// 2. Adiciones base ($3000)
+const ADICIONES_BASE = [
+    { nombre: "Coco", precio: 3000 },
     { nombre: "Arequipe", precio: 3000 },
-    { nombre: "Chantilly", precio: 3000 },
-    { nombre: "Salsa de mora", precio: 3000 },
-    { nombre: "Salsa de maracuyá", precio: 3000 }
+    { nombre: "Natas", precio: 3000 },
+    { nombre: "Un durazno", precio: 3000 },
+    { nombre: "Una breva", precio: 3000 },
+    { nombre: "Mielmesabe", precio: 3000 },
+    { nombre: "Papayuela", precio: 3000 },
+    { nombre: "adicion extra", precio: 3000 }
 ];
 
+// 3. Convertimos las salsas del merengón en adiciones automáticas ($3000)
+const SALSAS_COMO_ADICIONES = SALSAS_MERENGON.map(sabor => ({ nombre: `Salsa de ${sabor}`, precio: 3000 }));
+
+// 4. Lista final de adiciones para los modales
+const ADICIONES_GENERALES = [...ADICIONES_BASE, ...SALSAS_COMO_ADICIONES];
+
+// 5. Sabores de la Bola de Helado
 const SABORES_HELADO = ["Vainilla","Fresa","Chocolate","Mora","Mango","Maracuyá","Arequipe","Coco"];
-const SALSAS_MERENGON = ["Mora","Maracuyá","Frutos rojos","Lulo","Guanábana","Curuba"];
-const SABORES_CREMITAS = ["Vainilla","Chocolate","Café","Coco","Arequipe","Limón"];
+
+// 5b. Sabores de Cremitas (Agregado para evitar el error de variable indefinida)
+const SABORES_CREMITAS = ["Tradicional", "Arequipe", "Coco"];
+
+// 6. Paletas con sistema de AGOTADOS
+const SABORES_PALETAS = [
+    { nombre: "Coco", disponible: true },
+    { nombre: "Arequipe", disponible: true },
+    { nombre: "Queso bocadillo", disponible: true },
+    { nombre: "Mora", disponible: true },
+    { nombre: "Guanábana", disponible: true },
+    { nombre: "Fresa", disponible: true },
+    { nombre: "Curuba", disponible: true },
+    { nombre: "Feijoa", disponible: false }, // <-- Cambia a true/false para ocultar o mostrar
+    { nombre: "Chicle", disponible: true },
+    { nombre: "Oreo", disponible: true },
+    { nombre: "Chocolate", disponible: true },
+    { nombre: "Maracuyá", disponible: true },
+    { nombre: "Lulo", disponible: true },
+    { nombre: "Mango", disponible: true } 
+];
 
 const listaProductos = [
     // POSTRES
@@ -773,7 +807,7 @@ const listaProductos = [
     { id: 18, categoria: "Postres", nombre: "Merengón Coguano", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn",
       opciones: {
         grupos: [{ label: "Salsa (elige hasta 3)", tipo: "multiple", requerido: true, max: 3, opciones: SALSAS_MERENGON }],
-        adiciones: ADICIONES_GENERALES
+        adiciones: ADICIONES_BASE
       }
     },
     { id: 19, categoria: "Postres", nombre: "Merengón Especial", precio: 15000, imgPostre: "https://corporativo.heladospopsy.com/wp-content/uploads/2023/07/Miniaturas-17.png",
@@ -782,10 +816,11 @@ const listaProductos = [
           { label: "Salsa (elige hasta 3)", tipo: "multiple", requerido: true, max: 3, opciones: SALSAS_MERENGON },
           { label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }
         ],
-        adiciones: ADICIONES_GENERALES
+        adiciones: ADICIONES_BASE
       }
     },
     { id: 20, categoria: "Postres", nombre: "Combo milhoja + Americano", precio: 15000, imgPostre: "https://thumbs.dreamstime.com/b/trozos-de-delicioso-pastel-kiev-servido-con-caf%C3%A9-sobre-una-mesa-madera-un-trozo-torta-vibrante-dos-ruedas-claro-color-amarillo-y-393125447.jpg" },
+    
     // DULCES
     { id: 21, categoria: "Dulces", nombre: "Duraznos", precio: 8000, imgPostre: "https://www.shutterstock.com/image-photo/sliced-peaches-syrup-served-bowl-260nw-2681012909.jpg" },
     { id: 22, categoria: "Dulces", nombre: "Brevas en almíbar", precio: 8000, imgPostre: "https://media.anmar.com.co/5145-home_default/brevas-en-almibar.jpg" },
@@ -794,6 +829,7 @@ const listaProductos = [
     { id: 25, categoria: "Dulces", nombre: "Arequipe coco", precio: 9000, imgPostre: "https://www.recetasnestle.com.do/sites/default/files/srh_recipes/e52d42c50cefea31742607f58bb80381.png" },
     { id: 26, categoria: "Dulces", nombre: "Natas", precio: 9000, imgPostre: "https://2.bp.blogspot.com/-SYAqJ7jyq8I/VVj1pGdgYDI/AAAAAAAACPo/kYUyWfT7vdw/s1600/Postre%2BNatas%2BSySPMS.jpg" },
     { id: 27, categoria: "Dulces", nombre: "Papayuela", precio: 9000, imgPostre: "https://imagenes2.eltiempo.com/files/image_600_455/uploads/2023/05/27/64727c8bd05a9.jpeg" },
+    
     // HELADOS
     { id: 28, categoria: "Helados", nombre: "Chocofresa con helado", precio: 14000, imgPostre: "https://images.rappi.com/restaurants_logo/choco-logo-1-1622671201005.png",
       opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
@@ -801,10 +837,11 @@ const listaProductos = [
       opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
     { id: 30, categoria: "Helados", nombre: "Cono 2 bolitas", precio: 6500, imgPostre: "https://lamaletadecarla.com/wp-content/uploads/2020/02/helado-de-2-bolas.png",
       opciones: { grupos: [{ label: "Sabores (elige 2)", tipo: "multiple", requerido: true, max: 2, opciones: SABORES_HELADO }] } },
-    { id: 31, categoria: "Helados", nombre: "Casero (paleta)", precio: 5000, imgPostre: "https://images.vexels.com/media/users/3/255392/isolated/lists/c184470777d169b68d15076bb5df383d-trazo-de-color-de-polo-de-hielo.png",
-      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+    { id: 31, categoria: "Helados", nombre: "Casero (paleta)", precio: 5000, imgPostre: "https://images.vexels.com/media/users/3/200095/isolated/preview/26e6fae69e46a51d8b7b752df613d0fc-icono-de-trazo-de-paleta-de-helado.png",
+      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_PALETAS.filter(s => s.disponible).map(s => s.nombre) }] } },
     { id: 32, categoria: "Helados", nombre: "Torta de Helado", precio: 8800, imgPostre: "https://www.laneveria.com.sv/wp-content/uploads/2021/07/2-porcion-helado.jpg",
       opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+    
     // PASABOCAS
     { id: 33, categoria: "Pasabocas", nombre: "Fresa con chocolate", precio: 1200, imgPostre: "https://images.stockcake.com/public/7/5/f/75f513a5-78ba-45bf-b429-7731fb0944b8_medium/chocolate-dipped-pixel-stockcake.jpg" },
     { id: 34, categoria: "Pasabocas", nombre: "Algodón pequeño", precio: 4200, imgPostre: "https://img.magnific.com/vector-gratis/composicion-realista-algodon-azucar-caramelo-realista-imagen-realista-muneca-humana-ilustracion-vector-palo-dulce_1284-30555.jpg" },
@@ -813,7 +850,7 @@ const listaProductos = [
     { id: 37, categoria: "Pasabocas", nombre: "Obleas Especial", precio: 5500, imgPostre: "https://www.shutterstock.com/image-photo/wafer-oblea-arequipe-blackberry-sauce-260nw-2030844932.jpg" },
     { id: 38, categoria: "Pasabocas", nombre: "Pan de yuca", precio: 5000, imgPostre: "https://st4.depositphotos.com/7622586/22524/i/450/depositphotos_225243534-stock-photo-baked-colombian-cassava-bread-pandeyuca.jpg" },
     { id: 39, categoria: "Pasabocas", nombre: "Merenguitos", precio: 6000, imgPostre: "https://kudocook.com/wp-content/uploads/2024/09/627cc40a1aef0.jpg" },
-    { id: 40, categoria: "Pasabocas", nombre: "Rollitos Crema Chantilly", precio: 6500, imgPostre: "https://media.mdzol.com/p/061bc71dbd5d09a232566965768c8623/adjuntos/373/imagenes/001/604/0001604192/760x0/smart/si-lo-deseas-puedes-jugar-los-rellenos-y-la-decoracion-los-canoncitos.jpg" },
+    { id: 40, categoria: "Pasabocas", nombre: "Rollitos Cream Chantilly", precio: 6500, imgPostre: "https://media.mdzol.com/p/061bc71dbd5d09a232566965768c8623/adjuntos/373/imagenes/001/604/0001604192/760x0/smart/si-lo-deseas-puedes-jugar-los-rellenos-y-la-decoracion-los-canoncitos.jpg" },
     { id: 41, categoria: "Pasabocas", nombre: "Rollitos Arequipe", precio: 7500, imgPostre: "https://media.mdzol.com/p/57810ebd0ac5b1cb41597f1e382090f7/adjuntos/373/imagenes/001/913/0001913445/760x0/smart/receta-canoncitos-dulce-leche.png" },
     { id: 42, categoria: "Pasabocas", nombre: "Torta Amapola", precio: 8000, imgPostre: "https://recetasjudias.com/wp-content/uploads/2018/11/Bizcocho-con-Semillas-de-Amapola2.jpg" },
     { id: 142,categoria: "Pasabocas", nombre: "Torta Chocolate", precio: 8000, imgPostre: "https://www.shutterstock.com/image-photo/piece-chocolate-cake-on-white-260nw-2632078161.jpg" },
@@ -825,6 +862,7 @@ const listaProductos = [
     { id: 48, categoria: "Pasabocas", nombre: "Eclair", precio: 8500, imgPostre: "https://png.pngtree.com/png-vector/20241101/ourmid/pngtree-chocolate-eclair-pastry-filled-with-creamy-custard-png-image_14224677.png" },
     { id: 49, categoria: "Pasabocas", nombre: "Tortas con Helado", precio: 12500, imgPostre: "https://i.pinimg.com/originals/9d/60/92/9d609240b92a21e8d2d3e6bc73dcab94.png",
       opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+    
     // BEBIDAS FRÍAS
     { id: 50, categoria: "Bebidas Frías", nombre: "Agua Pequeña", precio: 2000, imgPostre: "https://licoresmedellin.com/cdn/shop/files/agua-cristal-personal-300mlagua-cristal-personal-300mlcristallicores-medellin-2467011.jpg?width=1214" },
     { id: 51, categoria: "Bebidas Frías", nombre: "Agua Grande", precio: 3000, imgPostre: "https://tomatelavida.com.co/wp-content/uploads/2023/03/Agua-Cristal-2023-P.png" },
@@ -839,6 +877,7 @@ const listaProductos = [
       opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: ["Vainilla","Fresa","Chocolate","Mora","Oreo","Arequipe"] }] } },
     { id: 58, categoria: "Bebidas Frías", nombre: "Hatsu", precio: 12000, imgPostre: "https://mercasur.com.co/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6ODQ4NjUsInB1ciI6ImJsb2JfaWQifX0=--67f1e5358012f66bde25b9d79f558106d38bed99/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJqcGciLCJyZXNpemVfdG9fZml0IjpbNjAwLDYwMF19LCJwdXIiOiJ2YXJpYXRpb24ifX0=--121ebfcd4293f99df590ac1a60ec2d53d6f75b42/7702090048643" },
     { id: 59, categoria: "Bebidas Frías", nombre: "Coca Cola Zero", precio: 3500, imgPostre: "https://nocomasmasmentiras.org/wp-content/uploads/2023/10/Coca-cola-sin-azucar-540x510-c-default.jpg" },
+    
     // BEBIDAS CALIENTES
     { id: 60, categoria: "Bebidas Calientes", nombre: "Aromática", precio: 4800, imgPostre: "https://w7.pngwing.com/pngs/1007/585/png-transparent-green-tea-fizzy-drinks-ginger-tea-lemon-juice-tea-tea-cocktail-non-alcoholic-beverage-thumbnail.png" },
     { id: 61, categoria: "Bebidas Calientes", nombre: "Americano", precio: 4500, imgPostre: "https://static.vecteezy.com/system/resources/thumbnails/069/564/525/small/hot-coffee-cup-with-saucer-and-coffee-beans-steam-rising-isolated-png.png" },
@@ -849,9 +888,20 @@ const listaProductos = [
     { id: 66, categoria: "Bebidas Calientes", nombre: "Moka", precio: 4800, imgPostre: "https://img.magnific.com/psd-gratis/disfrute-lujosa-experiencia-chocolate-caliente-rico-crema-rematado-virutas-chocolate_191095-83178.jpg" },
     { id: 67, categoria: "Bebidas Calientes", nombre: "Campesino", precio: 5500, imgPostre: "https://static.vecteezy.com/system/resources/previews/048/112/478/non_2x/cup-of-coffee-without-background-transparent-free-png.png" },
     { id: 68, categoria: "Bebidas Calientes", nombre: "Affogato", precio: 8500, imgPostre: "https://thumbs.dreamstime.com/b/caf%C3%A9-affogato-crema-de-hielo-con-fondo-transparente-384065281.jpg",
-      opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+      opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } }
 ];
 
+// Inyectamos las adiciones como productos independientes en la categoría "Adicionales"
+const productosAdicionales = ADICIONES_BASE.map((adicion, index) => ({
+    id: 500 + index, 
+    categoria: "Adicionales", 
+    nombre: adicion.nombre, 
+    precio: adicion.precio, 
+    imgPostre: "https://cdn-icons-png.flaticon.com/512/1046/1046874.png"
+}));
+
+// Unimos tu lista original con los productos adicionales automáticamente
+listaProductos.push(...productosAdicionales);
 // ═══════════════════════════════════════════════════════════
 //  ESTADO
 // ═══════════════════════════════════════════════════════════

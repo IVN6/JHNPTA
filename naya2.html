@@ -273,7 +273,6 @@
 </nav>
 
 <div id="toast-container"></div>
-
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyTgsY2YYD5IZCmDXC_QjDTdFntpTG11VQrQbukrb19xSPjIx9F3JT1B5JOqO7jtU0x/exec";
 const WHATSAPP_NUMER = "573100000000"; // Reemplaza con tu número de control del evento
@@ -425,4 +424,55 @@ function enviarAlWhatsAppDirecto() {
     if(comandaActiva.length === 0) return;
     const { destino, IDUser, itemsText } = generarTextoOrden();
     
-    const mensaje = `*NUEVA ORDEN COMICON*\n📌 *Destino/Stand:* ${destino}\n👤 *Contacto:* ${IDUser
+    const mensaje = `*NUEVA ORDEN COMICON*\n📌 *Destino/Stand:* ${destino}\n👤 *Contacto:* ${IDUser}\n📸 *Pedido:* ${itemsText}`;
+    const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMER}&text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+}
+
+// ── MONITOR INTERNO CON BOTÓN LIMPIO "COPIAR LINK" ──
+function renderMonitor() {
+    const contenedor = document.getElementById('lista-historial');
+    if(historialPedidos.length === 0) {
+        contenedor.innerHTML = `<p style="text-align:center; padding:20px; color:var(--text-muted);">No hay solicitudes activas.</p>`;
+        return;
+    }
+    
+    contenedor.innerHTML = historialPedidos.map(p => `
+        <div class="pedido-ticket">
+            <div class="ticket-head">
+                <span class="ticket-mesa">📍 ${p.mesa} (User: ${p.mesero})</span>
+                <span class="ticket-num">${p.estado}</span>
+            </div>
+            <div class="ticket-items">${p.items}</div>
+            <div class="ticket-foot">
+                <!-- Botón de copiar limpio -->
+                <button class="btn-copiar-link" onclick="copiarLinkExclusivo('${p.linkFoto}')">📋 Copiar Link</button>
+                <button class="btn-estado-ticket" onclick="cambiarEstadoControl(${p.id})">Avanzar ⚡</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function copiarLinkExclusivo(link) {
+    navigator.clipboard.writeText(link).then(() => {
+        mostrarToast("🔗 Link copiado al portapapeles");
+    });
+}
+
+function cambiarEstadoControl(id) {
+    const p = historialPedidos.find(x => x.id === id);
+    if(p) p.estado = p.estado === "Pendiente" ? "Listo" : "Entregado";
+    renderMonitor();
+}
+
+function buscarProducto(v) { busquedaActual = v.toLowerCase(); renderGrid(); }
+function limpiarBusqueda() { document.getElementById('buscador').value = ""; busquedaActual = ""; renderGrid(); }
+function switchView(id, btn) { document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function mostrarToast(txt) { const t = document.getElementById('toast-container'); t.textContent = txt; t.style.display="block"; setTimeout(()=>t.style.display="none", 2000); }
+
+// Iniciar
+initCategorias();
+renderGrid();
+</script>
+</body>
+</html>

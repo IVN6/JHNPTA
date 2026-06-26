@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Comic-Con Publicidad Hub - Alto Rendimiento</title>
+    <style>
+        :root {
+            --primary: #6f42c1; /* Color tipo Comic-Con Geek */
+            --success: #25D366;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --dark: #212529;
+            --bg-interno: #f8f9fa;
+            --border: #dee2e6;
+            --nav-height: 65px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-interno);
+            color: var(--dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- BOTONES DE NAVEGACIÓN INFERIOR --- */
+        .mobile-nav {
+            display: flex;
+            background: white;
+            border-top: 1px solid var(--border);
+            height: var(--nav-height);
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 2000;
+        }
+
+        .nav-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #6c757d;
+            background: none;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            gap: 4px;
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            background: #f3f0ff;
+        }
+
+        /* --- CONTENEDOR MULTIPLATAFORMA --- */
+        .app-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - var(--nav-height));
+            overflow: hidden;
+            position: relative;
+        }
+
+        .section-view {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        .section-view.active {
+            display: flex;
+        }
+
+        /* --- VISTA 1: RENDERIZADOR DE STICKERS --- */
+        .render-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            overflow-y: auto;
+            padding-bottom: 40px;
+        }
+
+        /* Contenedor simulación Tarjeta Bancaria / Cédula */
+        .tarjeta-mockup {
+            width: 320px;
+            height: 200px;
+            border-radius: 15px;
+            background: #2b2b2b;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Chip de la tarjeta */
+        .tarjeta-mockup .chip {
+            width: 45px;
+            height: 35px;
+            background: linear-gradient(135deg, #f0d060, #cc9933);
+            border-radius: 6px;
+            position: absolute;
+            top: 40px;
+            left: 25px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .tarjeta-mockup .tipo-sticker {
+            position: absolute;
+            bottom: 20px;
+            right: 25px;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .form-render {
+            width: 100%;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-render input, .form-render select {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            background: white;
+        }
+
+        .btn-action {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(111, 66, 193, 0.15);
+        }
+
+        /* --- VISTA 2: FORMULARIO PROYECTOS (EMBUDO SINCERO) --- */
+        .proyecto-wrapper {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        /* Botones de Categorías de necesidad comercial */
+        .grid-necesidades {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-necesidad {
+            padding: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-interno);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .btn-necesidad.active {
+            background: var(--dark);
+            color: white;
+            border-color: var(--dark);
+        }
+
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            resize: none;
+            font-family: inherit;
+        }
+
+        /* --- VISTA 3: MONITOR EN VIVO --- */
+        .monitor-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .lista-leads-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        .lead-ticket {
+            background: white;
+            padding: 12px;
+            border-left: 5px solid var(--primary);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .lead-ticket.sticker-type { border-left-color: var(--warning); }
+
+        /* TOAST SYSTEM */
+        #toast-container {
+            position: fixed;
+            bottom: 85px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: rgba(33, 37, 41, 0.95);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 5000;
+            opacity: 0;
+            transition: all 0.25s ease;
+            pointer-events: none;
+        }
+        #toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* RESPONSIVE TABLETS / COMPUTADORAS */
+        @media (min-width: 768px) {
+            .mobile-nav { display: none; }
+            .app-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                height: 100vh;
+            }
+            .section-view {
+                display: flex !important;
+                border-right: 1px solid var(--border);
+                height: 100vh;
+            }
+            .section-view:last-child { border-right: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- VISTA 1: RENDER DE STICKERS -->
+        <main id="view-render" class="section-view active">
+            <h3 style="margin-bottom: 15px; font-size: 1.2rem;">🎨 Personaliza tu Sticker</h3>
+            <div class="render-container">
+                <div class="tarjeta-mockup" id="tarjeta-preview">
+                    <div class="chip" id="tarjeta-chip"></div>
+                    <div class="tipo-sticker" id="tipo-badge">Tarjeta</div>
+                </div>
+
+                <div class="form-render">
+                    <select id="select-tipo" onchange="actualizarTipoSticker()">
+                        <option value="Tarjeta">💳 Sticker de Tarjeta</option>
+                        <option value="Cédula">🪪 Sticker de Cédula</option>
+                        <option value="Universal">💻 Sticker Universal (Laptop/Termo)</option>
+                    </select>
+                    
+                    <input type="text" id="url-imagen" placeholder="Pega el link de la imagen aquí..." oninput="renderizarImagen()">
+                    <input type="text" id="cliente-whatsapp-sticker" placeholder="WhatsApp o Instagram de contacto">
+                    
+                    <button class="btn-action" onclick="guardarPedidoSticker()">Encargar Sticker</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- VISTA 2: FORMULARIO DE PROYECTOS PUBLICITARIOS -->
+        <aside id="view-proyecto" class="section-view">
+            <h3 style="margin-bottom: 15px; font-size: 1.2rem;">🏢 ¿Tienes un Negocio o Canal?</h3>
+            <div class="proyecto-wrapper">
+                <input type="text" id="proyecto-contacto" placeholder="Tu Nombre / Marca o Canal" style="padding:12px; border:1px solid var(--border); border-radius:8px;">
+                <input type="text" id="proyecto-redes" placeholder="WhatsApp o Instagram corporativo" style="padding:12px; border:1px solid var(--border); border-radius:8px;">
+                
+                <p style="font-size:0.85rem; font-weight:bold; color:#555; margin-top:5px;">¿Qué tipo de publicidad física necesitas?</p>
+                <div class="grid-necesidades">
+                    <button class="btn-necesidad" onclick="toggleNecesidad(this, 'Letrero Local')">Letrero / Caja Luz</button>
+                    <button class="btn-necesidad" onclick="toggleNecesidad(this, 'Camisas/Ropa')">Camisas/Uniformes</button>
+                    <button class="btn-necesidad" onclick="toggleNecesidad(this, 'Vasos/Termos')">Vasos o Termos</button>
+                    <button class="btn-necesidad" onclick="toggleNecesidad(this, 'Stickers x Mayor')">Stickers al por Mayor</button>
+                </div>
+
+                <textarea id="proyecto-notas" placeholder="Cuéntanos brevemente tu idea o necesidad..."></textarea>
+                
+                <button class="btn-action" style="background:var(--dark);" onclick="guardarPedidoProyecto()">Registrar mi Requerimiento</button>
+            </div>
+        </aside>
+
+        <!-- VISTA 3: MONITOR EN VIVO (BACKSTAGE) -->
+        <section id="view-monitor" class="section-view">
+            <h3 style="margin-bottom: 15px; font-size: 1.2rem;">🖥️ Panel Backstage en Vivo</h3>
+            <div class="monitor-wrapper">
+                <div class="lista-leads-scroll" id="lista-leads"></div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- NAVEGACIÓN MÓVIL (SOLO VISIBLE EN CELULARES) -->
+    <nav class="mobile-nav">
+        <button class="nav-tab active" id="btn-tab-render" onclick="switchView('view-render', this)">
+            <span>🎨</span> Stickers
+        </button>
+        <button class="nav-tab" id="btn-tab-proyecto" onclick="switchView('view-proyecto', this)">
+            <span>🏢</span> Proyectos
+        </button>
+        <button class="nav-tab" id="btn-tab-monitor" onclick="switchView('view-monitor', this)">
+            <span>🖥️</span> Monitor
+        </button>
+    </nav>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // Memoria volátil simulando tu base local persistente de datos
+        let dbLeads = JSON.parse(localStorage.getItem('dbLeads')) || [];
+        let necesidadesSeleccionadas = [];
+
+        function switchView(viewId, button) {
+            if (window.innerWidth < 768) {
+                document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.getElementById(viewId).classList.add('active');
+                button.classList.add('active');
+            }
+        }
+
+        function showToast(mensaje) {
+            const toast = document.getElementById('toast-container');
+            toast.innerText = mensaje;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // --- LÓGICA VISTA 1: RENDERIZADOR ---
+        function actualizarTipoSticker() {
+            const tipo = document.getElementById('select-tipo').value;
+            const badge = document.getElementById('tipo-badge');
+            const chip = document.getElementById('tarjeta-chip');
+            badge.innerText = tipo;
+            
+            // Ocultar chip si no es tarjeta bancaria para que sea realista
+            if (tipo === "Tarjeta") {
+                chip.style.display = "block";
+            } else {
+                chip.style.display = "none";
+            }
+        }
+
+        function renderizarImagen() {
+            const url = document.getElementById('url-imagen').value;
+            const preview = document.getElementById('tarjeta-preview');
+            if (url.trim() !== "") {
+                preview.style.backgroundImage = `url('${url}')`;
+            } else {
+                preview.style.backgroundImage = 'none';
+            }
+        }
+
+        function guardarPedidoSticker() {
+            const tipo = document.getElementById('select-tipo').value;
+            const url = document.getElementById('url-imagen').value;
+            const contacto = document.getElementById('cliente-whatsapp-sticker').value;
+
+            if (!contacto) {
+                showToast("⚠️ Pon un contacto para avisar el martes.");
+                return;
+            }
+
+            const nuevoLead = {
+                id: Date.now(),
+                categoria: 'Sticker Personalizado',
+                detalle: `Tipo: ${tipo} | Imagen: ${url ? 'Adjunta' : 'Ninguna'}`,
+                contacto: contacto,
+                notas: 'Espera confirmación de render final para impresión.'
+            };
+
+            dbLeads.unshift(nuevoLead);
+            localStorage.setItem('dbLeads', JSON.stringify(dbLeads));
+            
+            // Resetear campos
+            document.getElementById('url-imagen').value = '';
+            document.getElementById('cliente-whatsapp-sticker').value = '';
+            document.getElementById('tarjeta-preview').style.backgroundImage = 'none';
+
+            renderMonitor();
+            showToast("✅ ¡Encargo guardado! Nos vemos en el monitor.");
+            if (window.innerWidth < 768) switchView('view-monitor', document.getElementById('btn-tab-monitor'));
+        }
+
+        // --- LÓGICA VISTA 2: FORMULARIO PROYECTOS ---
+        function toggleNecesidad(btn, valor) {
+            btn.classList.toggle('active');
+            if (btn.classList.contains('active')) {
+                necesidadesSeleccionadas.push(valor);
+            } else {
+                necesidadesSeleccionadas = necesidadesSeleccionadas.filter(n => n !== valor);
+            }
+        }
+
+        function guardarPedidoProyecto() {
+            const marca = document.getElementById('proyecto-contacto').value;
+            const redes = document.getElementById('proyecto-redes').value;
+            const notas = document.getElementById('proyecto-notas').value;
+
+            if (!marca || !redes) {
+                showToast("⚠️ Completa el nombre y contacto comercial.");
+                return;
+            }
+
+            const nuevoLead = {
+                id: Date.now(),
+                categoria: 'Proyecto Publicitario',
+                detalle: necesidadesSeleccionadas.length > 0 ? necesidadesSeleccionadas.join(', ') : 'Branding general',
+                contacto: `${marca} (${redes})`,
+                notas: notas ? notas : 'Sin observaciones adicionales.'
+            };
+
+            dbLeads.unshift(nuevoLead);
+            localStorage.setItem('dbLeads', JSON.stringify(dbLeads));
+
+            // Limpiar campos
+            document.getElementById('proyecto-contacto').value = '';
+            document.getElementById('proyecto-redes').value = '';
+            document.getElementById('proyecto-notas').value = '';
+            document.querySelectorAll('.btn-necesidad').forEach(b => b.classList.remove('active'));
+            necesidadesSeleccionadas = [];
+
+            renderMonitor();
+            showToast("🚀 Requerimiento registrado para el Martes.");
+            if (window.innerWidth < 768) switchView('view-monitor', document.getElementById('btn-tab-monitor'));
+        }
+
+        // --- LÓGICA VISTA 3: MONITOR EN VIVO ---
+        function renderMonitor() {
+            const contenedor = document.getElementById('lista-leads');
+            if (dbLeads.length === 0) {
+                contenedor.innerHTML = `<div style="color:#aaa; text-align:center; padding:35px; font-size:0.9rem;">No hay registros captados hoy aún.</div>`;
+                return;
+            }
+
+            contenedor.innerHTML = dbLeads.map(l => `
+                <div class="lead-ticket ${l.categoria === 'Sticker Personalizado' ? 'sticker-type' : ''}">
+                    <div style="font-size:0.85rem; font-weight:bold; color:#495057; display:flex; justify-content:space-between;">
+                        <span>📌 ${l.categoria}</span>
+                        <span style="color:var(--primary); font-size:0.75rem;">⏱️ ${new Date(l.id).toLocaleTimeString()}</span>
+                    </div>
+                    <div style="font-size:0.95rem; font-weight:700; margin:5px 0;">Contacto: ${l.contacto}</div>
+                    <div style="font-size:0.85rem; color:#6c757d;">Requerimiento: ${l.detalle}</div>
+                    <div style="font-size:0.75rem; font-style:italic; background:#f1f3f5; padding:6px; border-radius:4px; margin-top:6px; color:#212529;">
+                        <strong>Nota:</strong> ${l.notas}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Inicialización en tiempo de renderizado
+        renderMonitor();
+    </script>
+</body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Comanda Pro + Catálogo Participativo</title>
+    <style>
+        :root {
+            --primary: #d63384;
+            --primary-light: #fff0f6;
+            --success: #25D366;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #1a1a2e;
+            --bg: #f4f4f8;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text-muted: #64748b;
+            --nav-height: 65px;
+            --cat-height: 140px; /* Ajustado para el área de carga */
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* ── NAV MÓVIL ── */
+        .mobile-nav {
+            display: flex;
+            background: white;
+            border-top: 1px solid var(--border);
+            height: var(--nav-height);
+            position: fixed;
+            bottom: 0; width: 100%;
+            z-index: 2000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+        }
+        .nav-tab {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-size: 0.78rem; font-weight: 600;
+            color: #94a3b8; background: none; border: none;
+            cursor: pointer; position: relative; gap: 3px;
+            transition: color 0.15s;
+        }
+        .nav-tab .icon { font-size: 1.3rem; }
+        .nav-tab.active { color: var(--primary); }
+        .nav-tab.active::after {
+            content: ''; position: absolute; top: 0; left: 20%; right: 20%;
+            height: 3px; background: var(--primary); border-radius: 0 0 4px 4px;
+        }
+        .badge {
+            position: absolute; top: 6px; right: 22%;
+            background: var(--primary); color: white;
+            font-size: 0.7rem; padding: 1px 6px;
+            border-radius: 10px; font-weight: 700;
+            display: none;
+        }
+
+        /* ── LAYOUT DESKTOP / PC COOL ── */
+        .app-container {
+            display: flex; flex: 1;
+            height: calc(100vh - var(--nav-height));
+            overflow: hidden;
+        }
+        .section-view {
+            display: none; flex-direction: column;
+            width: 100%; height: 100%;
+            padding: 12px 12px calc(var(--nav-height) + 8px);
+            overflow: hidden;
+        }
+        .section-view.active { display: flex; }
+
+        .grid-productos-scroll {
+            flex: 1; overflow-y: auto;
+            padding-bottom: calc(var(--cat-height) + var(--nav-height) + 20px);
+        }
+        .grid-productos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+        }
+        
+        /* ── TRATAMIENTO FOTOS HORIZONTAL/VERTICAL ── */
+        .producto-celda {
+            background: white; border: 1.5px solid var(--border);
+            border-radius: 12px; padding: 10px 8px;
+            text-align: center; cursor: pointer;
+            display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center;
+            min-height: 165px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: transform 0.1s, border-color 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+        .producto-celda:active { transform: scale(0.96); background: var(--primary-light); border-color: var(--primary); }
+        
+        .img-container {
+            width: 85px; height: 85px; 
+            border-radius: 8px; margin-bottom: 6px;
+            overflow: hidden; background: #eee;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .producto-celda img {
+            width: 100%; height: 100%; 
+            object-fit: cover; /* Recorta inteligentemente fotos verticales u horizontales sin deformar */
+            pointer-events: none;
+        }
+        
+        .prod-nombre { font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
+        .prod-precio { font-size: 0.85rem; color: var(--primary); font-weight: 700; }
+        .prod-tiene-opciones {
+            position: absolute; top: 6px; right: 6px;
+            background: var(--warning); color: white;
+            font-size: 0.6rem; font-weight: 700;
+            padding: 2px 5px; border-radius: 4px; z-index: 10;
+        }
+
+        /* ── SECCIÓN MINERÍA DE FOTOS + CATEGORÍAS ── */
+        .categorias-container {
+            background: white;
+            border-top: 1px solid var(--border);
+            position: fixed; bottom: var(--nav-height);
+            left: 0; width: 100%; height: var(--cat-height);
+            z-index: 1500;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.07);
+            display: flex; flex-direction: column;
+            padding: 8px 12px; gap: 6px;
+        }
+        .cat-search-row {
+            display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+        }
+        .btn-lupa {
+            width: 34px; height: 34px; border-radius: 8px;
+            border: 1.5px solid var(--border); background: var(--bg);
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 1rem; flex-shrink: 0;
+        }
+        .search-expandible {
+            flex: 1; display: flex; align-items: center; gap: 6px;
+            background: var(--bg); border: 1.5px solid var(--border);
+            border-radius: 8px; padding: 0 10px; height: 34px;
+        }
+        .search-expandible input {
+            flex: 1; border: none; outline: none; background: transparent; font-size: 0.9rem;
+        }
+        
+        /* Botón de Carga Colectiva de Fotos */
+        .upload-box {
+            display: flex; align-items: center; justify-content: center;
+            background: var(--primary-light); border: 1.5px dashed var(--primary);
+            border-radius: 8px; padding: 6px; cursor: pointer; font-size: 0.8rem;
+            font-weight: 700; color: var(--primary); gap: 6px; transition: background 0.2s;
+        }
+        .upload-box:hover { background: #ffe3ee; }
+        .upload-box input { display: none; }
+
+        .categorias-bar {
+            display: flex; gap: 8px; overflow-x: auto; flex: 1;
+            align-items: center; scrollbar-width: none;
+        }
+        .categorias-bar::-webkit-scrollbar { display: none; }
+        .btn-categoria {
+            padding: 6px 14px; border: 1.5px solid var(--border);
+            background: var(--bg); border-radius: 20px;
+            cursor: pointer; font-weight: 600; white-space: nowrap;
+            font-size: 0.82rem; color: var(--text-muted);
+        }
+        .btn-categoria.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* ── MODAL PERSONALIZACIÓN ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55); z-index: 9000;
+            display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: white; border-radius: 20px 20px 0 0;
+            padding: 20px; width: 100%; max-width: 480px;
+            max-height: 80vh; overflow-y: auto;
+            transform: translateY(30px); transition: transform 0.25s ease;
+        }
+        .modal-overlay.open .modal-box { transform: translateY(0); }
+        .modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+        .modal-precio { color: var(--primary); font-weight: 700; margin-bottom: 16px; }
+        .modal-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin: 14px 0 8px; }
+        .opciones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .opcion-btn { padding: 10px 8px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--bg); cursor: pointer; font-size: 0.85rem; text-align: center; }
+        .opcion-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 700; }
+        .adicion-btn { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--bg); cursor: pointer; font-size: 0.85rem; margin-bottom: 6px; }
+        .adicion-btn.selected { border-color: var(--success); background: #f0fdf4; }
+        .modal-nota-input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; outline: none; font-family: inherit; margin-top: 6px; }
+        .modal-footer { display: flex; gap: 10px; margin-top: 18px; }
+        .btn-modal-cancel { flex: 1; padding: 13px; border: 1.5px solid var(--border); background: white; border-radius: 10px; font-weight: 600; cursor: pointer; color: var(--text-muted); }
+        .btn-modal-confirm { flex: 2; padding: 13px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+
+        /* ── COMANDA / CARRITO ── */
+        .comanda-wrapper { display: flex; flex-direction: column; height: 100%; background: white; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; }
+        .comanda-header { padding: 14px; border-bottom: 1px solid var(--border); }
+        .meta-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .meta-inputs select, .meta-inputs input { padding: 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; font-family: inherit; }
+        .campo-nota-orden { width: 100%; margin-top: 8px; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.85rem; outline: none; font-family: inherit; }
+        .items-lista { flex: 1; overflow-y: auto; padding: 12px; background: #fafbfc; }
+        .vacia-msg { text-align: center; color: var(--text-muted); padding: 30px 20px; font-size: 0.9rem; }
+        .vacia-msg .icon { font-size: 2.5rem; display: block; margin-bottom: 8px; }
+        .item-linea { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+        .item-linea-top { display: flex; justify-content: space-between; }
+        .item-nombre { font-weight: 600; font-size: 0.9rem; }
+        .item-specs { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+        .item-precio { font-weight: 700; color: var(--primary); font-size: 0.9rem; }
+        .item-controles { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+        .item-controles button { width: 30px; height: 30px; border: 1.5px solid var(--border); background: white; border-radius: 7px; font-weight: 700; cursor: pointer; }
+        .btn-eliminar-item { margin-left: auto; background: none!important; border: none!important; color: var(--danger); cursor: pointer; font-size: 1rem; }
+        .comanda-footer { padding: 14px; border-top: 2px solid var(--border); }
+        .totales-row { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; }
+        .totales-row span:last-child { color: var(--primary); }
+        
+        /* Botones de acción principal */
+        .action-buttons-group { display: flex; flex-direction: column; gap: 8px; }
+        .btn-enviar { width: 100%; background: var(--info); color: white; border: none; padding: 12px; font-size: 0.95rem; font-weight: 700; border-radius: 10px; cursor: pointer; }
+        .btn-whatsapp { width: 100%; background: var(--success); color: white; border: none; padding: 12px; font-size: 0.95rem; font-weight: 700; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 10px rgba(37,211,102,0.2); }
+        .btn-vaciar { width: 100%; background: none; color: var(--text-muted); border: 1.5px solid var(--border); padding: 8px; font-size: 0.85rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
+
+        /* ── MONITOR ── */
+        .monitor-wrapper { display: flex; flex-direction: column; height: 100%; }
+        .monitor-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .balance-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 10px; }
+        .balance-card { background: var(--dark); color: white; border-radius: 10px; padding: 10px; text-align: center; }
+        .balance-card .valor { font-size: 1.2rem; font-weight: 700; }
+        .lista-pedidos-scroll { flex: 1; overflow-y: auto; padding-bottom: 80px; }
+
+        /* Tickets en monitor con Copiar Link limpio */
+        .pedido-ticket { background: white; border-radius: 12px; border-left: 5px solid var(--warning); margin-bottom: 10px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .ticket-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .ticket-mesa { font-weight: 700; font-size: 0.95rem; }
+        .ticket-num { font-size: 0.7rem; background: var(--dark); color: white; padding: 2px 6px; border-radius: 4px; }
+        .ticket-items { margin: 8px 0; border-top: 1px dashed var(--border); padding-top: 6px; }
+        .ticket-item-linea { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 2px 0; }
+        .ticket-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; flex-wrap: wrap; }
+        .btn-copiar-link { background: var(--bg); border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .btn-copiar-link:active { background: var(--primary-light); }
+
+        /* ── TOAST FLOATING NOTIFICATION ── */
+        #toast-container { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%) translateY(8px); background: rgba(26,26,46,0.95); color: white; padding: 10px 22px; border-radius: 30px; font-size: 0.88rem; z-index: 9999; opacity: 0; transition: all 0.2s ease; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+        #toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── ADAPTACIÓN TOTAL PC / DESKTOP ── */
+        @media (min-width: 768px) {
+            .mobile-nav { display: none; }
+            .app-container { height: 100vh; display: grid; grid-template-columns: 1fr 380px 360px; }
+            .section-view { display: flex !important; border-right: 1px solid var(--border); height: 100vh; padding: 14px; }
+            .section-view:last-child { border-right: none; }
+            .categorias-container { position: static; width: 100%; height: auto; border-top: none; border-bottom: 1px solid var(--border); box-shadow: none; padding: 8px 0; margin-bottom: 10px; }
+            .grid-productos-scroll { padding-bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- ════════════════════ CATÁLOGO ════════════════════ -->
+    <main id="view-catalogo" class="section-view active">
+        <div class="grid-productos-scroll">
+            <div class="grid-productos" id="grid-productos"></div>
+        </div>
+        <div class="categorias-container">
+            <div class="cat-search-row">
+                <button class="btn-lupa" onclick="limpiarBusqueda()">🔍</button>
+                <div class="search-expandible">
+                    <input type="text" id="buscador" placeholder="Buscar postre..." oninput="buscarProducto(this.value)">
+                </div>
+                <!-- Cámara/Minería colectiva -->
+                <label class="upload-box">
+                    📸 <span>Cargar Foto</span>
+                    <input type="file" accept="image/*" capture="environment" onchange="subirFotoColectiva(this)">
+                </label>
+            </div>
+            <div class="categorias-bar" id="categorias-bar"></div>
+        </div>
+    </main>
+
+    <!-- ════════════════════ COMANDA / CARRITO ════════════════════ -->
+    <aside id="view-comanda" class="section-view">
+        <div class="comanda-wrapper">
+            <div class="comanda-header">
+                <h3>📋 Mi Comanda / Carrito</h3>
+                <div class="meta-inputs" style="margin-top:8px;">
+                    <select id="num-mesa">
+                        <option value="" disabled selected>📍 Destino/Mesa</option>
+                        <option value="Mesa 1">🪑 Mesa 1</option>
+                        <option value="Mesa 2">🪑 Mesa 2</option>
+                        <option value="Mesa 3">🪑 Mesa 3</option>
+                        <option value="Para Llevar">🛍️ Para Llevar</option>
+                    </select>
+                    <input type="text" id="campo-mesero" placeholder="👤 Tu Nombre">
+                </div>
+                <input type="text" id="comentario-orden" class="campo-nota-orden" placeholder="Nota general de la orden...">
+            </div>
+
+            <div class="items-lista" id="items-comanda">
+                <div class="vacia-msg"><span class="icon">🛒</span>Selecciona productos para armar tu comanda</div>
+            </div>
+
+            <div class="comanda-footer">
+                <div class="totales-row">
+                    <span>Total</span>
+                    <span id="total-comanda">$0</span>
+                </div>
+                <div class="action-buttons-group">
+                    <button class="btn-whatsapp" onclick="enviarAlWhatsApp()">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.907h.004c4.368 0 7.926-3.559 7.93-7.93a7.9 7.9 0 0 0-2.327-5.645zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.69-4.98c-.202-.1-.1.195-.582-.24-.483-.437-.88-.867-1.033-1.121-.153-.255-.017-.394.112-.523.116-.117.255-.3.383-.45.128-.15.17-.255.255-.425.085-.17.043-.319-.021-.448-.064-.13-.582-1.4-.797-1.92-.21-.509-.42-.44-.582-.447h-.498c-.17 0-.447.064-.68.314-.234.249-.893.874-.893 2.133s.914 2.474.1 2.6c1.173 1.549 2.58 2.736 4.165 3.44.425.18.756.288 1.01.37.426.136.813.117 1.119.072.342-.05 1.032-.421 1.178-.827.145-.407.145-.756.102-.83-.043-.074-.153-.117-.356-.218z"/></svg>
+                        Pedir por WhatsApp (Directo)
+                    </button>
+                    <button class="btn-enviar" onclick="procesarOrden()">⚡ Registrar Interno (Nube)</button>
+                    <button class="btn-vaciar" onclick="vaciarComanda()">🗑️ Limpiar Todo</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ════════════════════ MONITOR EN VIVO ════════════════════ -->
+    <section id="view-monitor" class="section-view">
+        <div class="monitor-wrapper">
+            <div class="monitor-top">
+                <h3>🖥️ Monitor de Comandas</h3>
+                <button class="btn-modal-cancel" style="padding:4px 8px; font-size:0.8rem;" onclick="cargarPedidos()">🔄</button>
+            </div>
+            <div class="balance-grid">
+                <div class="balance-card"><div class="valor" id="bal-count">0</div><div>Activas</div></div>
+            </div>
+            <div class="lista-pedidos-scroll" id="lista-historial"></div>
+        </div>
+    </section>
+
+</div>
+
+<!-- NAV MÓVIL -->
+<nav class="mobile-nav">
+    <button class="nav-tab active" id="btn-tab-catalogo" onclick="switchView('view-catalogo', this)">📋 Catálogo</button>
+    <button class="nav-tab" id="btn-tab-comanda" onclick="switchView('view-comanda', this)">🛒 Carrito <span class="badge" id="badge-comanda">0</span></button>
+    <button class="nav-tab" id="btn-tab-monitor" onclick="switchView('view-monitor', this)">🖥️ Monitor</button>
+</nav>
+
+<!-- MODAL PERSONALIZACIÓN -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModal(event)">
+    <div class="modal-box">
+        <div class="modal-title" id="modal-titulo"></div>
+        <div class="modal-precio" id="modal-precio-base"></div>
+        <div id="modal-contenido"></div>
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="cerrarModalBtn()">Cancelar</button>
+            <button class="btn-modal-confirm" onclick="confirmarModal()">Agregar ✓</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyTgsY2YYD5IZCmDXC_QjDTdFntpTG11VQrQbukrb19xSPjIx9F3JT1B5JOqO7jtU0x/exec";
+
+// Catálogo Base Dinámico
+let listaProductos = [
+    { id: 1, categoria: "Postres", nombre: "Cremitas Especiales", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ" },
+    { id: 2, categoria: "Postres", nombre: "Arroz con Leche Premium", precio: 7000, imgPostre: "https://centrolac.wordpress.com/wp-content/uploads/2014/02/post19-12.png?w=256&h=256" },
+    { id: 3, categoria: "Bebidas", nombre: "Cappuccino Italiano", precio: 4800, imgPostre: "https://photoshop-kopona.com/uploads/posts/2018-09/1537260549_im2.jpg" }
+];
+
+let comandaActiva = [];
+let historialPedidos = [];
+let categoriaActual = "Todos";
+let busquedaActual = "";
+
+// Carga Colectiva de Fotos (Cámara o Galería del Celular)
+function subirFotoColectiva(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const nuevoId = Date.now();
+            const nuevoPostre = {
+                id: nuevoId,
+                categoria: "Aportes ComicCon",
+                nombre: `Postre Fan #${String(nuevoId).slice(-4)}`,
+                precio: 5000,
+                imgPostre: e.target.result // Base64 directo para carga inmediata
+            };
+            listaProductos.unshift(nuevoPostre);
+            initCategorias();
+            renderGrid();
+            showToast("💎 ¡Diamante minado! Foto añadida al catálogo");
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Envío a WhatsApp sin fricciones
+function enviarAlWhatsApp() {
+    if (comandaActiva.length === 0) { showToast("⚠️ Carrito vacío."); return; }
+    const mesa = document.getElementById('num-mesa').value || "No asignada";
+    const mesero = document.getElementById('campo-mesero').value || "Cliente Comicon";
+    const notas = document.getElementById('comentario-orden').value || "Ninguna";
+    const total = comandaActiva.reduce((s, i) => s + i.precio * i.cantidad, 0);
+
+    let mensaje = `*⚡ NUEVA COMANDA COMICON* \n\n`;
+    mensaje += `📍 *Lugar/Mesa:* ${mesa}\n`;
+    mensaje += `👤 *Por:* ${mesero}\n`;
+    mensaje += `---------------------------\n`;
+    
+    comandaActiva.forEach(i => {
+        mensaje += `• *${i.cantidad}x* ${i.nombre} -> $${i.precio * i.cantidad}\n`;
+    });
+    
+    mensaje += `---------------------------\n`;
+    mensaje += `📌 *Notas:* ${notas}\n`;
+    mensaje += `💰 *TOTAL A PAGAR:* $${total}\n\n`;
+    mensaje += `_Enviado desde Comanda Pro_`;
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+    showToast("📱 Redirigiendo a WhatsApp...");
+}
+
+// Copiar Enlaces de forma Limpia al Portapapeles
+function copiarAlPortapapeles(texto) {
+    navigator.clipboard.writeText(texto).then(() => {
+        showToast("📋 Link copiado al portapapeles");
+    }).catch(() => {
+        showToast("❌ Error al copiar");
+    });
+}
+
+function renderHistorial() {
+    const lista = document.getElementById('lista-historial');
+    document.getElementById('bal-count').textContent = historialPedidos.length;
+
+    if (historialPedidos.length === 0) {
+        lista.innerHTML = `<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;">No hay órdenes registradas.</p>`;
+        return;
+    }
+
+    lista.innerHTML = historialPedidos.map(p => `
+        <div class="pedido-ticket">
+            <div class="ticket-head">
+                <span class="ticket-mesa">📍 ${p.mesa}</span>
+                <span class="ticket-num">#${p.id}</span>
+            </div>
+            <div class="ticket-items">
+                <div class="ticket-item-linea"><span>${p.items}</span></div>
+            </div>
+            <div class="ticket-foot">
+                <strong>$${p.total}</strong>
+                <!-- Botón de Copiar Link Limpio sin ensuciar la pantalla -->
+                <button class="btn-copiar-link" onclick="copiarAlPortapapeles('${API_URL}?id=${p.id}')">
+                    🔗 Copiar Link
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Lógica Básica del Catálogo y Estado
+function initCategorias() {
+    const bar = document.getElementById('categorias-bar');
+    const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
+    bar.innerHTML = cats.map(c => `<button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCat('${c}')">${c}</button>`).join('');
+}
+function cambiarCat(c) { categoriaActual = c; initCategorias(); renderGrid(); }
+function buscarProducto(t) { busquedaActual = t.toLowerCase(); renderGrid(); }
+function limpiarBusqueda() { document.getElementById('buscador').value = ''; busquedaActual = ''; renderGrid(); }
+
+function renderGrid() {
+    const grid = document.getElementById('grid-productos');
+    let f = listaProductos.filter(p => (categoriaActual === "Todos" || p.categoria === categoriaActual) && p.nombre.toLowerCase().includes(busquedaActual));
+    grid.innerHTML = f.map(p => `
+        <div class="producto-celda" onclick="agregarItem(${p.id})">
+            <div class="img-container">
+                <img src="${p.imgPostre}" onerror="this.src='https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?pid=ImgDetMain'">
+            </div>
+            <p class="prod-nombre">${p.nombre}</p>
+            <p class="prod-precio">$${p.precio}</p>
+        </div>
+    `).join('');
+}
+
+function agregarItem(id) {
+    const prod = listaProductos.find(p => p.id === id);
+    const exist = comandaActiva.find(i => i.id === id);
+    if(exist) exist.cantidad++; else comandaActiva.push({...prod, cantidad: 1});
+    actualizarComanda();
+}
+
+function modificarCantidad(idx, c) {
+    comandaActiva[idx].cantidad += c;
+    if(comandaActiva[idx].cantidad <= 0) comandaActiva.splice(idx,1);
+    actualizarComanda();
+}
+
+function actualizarComanda() {
+    const cont = document.getElementById('items-comanda');
+    const badge = document.getElementById('badge-comanda');
+    const totalItems = comandaActiva.reduce((s,i)=>s+i.cantidad, 0);
+    badge.textContent = totalItems; badge.style.display = totalItems > 0 ? 'block' : 'none';
+
+    if(comandaActiva.length === 0) {
+        cont.innerHTML = `<div class="vacia-msg"><span class="icon">🛒</span>Selecciona productos para armar tu comanda</div>`;
+        document.getElementById('total-comanda').textContent = '$0';
+        return;
+    }
+    cont.innerHTML = comandaActiva.map((item, idx)=>`
+        <div class="item-linea">
+            <div class="item-linea-top">
+                <span class="item-nombre">${item.nombre}</span>
+                <span class="item-precio">$${item.precio * item.cantidad}</span>
+            </div>
+            <div class="item-controles">
+                <button onclick="modificarCantidad(${idx},-1)">-</button>
+                <span>${item.cantidad}</span>
+                <button onclick="modificarCantidad(${idx},1)">+</button>
+            </div>
+        </div>
+    `).join('');
+    document.getElementById('total-comanda').textContent = `$${comandaActiva.reduce((s,i)=>s+i.precio*i.cantidad,0)}`;
+}
+
+async function procesarOrden() {
+    if(comandaActiva.length===0) return;
+    const mesa = document.getElementById('num-mesa').value;
+    if(!mesa) { showToast("⚠️ Elige una mesa"); return; }
+    
+    const total = comandaActiva.reduce((s,i)=>s+i.precio*i.cantidad,0);
+    const itemsTxt = comandaActiva.map(i=>`${i.cantidad}x ${i.nombre}`).join(', ');
+    
+    const pedido = { id: String(Date.now()).slice(-4), mesa, total, items: itemsTxt };
+    historialPedidos.unshift(pedido);
+    comandaActiva = [];
+    actualizarComanda();
+    renderHistorial();
+    showToast("⚡ Guardado en monitor interno");
+}
+
+function vaciarComanda() { comandaActiva = []; actualizarComanda(); }
+function showToast(m) { const t = document.getElementById('toast-container'); t.innerText = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+function switchView(id, b) { if(window.innerWidth < 768) { document.querySelectorAll('.section-view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active')); document.getElementById(id).classList.add('active'); b.classList.add('active'); } }
+function cerrarModal(e) { if(e.target.classList.contains('modal-overlay')) cerrarModalBtn(); }
+function cerrarModalBtn() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// Init
+initCategorias();
+renderGrid();
+</script>
+</body>
+</html>

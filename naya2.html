@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Comicon Catalog Pro</title>
+    <style>
+        :root {
+            --primary: #d63384;
+            --primary-light: #fff0f6;
+            --success: #25D366;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #1a1a2e;
+            --bg: #f4f4f8;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text-muted: #64748b;
+            --nav-height: 65px;
+            --cat-height: 140px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* ── NAV MÓVIL ── */
+        .mobile-nav {
+            display: flex;
+            background: white;
+            border-top: 1px solid var(--border);
+            height: var(--nav-height);
+            position: fixed;
+            bottom: 0; width: 100%;
+            z-index: 2000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+        }
+        .nav-tab {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-size: 0.78rem; font-weight: 600;
+            color: #94a3b8; background: none; border: none;
+            cursor: pointer; position: relative; gap: 3px;
+            transition: color 0.15s;
+        }
+        .nav-tab .icon { font-size: 1.3rem; }
+        .nav-tab.active { color: var(--primary); }
+        .nav-tab.active::after {
+            content: ''; position: absolute; top: 0; left: 20%; right: 20%;
+            height: 3px; background: var(--primary); border-radius: 0 0 4px 4px;
+        }
+        .badge {
+            position: absolute; top: 6px; right: 22%;
+            background: var(--primary); color: white;
+            font-size: 0.7rem; padding: 1px 6px;
+            border-radius: 10px; font-weight: 700;
+            display: none;
+        }
+
+        /* ── LAYOUT ── */
+        .app-container {
+            display: flex; flex: 1;
+            height: calc(100vh - var(--nav-height));
+            overflow: hidden;
+        }
+        .section-view {
+            display: none; flex-direction: column;
+            width: 100%; height: 100%;
+            padding: 12px 12px calc(var(--nav-height) + 8px);
+            overflow: hidden;
+        }
+        .section-view.active { display: flex; }
+
+        .grid-productos-scroll {
+            flex: 1; overflow-y: auto;
+            padding-bottom: calc(var(--cat-height) + var(--nav-height) + 20px);
+        }
+        .grid-productos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .producto-celda {
+            background: white; border: 1.5px solid var(--border);
+            border-radius: 12px; padding: 10px 8px;
+            text-align: center; cursor: pointer;
+            display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center;
+            min-height: 180px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: transform 0.1s, border-color 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+        .producto-celda:active { transform: scale(0.96); background: var(--primary-light); border-color: var(--primary); }
+        
+        /* Tratamiento adaptativo para fotos horizontales y verticales de la gente */
+        .producto-celda .img-container {
+            width: 100%; height: 110px; border-radius: 8px; overflow: hidden; margin-bottom: 6px; background: #eee;
+        }
+        .producto-celda img {
+            width: 100%; height: 100%; object-fit: cover; pointer-events: none;
+        }
+        
+        .prod-nombre { font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
+        .prod-precio { font-size: 0.85rem; color: var(--primary); font-weight: 700; }
+
+        /* ── CONTROL DE CARGA INTELIGENTE (MINERÍA DE FOTOS) ── */
+        .categorias-container {
+            background: white;
+            border-top: 1px solid var(--border);
+            position: fixed; bottom: var(--nav-height);
+            left: 0; width: 100%; height: var(--cat-height);
+            z-index: 1500;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.07);
+            display: flex; flex-direction: column;
+            padding: 10px; gap: 8px;
+        }
+        .upload-row {
+            display: flex; gap: 8px; align-items: center; background: var(--primary-light);
+            padding: 6px 10px; border-radius: 8px; border: 1px dashed var(--primary);
+        }
+        .upload-row label {
+            font-size: 0.8rem; font-weight: 700; color: var(--primary); cursor: pointer; flex: 1; text-align: center;
+        }
+        .upload-row input { display: none; }
+
+        .cat-search-row { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .btn-lupa {
+            width: 34px; height: 34px; border-radius: 8px;
+            border: 1.5px solid var(--border); background: var(--bg);
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 1rem; flex-shrink: 0;
+        }
+        .search-expandible {
+            flex: 1; display: flex; align-items: center; gap: 6px;
+            background: var(--bg); border: 1.5px solid var(--border);
+            border-radius: 8px; padding: 0 10px; height: 34px;
+        }
+        .search-expandible input {
+            flex: 1; border: none; outline: none; background: transparent; font-size: 0.9rem; min-width: 0;
+        }
+        .categorias-bar { display: flex; gap: 8px; overflow-x: auto; align-items: center; scrollbar-width: none; }
+        .categorias-bar::-webkit-scrollbar { display: none; }
+        .btn-categoria {
+            padding: 6px 14px; border: 1.5px solid var(--border); background: var(--bg); border-radius: 20px;
+            cursor: pointer; font-weight: 600; white-space: nowrap; font-size: 0.8rem; color: var(--text-muted);
+        }
+        .btn-categoria.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* ── CARRITO / COMANDA COGNITIVA ── */
+        .comanda-wrapper { display: flex; flex-direction: column; height: 100%; background: white; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; }
+        .comanda-header { padding: 14px; border-bottom: 1px solid var(--border); background: white; }
+        .meta-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .meta-inputs input { padding: 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; }
+        .meta-inputs input:focus { border-color: var(--primary); }
+        .items-lista { flex: 1; overflow-y: auto; padding: 12px; background: #fafbfc; }
+        
+        .item-linea { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+        .item-linea-top { display: flex; justify-content: space-between; }
+        .item-nombre { font-weight: 600; font-size: 0.9rem; }
+        .item-precio { font-weight: 700; color: var(--primary); font-size: 0.9rem; }
+        .item-controles { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+        .item-controles button { width: 30px; height: 30px; border: 1.5px solid var(--border); background: white; border-radius: 7px; font-weight: 700; cursor: pointer; }
+        
+        .comanda-footer { padding: 14px; border-top: 2px solid var(--border); background: white; }
+        .totales-row { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; }
+        .totales-row span:last-child { color: var(--primary); }
+        
+        .action-buttons-group { display: flex; flex-direction: column; gap: 8px; }
+        .btn-enviar { width: 100%; background: var(--info); color: white; border: none; padding: 14px; font-size: 1rem; font-weight: 700; border-radius: 10px; cursor: pointer; }
+        .btn-whatsapp { width: 100%; background: var(--success); color: white; border: none; padding: 12px; font-size: 0.95rem; font-weight: 700; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+        /* ── MONITOR TICKETS ── */
+        .pedido-ticket { background: white; border-radius: 12px; border-left: 5px solid var(--warning); margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); padding: 12px; }
+        .ticket-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .ticket-mesa { font-weight: 700; font-size: 0.95rem; }
+        .ticket-num { font-size: 0.7rem; background: var(--dark); color: white; padding: 2px 6px; border-radius: 4px; }
+        .ticket-items { padding: 6px 0; border-top: 1px dashed var(--border); font-size: 0.85rem; }
+        .ticket-foot { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+        
+        /* Botón exclusivo Limpio de Copiar Link */
+        .btn-copiar-link { background: var(--dark); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+        .btn-copiar-link:active { opacity: 0.8; }
+
+        .btn-estado-ticket { padding: 6px 11px; border-radius: 7px; border: 1.5px solid var(--border); background: white; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+
+        #toast-container { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.85rem; z-index: 9999; display: none; }
+
+        @media (min-width: 768px) {
+            .mobile-nav { display: none; }
+            .app-container { height: 100vh; display: grid; grid-template-columns: 1fr 380px 360px; }
+            .section-view { display: flex !important; border-right: 1px solid var(--border); height: 100vh; padding: 14px; }
+            .categorias-container { position: static; width: 100%; height: auto; border-top: none; box-shadow: none; padding: 8px 0; }
+            .grid-productos-scroll { padding-bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- ════════════════════ CATÁLOGO ════════════════════ -->
+    <main id="view-catalogo" class="section-view active">
+        <div class="grid-productos-scroll">
+            <div class="grid-productos" id="grid-productos"></div>
+        </div>
+        <div class="categorias-container">
+            <!-- Minería de fotos: Carga Express desde el Celu -->
+            <div class="upload-row">
+                <label for="foto-comicon">📸 ¡Sube tu Foto al Catálogo Al Instante!</label>
+                <input type="file" id="foto-comicon" accept="image/*" onchange="cargarFotoUsuario(event)">
+            </div>
+            <div class="cat-search-row">
+                <button class="btn-lupa" onclick="limpiarBusqueda()">🔍</button>
+                <div class="search-expandible">
+                    <input type="text" id="buscador" placeholder="Buscar cosplay, stand, foto..." oninput="buscarProducto(this.value)">
+                </div>
+            </div>
+            <div class="categorias-bar" id="categorias-bar"></div>
+        </div>
+    </main>
+
+    <!-- ════════════════════ CARRITO / COMPANDA USER ════════════════════ -->
+    <aside id="view-comanda" class="section-view">
+        <div class="comanda-wrapper">
+            <div class="comanda-header">
+                <h3 style="margin-bottom:10px;">🛒 Tus Fotos / Selección</h3>
+                <div class="meta-inputs">
+                    <input type="text" id="num-mesa" placeholder="🆔 Stand # o Cosplay">
+                    <input type="text" id="campo-mesero" placeholder="📱 Tu Instagram / Tel">
+                </div>
+            </div>
+
+            <div class="items-lista" id="items-comanda"></div>
+
+            <div class="comanda-footer">
+                <div class="totales-row">
+                    <span>Items</span>
+                    <span id="total-comanda">$0</span>
+                </div>
+                <div class="action-buttons-group">
+                    <button class="btn-enviar" onclick="procesarOrden()">⚡ Enviar al Monitor Interno</button>
+                    <button class="btn-whatsapp" onclick="enviarAlWhatsAppDirecto()">🟢 Enviar Directo a WhatsApp</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ════════════════════ MONITOR INTERNO ════════════════════ -->
+    <section id="view-monitor" class="section-view">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <h3>🖥️ Monitor de Control (Comicon)</h3>
+            <button onclick="cargarPedidos()" style="padding:4px 8px;">🔄 Sync</button>
+        </div>
+        <div class="grid-productos-scroll" id="lista-historial"></div>
+    </section>
+
+</div>
+
+<nav class="mobile-nav">
+    <button class="nav-tab active" onclick="switchView('view-catalogo', this)"><span>📋</span> Catálogo</button>
+    <button class="nav-tab" onclick="switchView('view-comanda', this)"><span>🛒</span> Mi Carrito <span class="badge" id="badge-comanda">0</span></button>
+    <button class="nav-tab" onclick="switchView('view-monitor', this)"><span>🖥️</span> Monitor</button>
+</nav>
+
+<div id="toast-container"></div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyTgsY2YYD5IZCmDXC_QjDTdFntpTG11VQrQbukrb19xSPjIx9F3JT1B5JOqO7jtU0x/exec";
+const WHATSAPP_NUMER = "573100000000"; // Reemplaza con tu número de control del evento
+
+let comandaActiva = [];
+let historialPedidos = [];
+let categoriaActual = "Todos";
+let busquedaActual = "";
+
+// Catálogo Base Inicial
+const listaProductos = [
+    { id: 101, categoria: "Impresiones", nombre: "Foto Print A4 Holográfico", precio: 15000, imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ" },
+    { id: 102, categoria: "Impresiones", nombre: "Sticker Pack Premium", precio: 8000, imgPostre: "https://lh3.googleusercontent.com/d/1a9Gy3hm-oAUamMZnlKJiHrB1oEX0DsTC" },
+    { id: 103, categoria: "Fotografía", nombre: "Sesión Digital HD (1 Foto)", precio: 5000, imgPostre: "https://lh3.googleusercontent.com/d/1bpMy0TKOgvB7OQGXkE9AEbDJlcl7vNt4" }
+];
+
+// ── EXPLOTACIÓN DE MINERÍA DE FOTOS (LA GENTE LLENA EL CATÁLOGO) ──
+function cargarFotoUsuario(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const nuevoId = Date.now();
+        const nuevaFotoProd = {
+            id: nuevoId,
+            categoria: "Comunidad",
+            nombre: `Foto Cosplay #${String(nuevoId).slice(-4)}`,
+            precio: 0, // O asigna un valor base si se vende el print
+            imgPostre: e.target.result // Base64 local instantáneo
+        };
+        
+        listaProductos.unshift(nuevaFotoProd);
+        initCategorias();
+        renderGrid();
+        mostrarToast("💎 ¡Foto agregada al catálogo comunitario!");
+    };
+    reader.readAsDataURL(file);
+}
+
+function initCategorias() {
+    const bar = document.getElementById('categorias-bar');
+    const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
+    bar.innerHTML = cats.map(c => `<button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCategoria('${c}', this)">${c}</button>`).join('');
+}
+
+function cambiarCategoria(cat, btn) {
+    categoriaActual = cat;
+    renderGrid();
+}
+
+function renderGrid() {
+    const grid = document.getElementById('grid-productos');
+    let filtrados = listaProductos.filter(p => 
+        (categoriaActual === "Todos" || p.categoria === categoriaActual) &&
+        (p.nombre.toLowerCase().includes(busquedaActual))
+    );
+    
+    grid.innerHTML = filtrados.map(p => `
+        <div class="producto-celda" onclick="agregarAlCarrito(${p.id})">
+            <div class="img-container">
+                <img src="${p.imgPostre}">
+            </div>
+            <p class="prod-nombre">${p.nombre}</p>
+            <p class="prod-precio">${p.precio > 0 ? '$'+p.precio.toLocaleString() : 'Cortesía/Muestra'}</p>
+        </div>
+    `).join('');
+}
+
+function agregarAlCarrito(id) {
+    const prod = listaProductos.find(p => p.id === id);
+    const exist = comandaActiva.find(i => i.id === id);
+    if(exist) { exist.cantidad++; } else { comandaActiva.push({...prod, cantidad: 1}); }
+    renderCarrito();
+    mostrarToast(`🛒 Añadido: ${prod.nombre}`);
+}
+
+function renderCarrito() {
+    const contenedor = document.getElementById('items-comanda');
+    if(comandaActiva.length === 0) {
+        contenedor.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px;">Tu selección está vacía.</p>`;
+        document.getElementById('total-comanda').textContent = "$0";
+        document.getElementById('badge-comanda').style.display = "none";
+        return;
+    }
+    
+    contenedor.innerHTML = comandaActiva.map((item, idx) => `
+        <div class="item-linea">
+            <div class="item-linea-top">
+                <span class="item-nombre">${item.nombre}</span>
+                <span class="item-precio">$${(item.precio * item.cantidad).toLocaleString()}</span>
+            </div>
+            <div class="item-controles">
+                <button onclick="cambiarCant(${idx}, -1)">-</button>
+                <span>${item.cantidad}</span>
+                <button onclick="cambiarCant(${idx}, 1)">+</button>
+            </div>
+        </div>
+    `).join('');
+    
+    const total = comandaActiva.reduce((s,i) => s + (i.precio * i.cantidad), 0);
+    document.getElementById('total-comanda').textContent = "$" + total.toLocaleString();
+    
+    const badge = document.getElementById('badge-comanda');
+    badge.textContent = comandaActiva.length;
+    badge.style.display = "block";
+}
+
+function cambiarCant(idx, val) {
+    comandaActiva[idx].cantidad += val;
+    if(comandaActiva[idx].cantidad <= 0) comandaActiva.splice(idx, 1);
+    renderCarrito();
+}
+
+// ── ENVÍOS COMPLEMENTARIOS: BACKEND + REDUCCIÓN DE FRICCIÓN VÍA WHATSAPP ──
+function generarTextoOrden() {
+    const destino = document.getElementById('num-mesa').value || "Stand General";
+    const IDUser = document.getElementById('campo-mesero').value || "Anónimo";
+    const itemsText = comandaActiva.map(i => `${i.cantidad}x ${i.nombre}`).join(', ');
+    return { destino, IDUser, itemsText };
+}
+
+async function procesarOrden() {
+    if(comandaActiva.length === 0) return;
+    const { destino, IDUser, itemsText } = generarTextoOrden();
+    
+    const pedido = {
+        id: Date.now(),
+        mesa: destino,
+        mesero: IDUser,
+        items: itemsText,
+        estado: "Pendiente",
+        linkFoto: "https://comicon.com/downloads/pic_" + Date.now() // Simulación de link generado
+    };
+    
+    historialPedidos.unshift(pedido);
+    renderMonitor();
+    
+    // Reset temporal
+    comandaActiva = [];
+    renderCarrito();
+    mostrarToast("⚡ Enviado al monitor del Stand.");
+    
+    // Post asincrónico al Backend (Sheets) sin bloquear
+    fetch(API_URL, { method: "POST", body: JSON.stringify({ accion: "nuevoPedido", mesa: destino, mesero: IDUser, items: itemsText }) }).catch(()=>{});
+}
+
+function enviarAlWhatsAppDirecto() {
+    if(comandaActiva.length === 0) return;
+    const { destino, IDUser, itemsText } = generarTextoOrden();
+    
+    const mensaje = `*NUEVA ORDEN COMICON*\n📌 *Destino/Stand:* ${destino}\n👤 *Contacto:* ${IDUser

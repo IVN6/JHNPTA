@@ -3,477 +3,527 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Comicon Catalog Pro</title>
+    <title>⚡ Comic-Con Custom Hub</title>
     <style>
         :root {
-            --primary: #d63384;
-            --primary-light: #fff0f6;
+            --primary: #6f42c1;
             --success: #25D366;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #3b82f6;
-            --dark: #1a1a2e;
-            --bg: #f4f4f8;
-            --card: #ffffff;
-            --border: #e2e8f0;
-            --text-muted: #64748b;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --border: #dee2e6;
             --nav-height: 65px;
-            --cat-height: 140px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-            background: var(--bg);
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--light);
             color: var(--dark);
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            user-select: none;
         }
 
-        /* ── NAV MÓVIL ── */
-        .mobile-nav {
+        header {
+            background: white;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border);
             display: flex;
-            background: white;
-            border-top: 1px solid var(--border);
-            height: var(--nav-height);
-            position: fixed;
-            bottom: 0; width: 100%;
-            z-index: 2000;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
-        }
-        .nav-tab {
-            flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            font-size: 0.78rem; font-weight: 600;
-            color: #94a3b8; background: none; border: none;
-            cursor: pointer; position: relative; gap: 3px;
-            transition: color 0.15s;
-        }
-        .nav-tab .icon { font-size: 1.3rem; }
-        .nav-tab.active { color: var(--primary); }
-        .nav-tab.active::after {
-            content: ''; position: absolute; top: 0; left: 20%; right: 20%;
-            height: 3px; background: var(--primary); border-radius: 0 0 4px 4px;
-        }
-        .badge {
-            position: absolute; top: 6px; right: 22%;
-            background: var(--primary); color: white;
-            font-size: 0.7rem; padding: 1px 6px;
-            border-radius: 10px; font-weight: 700;
-            display: none;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        /* ── LAYOUT ── */
         .app-container {
-            display: flex; flex: 1;
-            height: calc(100vh - var(--nav-height));
+            flex: 1;
+            display: flex;
+            height: calc(100vh - var(--nav-height) - 55px);
             overflow: hidden;
         }
+
         .section-view {
-            display: none; flex-direction: column;
-            width: 100%; height: 100%;
-            padding: 12px 12px calc(var(--nav-height) + 8px);
-            overflow: hidden;
+            display: none;
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+            overflow-y: auto;
+            padding-bottom: 80px;
         }
-        .section-view.active { display: flex; }
 
-        .grid-productos-scroll {
-            flex: 1; overflow-y: auto;
-            padding-bottom: calc(var(--cat-height) + var(--nav-height) + 20px);
+        .section-view.active { display: flex; flex-direction: column; }
+
+        /* --- MOCKUPS DE DISEÑO --- */
+        .mockup-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 12px;
         }
-        .grid-productos {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
-        }
-        .producto-celda {
-            background: white; border: 1.5px solid var(--border);
-            border-radius: 12px; padding: 10px 8px;
-            text-align: center; cursor: pointer;
-            display: flex; flex-direction: column;
-            justify-content: space-between; align-items: center;
-            min-height: 180px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            transition: transform 0.1s, border-color 0.1s;
+
+        .card-mockup {
+            width: 260px;
+            height: 160px;
+            border-radius: 12px;
+            background: #343a40;
+            background-size: cover;
+            background-position: center;
             position: relative;
-            overflow: hidden;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
-        .producto-celda:active { transform: scale(0.96); background: var(--primary-light); border-color: var(--primary); }
-        
-        /* Tratamiento adaptativo para fotos horizontales y verticales de la gente */
-        .producto-celda .img-container {
-            width: 100%; height: 110px; border-radius: 8px; overflow: hidden; margin-bottom: 6px; background: #eee;
+        .card-mockup .chip {
+            width: 38px;
+            height: 28px;
+            background: linear-gradient(135deg, #f0d060, #cc9933);
+            border-radius: 4px;
+            position: absolute;
+            top: 35px; left: 20px;
         }
-        .producto-celda img {
-            width: 100%; height: 100%; object-fit: cover; pointer-events: none;
-        }
-        
-        .prod-nombre { font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
-        .prod-precio { font-size: 0.85rem; color: var(--primary); font-weight: 700; }
 
-        /* ── CONTROL DE CARGA INTELIGENTE (MINERÍA DE FOTOS) ── */
-        .categorias-container {
-            background: white;
-            border-top: 1px solid var(--border);
-            position: fixed; bottom: var(--nav-height);
-            left: 0; width: 100%; height: var(--cat-height);
-            z-index: 1500;
-            box-shadow: 0 -3px 10px rgba(0,0,0,0.07);
-            display: flex; flex-direction: column;
-            padding: 10px; gap: 8px;
+        .tshirt-mockup {
+            width: 200px;
+            height: 200px;
+            background: url('https://img.freepik.com/vector-premium/plantilla-maqueta-camiseta-blanca-aislada-sobre-fondo-blanco_125373-19.jpg?w=360') no-repeat center;
+            background-size: contain;
+            position: relative;
         }
-        .upload-row {
-            display: flex; gap: 8px; align-items: center; background: var(--primary-light);
-            padding: 6px 10px; border-radius: 8px; border: 1px dashed var(--primary);
+        .tshirt-canvas {
+            width: 70px;
+            height: 85px;
+            position: absolute;
+            top: 55px;
+            left: 65px;
+            background-size: cover;
+            background-position: center;
+            border: 1px dashed rgba(0,0,0,0.1);
         }
-        .upload-row label {
-            font-size: 0.8rem; font-weight: 700; color: var(--primary); cursor: pointer; flex: 1; text-align: center;
-        }
-        .upload-row input { display: none; }
 
-        .cat-search-row { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-        .btn-lupa {
-            width: 34px; height: 34px; border-radius: 8px;
-            border: 1.5px solid var(--border); background: var(--bg);
-            cursor: pointer; display: flex; align-items: center;
-            justify-content: center; font-size: 1rem; flex-shrink: 0;
+        /* --- CATÁLOGO Y BUSCADOR --- */
+        .search-box {
+            padding: 10px 0;
+            display: flex;
+            gap: 8px;
         }
-        .search-expandible {
-            flex: 1; display: flex; align-items: center; gap: 6px;
-            background: var(--bg); border: 1.5px solid var(--border);
-            border-radius: 8px; padding: 0 10px; height: 34px;
+        .search-box input {
+            flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px;
         }
-        .search-expandible input {
-            flex: 1; border: none; outline: none; background: transparent; font-size: 0.9rem; min-width: 0;
-        }
-        .categorias-bar { display: flex; gap: 8px; overflow-x: auto; align-items: center; scrollbar-width: none; }
-        .categorias-bar::-webkit-scrollbar { display: none; }
-        .btn-categoria {
-            padding: 6px 14px; border: 1.5px solid var(--border); background: var(--bg); border-radius: 20px;
-            cursor: pointer; font-weight: 600; white-space: nowrap; font-size: 0.8rem; color: var(--text-muted);
-        }
-        .btn-categoria.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .cats-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; }
+        .cats-bar button { padding: 6px 12px; border: 1px solid var(--border); background: white; border-radius: 16px; font-size: 0.85rem; font-weight: bold; white-space: nowrap; cursor: pointer; }
+        .cats-bar button.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* ── CARRITO / COMANDA COGNITIVA ── */
-        .comanda-wrapper { display: flex; flex-direction: column; height: 100%; background: white; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; }
-        .comanda-header { padding: 14px; border-bottom: 1px solid var(--border); background: white; }
-        .meta-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .meta-inputs input { padding: 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; }
-        .meta-inputs input:focus { border-color: var(--primary); }
-        .items-lista { flex: 1; overflow-y: auto; padding: 12px; background: #fafbfc; }
-        
-        .item-linea { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
-        .item-linea-top { display: flex; justify-content: space-between; }
-        .item-nombre { font-weight: 600; font-size: 0.9rem; }
-        .item-precio { font-weight: 700; color: var(--primary); font-size: 0.9rem; }
-        .item-controles { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-        .item-controles button { width: 30px; height: 30px; border: 1.5px solid var(--border); background: white; border-radius: 7px; font-weight: 700; cursor: pointer; }
-        
-        .comanda-footer { padding: 14px; border-top: 2px solid var(--border); background: white; }
-        .totales-row { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; }
-        .totales-row span:last-child { color: var(--primary); }
-        
-        .action-buttons-group { display: flex; flex-direction: column; gap: 8px; }
-        .btn-enviar { width: 100%; background: var(--info); color: white; border: none; padding: 14px; font-size: 1rem; font-weight: 700; border-radius: 10px; cursor: pointer; }
-        .btn-whatsapp { width: 100%; background: var(--success); color: white; border: none; padding: 12px; font-size: 0.95rem; font-weight: 700; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+        .product-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 10px; text-align: center; }
+        .product-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; }
+        .product-card h4 { font-size: 0.85rem; margin: 6px 0 2px 0; }
+        .product-card p { color: var(--primary); font-weight: bold; font-size: 0.9rem; margin-bottom: 6px;}
 
-        /* ── MONITOR TICKETS ── */
-        .pedido-ticket { background: white; border-radius: 12px; border-left: 5px solid var(--warning); margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); padding: 12px; }
-        .ticket-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .ticket-mesa { font-weight: 700; font-size: 0.95rem; }
-        .ticket-num { font-size: 0.7rem; background: var(--dark); color: white; padding: 2px 6px; border-radius: 4px; }
-        .ticket-items { padding: 6px 0; border-top: 1px dashed var(--border); font-size: 0.85rem; }
-        .ticket-foot { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); flex-wrap: wrap; }
-        
-        /* Botón exclusivo Limpio de Copiar Link */
-        .btn-copiar-link { background: var(--dark); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
-        .btn-copiar-link:active { opacity: 0.8; }
+        /* --- COMPONENTES FORMULARIO --- */
+        .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
+        .btn-prime { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%; }
+        .btn-success { background: var(--success); }
 
-        .btn-estado-ticket { padding: 6px 11px; border-radius: 7px; border: 1.5px solid var(--border); background: white; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+        /* --- COBRANZA Y CARRITO --- */
+        .cart-summary { background: white; padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 15px; }
+        .cart-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px; }
 
-        #toast-container { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.85rem; z-index: 9999; display: none; }
+        /* --- MONITOR INTERNO OCULTO --- */
+        #view-monitor { background: #1a1d20; color: #e9ecef; display: none; }
+        .lead-ticket { background: #2b3035; border-left: 5px solid var(--primary); padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .lead-ticket img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+
+        /* --- NAVBAR INFERIOR --- */
+        .mobile-nav { display: flex; background: white; border-top: 1px solid var(--border); height: var(--nav-height); position: fixed; bottom: 0; width: 100%; }
+        .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold; color: #6c757d; background: none; border: none; }
+        .nav-tab.active { color: var(--primary); background: #f3f0ff; }
+
+        #toast-container { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.85rem; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 9999; }
+        #toast-container.show { opacity: 1; }
 
         @media (min-width: 768px) {
             .mobile-nav { display: none; }
-            .app-container { height: 100vh; display: grid; grid-template-columns: 1fr 380px 360px; }
-            .section-view { display: flex !important; border-right: 1px solid var(--border); height: 100vh; padding: 14px; }
-            .categorias-container { position: static; width: 100%; height: auto; border-top: none; box-shadow: none; padding: 8px 0; }
-            .grid-productos-scroll { padding-bottom: 20px; }
+            .app-container { display: grid; grid-template-columns: 1fr 1fr 1fr; height: calc(100vh - 55px); }
+            .section-view { display: flex !important; flex-direction: column; border-right: 1px solid var(--border); }
         }
     </style>
 </head>
 <body>
 
-<div class="app-container">
+    <header>
+        <h2 id="app-title" style="font-size: 1.15rem; cursor: pointer;">⚡ Comic-Con Custom Lab</h2>
+        <span id="cart-badge" style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: bold;">0 Ítems</span>
+    </header>
 
-    <!-- ════════════════════ CATÁLOGO ════════════════════ -->
-    <main id="view-catalogo" class="section-view active">
-        <div class="grid-productos-scroll">
-            <div class="grid-productos" id="grid-productos"></div>
-        </div>
-        <div class="categorias-container">
-            <!-- Minería de fotos: Carga Express desde el Celu -->
-            <div class="upload-row">
-                <label for="foto-comicon">📸 ¡Sube tu Foto al Catálogo Al Instante!</label>
-                <input type="file" id="foto-comicon" accept="image/*" onchange="cargarFotoUsuario(event)">
-            </div>
-            <div class="cat-search-row">
-                <button class="btn-lupa" onclick="limpiarBusqueda()">🔍</button>
-                <div class="search-expandible">
-                    <input type="text" id="buscador" placeholder="Buscar cosplay, stand, foto..." oninput="buscarProducto(this.value)">
-                </div>
-            </div>
-            <div class="categorias-bar" id="categorias-bar"></div>
-        </div>
-    </main>
-
-    <!-- ════════════════════ CARRITO / COMPANDA USER ════════════════════ -->
-    <aside id="view-comanda" class="section-view">
-        <div class="comanda-wrapper">
-            <div class="comanda-header">
-                <h3 style="margin-bottom:10px;">🛒 Tus Fotos / Selección</h3>
-                <div class="meta-inputs">
-                    <input type="text" id="num-mesa" placeholder="🆔 Stand # o Cosplay">
-                    <input type="text" id="campo-mesero" placeholder="📱 Tu Instagram / Tel">
-                </div>
-            </div>
-
-            <div class="items-lista" id="items-comanda"></div>
-
-            <div class="comanda-footer">
-                <div class="totales-row">
-                    <span>Items</span>
-                    <span id="total-comanda">$0</span>
-                </div>
-                <div class="action-buttons-group">
-                    <button class="btn-enviar" onclick="procesarOrden()">⚡ Enviar al Monitor Interno</button>
-                    <button class="btn-whatsapp" onclick="enviarAlWhatsAppDirecto()">🟢 Enviar Directo a WhatsApp</button>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-    <!-- ════════════════════ MONITOR INTERNO ════════════════════ -->
-    <section id="view-monitor" class="section-view">
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <h3>🖥️ Monitor de Control (Comicon)</h3>
-            <button onclick="cargarPedidos()" style="padding:4px 8px;">🔄 Sync</button>
-        </div>
-        <div class="grid-productos-scroll" id="lista-historial"></div>
-    </section>
-
-</div>
-
-<nav class="mobile-nav">
-    <button class="nav-tab active" onclick="switchView('view-catalogo', this)"><span>📋</span> Catálogo</button>
-    <button class="nav-tab" onclick="switchView('view-comanda', this)"><span>🛒</span> Mi Carrito <span class="badge" id="badge-comanda">0</span></button>
-    <button class="nav-tab" onclick="switchView('view-monitor', this)"><span>🖥️</span> Monitor</button>
-</nav>
-
-<div id="toast-container"></div>
-
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyTgsY2YYD5IZCmDXC_QjDTdFntpTG11VQrQbukrb19xSPjIx9F3JT1B5JOqO7jtU0x/exec";
-const WHATSAPP_NUMER = "573100000000"; // Reemplaza con tu número de control del evento
-
-let comandaActiva = [];
-let historialPedidos = [];
-let categoriaActual = "Todos";
-let busquedaActual = "";
-
-// Catálogo Base Inicial
-const listaProductos = [
-    { id: 101, categoria: "Impresiones", nombre: "Foto Print A4 Holográfico", precio: 15000, imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ" },
-    { id: 102, categoria: "Impresiones", nombre: "Sticker Pack Premium", precio: 8000, imgPostre: "https://lh3.googleusercontent.com/d/1a9Gy3hm-oAUamMZnlKJiHrB1oEX0DsTC" },
-    { id: 103, categoria: "Fotografía", nombre: "Sesión Digital HD (1 Foto)", precio: 5000, imgPostre: "https://lh3.googleusercontent.com/d/1bpMy0TKOgvB7OQGXkE9AEbDJlcl7vNt4" }
-];
-
-// ── EXPLOTACIÓN DE MINERÍA DE FOTOS (LA GENTE LLENA EL CATÁLOGO) ──
-function cargarFotoUsuario(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const nuevoId = Date.now();
-        const nuevaFotoProd = {
-            id: nuevoId,
-            categoria: "Comunidad",
-            nombre: `Foto Cosplay #${String(nuevoId).slice(-4)}`,
-            precio: 0, // O asigna un valor base si se vende el print
-            imgPostre: e.target.result // Base64 local instantáneo
-        };
+    <div class="app-container">
         
-        listaProductos.unshift(nuevaFotoProd);
-        initCategorias();
-        renderGrid();
-        mostrarToast("💎 ¡Foto agregada al catálogo comunitario!");
-    };
-    reader.readAsDataURL(file);
-}
-
-function initCategorias() {
-    const bar = document.getElementById('categorias-bar');
-    const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
-    bar.innerHTML = cats.map(c => `<button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCategoria('${c}', this)">${c}</button>`).join('');
-}
-
-function cambiarCategoria(cat, btn) {
-    categoriaActual = cat;
-    renderGrid();
-}
-
-function renderGrid() {
-    const grid = document.getElementById('grid-productos');
-    let filtrados = listaProductos.filter(p => 
-        (categoriaActual === "Todos" || p.categoria === categoriaActual) &&
-        (p.nombre.toLowerCase().includes(busquedaActual))
-    );
-    
-    grid.innerHTML = filtrados.map(p => `
-        <div class="producto-celda" onclick="agregarAlCarrito(${p.id})">
-            <div class="img-container">
-                <img src="${p.imgPostre}">
+        <!-- PESTAÑA 1: CATALOGO CO-CREADO -->
+        <main id="view-catalogo" class="section-view active">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="🔍 Buscar diseño en el catálogo..." oninput="filtrarCatalogo()">
             </div>
-            <p class="prod-nombre">${p.nombre}</p>
-            <p class="prod-precio">${p.precio > 0 ? '$'+p.precio.toLocaleString() : 'Cortesía/Muestra'}</p>
-        </div>
-    `).join('');
-}
-
-function agregarAlCarrito(id) {
-    const prod = listaProductos.find(p => p.id === id);
-    const exist = comandaActiva.find(i => i.id === id);
-    if(exist) { exist.cantidad++; } else { comandaActiva.push({...prod, cantidad: 1}); }
-    renderCarrito();
-    mostrarToast(`🛒 Añadido: ${prod.nombre}`);
-}
-
-function renderCarrito() {
-    const contenedor = document.getElementById('items-comanda');
-    if(comandaActiva.length === 0) {
-        contenedor.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px;">Tu selección está vacía.</p>`;
-        document.getElementById('total-comanda').textContent = "$0";
-        document.getElementById('badge-comanda').style.display = "none";
-        return;
-    }
-    
-    contenedor.innerHTML = comandaActiva.map((item, idx) => `
-        <div class="item-linea">
-            <div class="item-linea-top">
-                <span class="item-nombre">${item.nombre}</span>
-                <span class="item-precio">$${(item.precio * item.cantidad).toLocaleString()}</span>
+            <div class="cats-bar">
+                <button class="cat-btn active" onclick="filtrarCategoria('Todos', this)">Todos</button>
+                <button class="cat-btn" onclick="filtrarCategoria('Anime', this)">Anime</button>
+                <button class="cat-btn" onclick="filtrarCategoria('Memes', this)">Memes</button>
+                <button class="cat-btn" onclick="filtrarCategoria('Geek', this)">Geek</button>
             </div>
-            <div class="item-controles">
-                <button onclick="cambiarCant(${idx}, -1)">-</button>
-                <span>${item.cantidad}</span>
-                <button onclick="cambiarCant(${idx}, 1)">+</button>
+            <div class="catalog-grid" id="catalog-container"></div>
+        </main>
+
+        <!-- PESTAÑA 2: PERSONALIZADOR E IMÁN DE LEADS -->
+        <aside id="view-personalizar" class="section-view">
+            <div class="form-group">
+                <label style="font-weight: bold; font-size: 0.85rem;">1. Elige qué personalizar:</label>
+                <select id="item-tipo" onchange="conmutarMockup()">
+                    <option value="Sticker Personalizado">💳 Sticker de Tarjeta / Cédula ($6,000)</option>
+                    <option value="Camiseta Personalizada">👕 Camiseta Exclusiva ($35,000)</option>
+                </select>
             </div>
-        </div>
-    `).join('');
-    
-    const total = comandaActiva.reduce((s,i) => s + (i.precio * i.cantidad), 0);
-    document.getElementById('total-comanda').textContent = "$" + total.toLocaleString();
-    
-    const badge = document.getElementById('badge-comanda');
-    badge.textContent = comandaActiva.length;
-    badge.style.display = "block";
-}
 
-function cambiarCant(idx, val) {
-    comandaActiva[idx].cantidad += val;
-    if(comandaActiva[idx].cantidad <= 0) comandaActiva.splice(idx, 1);
-    renderCarrito();
-}
-
-// ── ENVÍOS COMPLEMENTARIOS: BACKEND + REDUCCIÓN DE FRICCIÓN VÍA WHATSAPP ──
-function generarTextoOrden() {
-    const destino = document.getElementById('num-mesa').value || "Stand General";
-    const IDUser = document.getElementById('campo-mesero').value || "Anónimo";
-    const itemsText = comandaActiva.map(i => `${i.cantidad}x ${i.nombre}`).join(', ');
-    return { destino, IDUser, itemsText };
-}
-
-async function procesarOrden() {
-    if(comandaActiva.length === 0) return;
-    const { destino, IDUser, itemsText } = generarTextoOrden();
-    
-    const pedido = {
-        id: Date.now(),
-        mesa: destino,
-        mesero: IDUser,
-        items: itemsText,
-        estado: "Pendiente",
-        linkFoto: "https://comicon.com/downloads/pic_" + Date.now() // Simulación de link generado
-    };
-    
-    historialPedidos.unshift(pedido);
-    renderMonitor();
-    
-    // Reset temporal
-    comandaActiva = [];
-    renderCarrito();
-    mostrarToast("⚡ Enviado al monitor del Stand.");
-    
-    // Post asincrónico al Backend (Sheets) sin bloquear
-    fetch(API_URL, { method: "POST", body: JSON.stringify({ accion: "nuevoPedido", mesa: destino, mesero: IDUser, items: itemsText }) }).catch(()=>{});
-}
-
-function enviarAlWhatsAppDirecto() {
-    if(comandaActiva.length === 0) return;
-    const { destino, IDUser, itemsText } = generarTextoOrden();
-    
-    const mensaje = `*NUEVA ORDEN COMICON*\n📌 *Destino/Stand:* ${destino}\n👤 *Contacto:* ${IDUser}\n📸 *Pedido:* ${itemsText}`;
-    const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMER}&text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
-}
-
-// ── MONITOR INTERNO CON BOTÓN LIMPIO "COPIAR LINK" ──
-function renderMonitor() {
-    const contenedor = document.getElementById('lista-historial');
-    if(historialPedidos.length === 0) {
-        contenedor.innerHTML = `<p style="text-align:center; padding:20px; color:var(--text-muted);">No hay solicitudes activas.</p>`;
-        return;
-    }
-    
-    contenedor.innerHTML = historialPedidos.map(p => `
-        <div class="pedido-ticket">
-            <div class="ticket-head">
-                <span class="ticket-mesa">📍 ${p.mesa} (User: ${p.mesero})</span>
-                <span class="ticket-num">${p.estado}</span>
+            <div class="mockup-wrapper">
+                <div class="card-mockup" id="m-card"><div class="chip"></div></div>
+                <div class="tshirt-mockup" id="m-tshirt" style="display: none;"><div class="tshirt-canvas" id="t-canvas"></div></div>
             </div>
-            <div class="ticket-items">${p.items}</div>
-            <div class="ticket-foot">
-                <!-- Botón de copiar limpio -->
-                <button class="btn-copiar-link" onclick="copiarLinkExclusivo('${p.linkFoto}')">📋 Copiar Link</button>
-                <button class="btn-estado-ticket" onclick="cambiarEstadoControl(${p.id})">Avanzar ⚡</button>
+
+            <div class="form-group">
+                <label style="font-weight: bold; font-size: 0.85rem;">2. Carga la Imagen de tu celular o pega un Link:</label>
+                <input type="file" id="file-input" accept="image/*" onchange="cargarImagenLocal(event)">
+                <input type="text" id="link-input" placeholder="O pega el link URL de la imagen aquí..." oninput="cargarImagenLink()">
             </div>
-        </div>
-    `).join('');
-}
 
-function copiarLinkExclusivo(link) {
-    navigator.clipboard.writeText(link).then(() => {
-        mostrarToast("🔗 Link copiado al portapapeles");
-    });
-}
+            <button class="btn-prime" onclick="agregarAlCarrito()">🛒 Añadir al Pedido</button>
+            <hr style="margin: 15px 0; border: 0; border-top: 1px dashed var(--border);">
 
-function cambiarEstadoControl(id) {
-    const p = historialPedidos.find(x => x.id === id);
-    if(p) p.estado = p.estado === "Pendiente" ? "Listo" : "Entregado";
-    renderMonitor();
-}
+            <div class="cart-summary">
+                <h4 style="margin-bottom: 8px; font-size: 0.9rem;">Resumen de tu Orden:</h4>
+                <div id="cart-list"></div>
+                <div class="cart-row" style="border-top: 1px solid var(--border); padding-top: 6px; margin-top: 6px; font-weight: bold;">
+                    <span>Total a pagar:</span>
+                    <span id="cart-total">$0</span>
+                </div>
+            </div>
 
-function buscarProducto(v) { busquedaActual = v.toLowerCase(); renderGrid(); }
-function limpiarBusqueda() { document.getElementById('buscador').value = ""; busquedaActual = ""; renderGrid(); }
-function switchView(id, btn) { document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-function mostrarToast(txt) { const t = document.getElementById('toast-container'); t.textContent = txt; t.style.display="block"; setTimeout(()=>t.style.display="none", 2000); }
+            <div class="form-group">
+                <input type="text" id="order-name" placeholder="Tu Nombre o Cuenta de Redes (Obligatorio)">
+                <select id="pickup-station">
+                    <option value="">📍 Selecciona Estación de Recogida (En 1 Semana)</option>
+                    <option value="Estación Héroes - Martes (1:00 PM a 7:00 PM)">Estación Héroes - Martes (1PM a 7PM)</option>
+                    <option value="Portal 80 - Miércoles (1:00 PM a 7:00 PM)">Portal 80 - Miércoles (1PM a 7PM)</option>
+                    <option value="Estación Pepe Sierra - Jueves (1:00 PM a 7:00 PM)">Estación Pepe Sierra - Jueves (1PM a 7PM)</option>
+                </select>
+                <textarea id="order-suggestions" placeholder="💡 Ideas para el catálogo o comentarios de tu publicidad exterior..."></textarea>
+            </div>
 
-// Iniciar
-initCategorias();
-renderGrid();
-</script>
+            <button class="btn-prime btn-success" onclick="procesarCheckoutFinal()">🚀 Confirmar y Enviar por WhatsApp</button>
+        </aside>
+
+        <!-- PESTAÑA 3: MONITOR ADMINISTRATIVO (OCULTO AL PÚBLICO) -->
+        <section id="view-monitor" class="section-view">
+            <h3 style="margin-bottom: 15px; color: white;">🖥️ Monitor de Control Interno</h3>
+            <div id="monitor-list"></div>
+        </section>
+
+    </div>
+
+    <nav class="mobile-nav">
+        <button class="nav-tab active" id="tab-catalogo" onclick="switchTab('view-catalogo', this)"><span>📋</span> Catálogo</button>
+        <button class="nav-tab" id="tab-personalizar" onclick="switchTab('view-personalizar', this)"><span>🎨</span> Crear</button>
+    </nav>
+
+    <div id="toast-container"></div>
+
+    <script>
+        const WHATSAPP_NUM = "573247356178";
+        
+        // Catálogo base escalable (UGC)
+        let productosCatalogo = JSON.parse(localStorage.getItem('cc_catalog')) || [
+            { id: 101, categoria: "Anime", nombre: "Sticker Naruto Modo Sabio", img: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ", precio: 4500 },
+            { id: 102, categoria: "Memes", nombre: "Sticker Cheems Rey", img: "https://lh3.googleusercontent.com/d/1a9Gy3hm-oAUamMZnlKJiHrB1oEX0DsTC", precio: 4500 },
+            { id: 103, categoria: "Geek", nombre: "Sticker Código Binario", img: "https://lh3.googleusercontent.com/d/1bpMy0TKOgvB7OQGXkE9AEbDJlcl7vNt4", precio: 4500 }
+        ];
+
+        let carrito = [];
+        let ordenesLog = JSON.parse(localStorage.getItem('cc_orders')) || [];
+        let currentCategory = "Todos";
+        let tempImageSrc = "";
+        let clickCount = 0;
+
+        // Revelador oculto de administración (Triple clic en el título de la app)
+        document.getElementById('app-title').addEventListener('click', () => {
+            clickCount++;
+            if (clickCount === 3) {
+                const monitor = document.getElementById('view-monitor');
+                monitor.style.display = monitor.style.display === 'flex' ? 'none' : 'flex';
+                showToast("🔐 Vista de Administrador Activada/Desactivada");
+                clickCount = 0;
+                renderMonitor();
+            }
+            setTimeout(() => { if(clickCount < 3) clickCount = 0; }, 1000);
+        });
+
+        function switchTab(viewId, btn) {
+            if (window.innerWidth < 768) {
+                document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.getElementById(viewId).classList.add('active');
+                btn.classList.add('active');
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast-container');
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        function conmutarMockup() {
+            const tipo = document.getElementById('item-tipo').value;
+            document.getElementById('m-card').style.display = tipo === 'Sticker Personalizado' ? 'block' : 'none';
+            document.getElementById('m-tshirt').style.display = tipo === 'Camiseta Personalizada' ? 'block' : 'none';
+            limpiarMockups();
+        }
+
+        function limpiarMockups() {
+            document.getElementById('m-card').style.backgroundImage = 'none';
+            document.getElementById('t-canvas').style.backgroundImage = 'none';
+        }
+
+        function cargarImagenLocal(e) {
+            if(e.target.files && e.target.files[0]) {
+                tempImageSrc = URL.createObjectURL(e.target.files[0]);
+                document.getElementById('link-input').value = ""; // Prioriza archivo local
+                aplicarFondoMockup(tempImageSrc);
+            }
+        }
+
+        function cargarImagenLink() {
+            const url = document.getElementById('link-input').value;
+            if(url.trim() !== "") {
+                tempImageSrc = url;
+                aplicarFondoMockup(url);
+            }
+        }
+
+        function aplicarFondoMockup(src) {
+            document.getElementById('m-card').style.backgroundImage = `url('${src}')`;
+            document.getElementById('t-canvas').style.backgroundImage = `url('${src}')`;
+        }
+
+        function renderCatalogo() {
+            const container = document.getElementById('catalog-container');
+            const filtrados = productosCatalogo.filter(p => currentCategory === "Todos" || p.categoria === currentCategory);
+            
+            container.innerHTML = filtrados.map(p => `
+                <div class="product-card">
+                    <img src="${p.img}" onerror="this.src='https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=150'">
+                    <h4>${p.nombre}</h4>
+                    <p>$${p.precio.toLocaleString()}</p>
+                    <button class="btn-prime" style="padding:6px; font-size:0.8rem;" onclick="agregarItemDirecto(${p.id})">＋ Añadir</button>
+                </div>
+            `).join('');
+        }
+
+        function filtrarCategoria(cat, btn) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentCategory = cat;
+            renderCatalogo();
+        }
+
+        function filtrarCatalogo() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(card => {
+                const name = card.querySelector('h4').innerText.toLowerCase();
+                card.style.display = name.includes(query) ? 'block' : 'none';
+            });
+        }
+
+        function agregarItemDirecto(id) {
+            const prod = productosCatalogo.find(p => p.id === id);
+            carrito.push({ ...prod, tipo: "Regular" });
+            calcularTotalesCarrito();
+            showToast("Agregado al carrito 🛒");
+        }
+
+        function agregarAlCarrito() {
+            const tipo = document.getElementById('item-tipo').value;
+            if(!tempImageSrc) {
+                showToast("⚠️ Carga un archivo o pon un link de imagen primero");
+                return;
+            }
+
+            const itemPersonalizado = {
+                id: Date.now(),
+                nombre: `${tipo} [Custom]`,
+                categoria: "Personalizado",
+                img: tempImageSrc.startsWith("blob:") ? "Archivo del celular (Enviado por WhatsApp)" : tempImageSrc,
+                precio: tipo === 'Sticker Personalizado' ? 6000 : 35000,
+                tipo: "Personalizado"
+            };
+
+            // Alimentación automática del catálogo global (UGC) si es un link procesable
+            if(!tempImageSrc.startsWith("blob:")) {
+                productosCatalogo.unshift({
+                    id: Date.now() + 1,
+                    categoria: "Geek",
+                    nombre: `Diseño Co-Creado #${Math.floor(Math.random()*900)+100}`,
+                    img: tempImageSrc,
+                    precio: 4500
+                });
+                localStorage.setItem('cc_catalog', JSON.stringify(productosCatalogo));
+                renderCatalogo();
+            }
+
+            carrito.push(itemPersonalizado);
+            calcularTotalesCarrito();
+            limpiarMockups();
+            tempImageSrc = "";
+            document.getElementById('link-input').value = "";
+            document.getElementById('file-input').value = "";
+            showToast("¡Diseño agregado con éxito! ⚡");
+        }
+
+        function calcularTotalesCarrito() {
+            const list = document.getElementById('cart-list');
+            
+            // Separar tipos para aplicar la regla de precios masivos a los stickers regulares
+            let itemsRegulares = carrito.filter(i => i.tipo === "Regular");
+            let itemsPersonalizados = carrito.filter(i => i.tipo === "Personalizado");
+
+            let totalRegulares = 0;
+            const cantReg = itemsRegulares.length;
+            
+            // Lógica exacta de precios: 1 x 4500, 2 x 8000, 3 x 10000. Los excedentes aplican ciclos
+            if (cantReg === 1) totalRegulares = 4500;
+            else if (cantReg === 2) totalRegulares = 8000;
+            else if (cantReg >= 3) {
+                const gruposDeTres = Math.floor(cantReg / 3);
+                const residuo = cantReg % 3;
+                totalRegulares = (gruposDeTres * 10000);
+                if (residuo === 1) totalRegulares += 4500;
+                if (residuo === 2) totalRegulares += 8000;
+            }
+
+            let totalPersonalizados = itemsPersonalizados.reduce((acc, cur) => acc + cur.precio, 0);
+            let totalFinal = totalRegulares + totalPersonalizados;
+
+            document.getElementById('cart-total').innerText = `$${totalFinal.toLocaleString()}`;
+            document.getElementById('cart-badge').innerText = `${carrito.length} Ítems`;
+
+            // Renderizar resumen visual del carrito
+            list.innerHTML = carrito.map((item, idx) => `
+                <div class="cart-row">
+                    <span>• ${item.nombre}</span>
+                    <span style="color:var(--danger); cursor:pointer;" onclick="removerDelCarrito(${idx})">✕</span>
+                </div>
+            `).join('');
+        }
+
+        function removerDelCarrito(idx) {
+            carrito.splice(idx, 1);
+            calcularTotalesCarrito();
+        }
+
+        function procesarCheckoutFinal() {
+            const nombre = document.getElementById('order-name').value;
+            const entrega = document.getElementById('pickup-station').value;
+            const feedback = document.getElementById('order-suggestions').value;
+            const totalStr = document.getElementById('cart-total').innerText;
+
+            if(!nombre || !entrega) {
+                showToast("⚠️ Nombre y Estación de recogida obligatorios.");
+                return;
+            }
+            if(carrito.length === 0) {
+                showToast("⚠️ Tu pedido está vacío.");
+                return;
+            }
+
+            const idOrden = "CC-" + Math.floor(100000 + Math.random() * 900000);
+            
+            // Estructura del objeto para persistencia local y sincronización
+            const metaOrden = {
+                id: idOrden,
+                cliente: nombre,
+                items: carrito.map(i => `${i.nombre} (${i.img})`).join(' | '),
+                total: totalStr,
+                logistica: entrega,
+                sugerencias: feedback || "Ninguna",
+                timestamp: new Date().toLocaleString()
+            };
+
+            ordenesLog.unshift(metaOrden);
+            localStorage.setItem('cc_orders', JSON.stringify(ordenesLog));
+
+            // Construir el mensaje codificado para WhatsApp
+            let mensajeWa = `*¡NUEVO PEDIDO COMIC-CON!* ⚡\n`;
+            mensajeWa += `*Orden ID:* ${idOrden}\n`;
+            mensajeWa += `*Cliente:* ${nombre}\n`;
+            mensajeWa += `*Recogida:* ${entrega}\n`;
+            mensajeWa += `-----------------------------\n`;
+            carrito.forEach(i => {
+                mensajeWa += `- ${i.nombre}\n  Link/Ref: ${i.img}\n`;
+            });
+            mensajeWa += `-----------------------------\n`;
+            mensajeWa += `*TOTAL A PAGAR:* ${totalStr}\n\n`;
+            if(feedback) mensajeWa += `*Idea/Petición Publicitaria:* ${feedback}\n`;
+            mensajeWa += `⚠️ _Si subiste una foto local del celular, adjúntala a este chat justo después de enviar este mensaje._`;
+
+            const urlWa = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUM}&text=${encodeURIComponent(mensajeWa)}`;
+            
+            // Vaciar carrito y redirigir
+            carrito = [];
+            calcularTotalesCarrito();
+            document.getElementById('order-name').value = "";
+            document.getElementById('order-suggestions').value = "";
+            document.getElementById('pickup-station').value = "";
+            
+            window.open(urlWa, '_blank');
+        }
+
+        function renderMonitor() {
+            const container = document.getElementById('monitor-list');
+            if(ordenesLog.length === 0) {
+                container.innerHTML = `<p style="color:#aaa; text-align:center; padding:20px;">No hay datos registrados.</p>`;
+                return;
+            }
+
+            container.innerHTML = ordenesLog.map(o => `
+                <div class="lead-ticket">
+                    <div style="display:flex; justify-content:between; font-size:0.8rem; color:#aaa; margin-bottom:6px;">
+                        <span>🆔 ${o.id}</span>
+                        <span>⏱️ ${o.timestamp}</span>
+                    </div>
+                    <p style="margin-bottom:4px;"><strong>Cliente:</strong> ${o.cliente}</p>
+                    <p style="margin-bottom:4px; font-size:0.9rem; color:var(--warning);"><strong>Pedido:</strong> ${o.items}</p>
+                    <p style="margin-bottom:4px; font-size:0.85rem;"><strong>Logística:</strong> ${o.logistica}</p>
+                    <p style="font-size:0.8rem; color:#aaa; background:#343a40; padding:6px; border-radius:4px;"><strong>Petición:</strong> ${o.sugerencias}</p>
+                    <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:bold; color:var(--success);">${o.total}</span>
+                        <button style="background:#495057; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;" onclick="copiarLinkDeOrden('${o.items}')">📋 Copiar Links</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function copiarLinkDeOrden(textoItems) {
+            // Filtra y extrae URLs que estén contenidas en el string de items
+            const regexUrl = /(https?:\/\/[^\s]+)/g;
+            const urlsFound = textoItems.match(regexUrl);
+            if(urlsFound && urlsFound.length > 0) {
+                navigator.clipboard.writeText(urlsFound.join('\n'));
+                showToast("✅ Links copiados al portapapeles");
+            } else {
+                showToast("❌ No hay links web en esta orden");
+            }
+        }
+
+        // Ejecución Inicial
+        renderCatalogo();
+    </script>
 </body>
 </html>

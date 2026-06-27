@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script>
+        window.history.replaceState(null, "", "/TIENLY/?shop=naya&v=comiccon");
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Comic-Con Publicidad Hub - Naya</title>
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --success: #25D366;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --dark: #212529;
+            --bg-interno: #f8f9fa;
+            --border: #dee2e6;
+            --nav-height: 70px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-interno);
+            color: var(--dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .mobile-nav {
+            display: flex;
+            background: white;
+            border-top: 1px solid var(--border);
+            height: var(--nav-height);
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 2000;
+        }
+
+        .nav-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #6c757d;
+            background: none;
+            border: none;
+            cursor: pointer;
+            gap: 4px;
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            background: #f3f0ff;
+        }
+
+        .app-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - var(--nav-height));
+            overflow: hidden;
+            position: relative;
+        }
+
+        .section-view {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        .section-view.active {
+            display: flex;
+        }
+
+        .scrollable-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 90px; /* Evita que la barra móvil tape el contenido */
+        }
+
+        /* --- VISUALIZADOR MULTIPRODUCTO --- */
+        .render-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mockup-wrapper {
+            width: 320px;
+            height: 200px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .tarjeta-mockup {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+            background: #2b2b2b;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+
+        /* Modificadores estéticos de mockups */
+        .tarjeta-mockup.tipo-Camiseta {
+            border-radius: 50% 50% 0 0;
+            width: 220px;
+            height: 220px;
+            background-color: #ffffff;
+            border: 2px dashed #ccc;
+        }
+        .tarjeta-mockup.tipo-Termo {
+            width: 140px;
+            height: 240px;
+            border-radius: 20px;
+            background-color: #333;
+        }
+
+        .tarjeta-mockup .chip {
+            width: 45px;
+            height: 35px;
+            background: linear-gradient(135deg, #f0d060, #cc9933);
+            border-radius: 6px;
+            position: absolute;
+            top: 40px;
+            left: 25px;
+        }
+
+        .tipo-sticker {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background: rgba(0,0,0,0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .form-render {
+            width: 100%;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input, select, textarea {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            background: white;
+            width: 100%;
+        }
+
+        .btn-action {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(111, 66, 193, 0.15);
+        }
+
+        /* --- CATÁLOGO --- */
+        .search-box {
+            margin-bottom: 10px;
+        }
+        .tag-container {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        .tag-badge {
+            background: #e9ecef;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .tag-badge.active {
+            background: var(--primary);
+            color: white;
+        }
+        .grid-catalogo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .card-item {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-img {
+            width: 100%;
+            height: 110px;
+            background-size: cover;
+            background-position: center;
+            background-color: #ddd;
+        }
+        .card-info {
+            padding: 8px;
+            font-size: 0.8rem;
+        }
+
+        /* --- TICKETS MONITOR --- */
+        .lead-ticket {
+            background: white;
+            padding: 12px;
+            border-left: 5px solid var(--primary);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .status-select {
+            margin-top: 8px;
+            padding: 4px;
+            font-size: 0.8rem;
+            width: auto;
+            display: inline-block;
+        }
+
+        #toast-container {
+            position: fixed;
+            bottom: 85px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: rgba(33, 37, 41, 0.95);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 5000;
+            opacity: 0;
+            transition: all 0.25s ease;
+            pointer-events: none;
+        }
+        #toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .grid-necesidades {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .btn-necesidad {
+            padding: 12px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+        .btn-necesidad.active {
+            background: var(--dark);
+            color: white;
+        }
+
+        @media (min-width: 768px) {
+            .mobile-nav { display: none; }
+            .app-container {
+                display: grid;
+                grid-template-columns: 1.2fr 1fr 1.2fr 1fr;
+                height: 100vh;
+            }
+            .section-view {
+                display: flex !important;
+                border-right: 1px solid var(--border);
+                height: 100vh;
+            }
+            .section-view:last-child { border-right: none; }
+            .scrollable-content { padding-bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <main id="view-render" class="section-view active">
+            <h3 style="margin-bottom: 12px;">🎨 Prueba tu Diseño</h3>
+            <div class="scrollable-content render-container">
+                <div class="mockup-wrapper">
+                    <div class="tarjeta-mockup" id="tarjeta-preview">
+                        <div class="chip" id="tarjeta-chip"></div>
+                        <div class="tipo-sticker" id="tipo-badge">Tarjeta</div>
+                    </div>
+                </div>
+
+                <div class="form-render">
+                    <select id="select-tipo" onchange="actualizarTipoMockup()">
+                        <option value="Tarjeta">💳 Sticker de Tarjeta</option>
+                        <option value="Camiseta">👕 Visualizar en Camiseta</option>
+                        <option value="Termo">🥤 Visualizar en Termo/Vaso</option>
+                    </select>
+
+                    <input type="text" id="url-imagen" placeholder="Pega el link de la imagen aquí..." oninput="renderizarImagenURL()">
+                    
+                    <label style="font-size:0.8rem; font-weight:bold; color:#555; margin-top:5px;">O sube foto de tu celular:</label>
+                    <input type="file" id="file-imagen" accept="image/*" onchange="renderizarImagenLocal(event)">
+
+                    <input type="text" id="nombre-sticker" placeholder="Nombre del diseño (Ej: Naruto Modo Sabio)">
+                    
+                    <input type="text" id="tag-sticker" placeholder="Etiqueta / Categoría (Ej: Anime, Geek)">
+
+                    <input type="text" id="cliente-whatsapp-sticker" placeholder="Tu WhatsApp o Instagram">
+                    
+                    <button class="btn-action" onclick="guardarDisenoYPedido()">Encargar / Subir al catálogo</button>
+                </div>
+            </div>
+        </main>
+
+        <section id="view-catalogo" class="section-view">
+            <h3 style="margin-bottom: 12px;">🛍️ Catálogo de Diseños</h3>
+            <div class="search-box">
+                <input type="text" id="input-buscar" placeholder="🔍 Buscar por nombre o tag..." oninput="filtrarCatalogo()">
+            </div>
+            <div class="tag-container" id="lista-tags"></div>
+            <div class="scrollable-content">
+                <div class="grid-catalogo" id="contenedor-catalogo"></div>
+            </div>
+        </section>
+
+        <aside id="view-proyecto" class="section-view">
+            <h3 style="margin-bottom: 12px;">🏢 Proyectos y Fachadas</h3>
+            <div class="scrollable-content">
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <input type="text" id="proyecto-contacto" placeholder="Tu Nombre / Marca o Canal">
+                    <input type="text" id="proyecto-redes" placeholder="WhatsApp o Instagram corporativo">
+                    
+                    <p style="font-size:0.85rem; font-weight:bold; color:#555;">¿Qué tipo de soporte comercial buscas?</p>
+                    <div class="grid-necesidades">
+                        <button class="btn-necesidad" onclick="toggleNecesidad(this, 'Letrero Local')">Letrero Exterior</button>
+                        <button class="btn-necesidad" onclick="toggleNecesidad(this, 'Camisas')">Uniformes/Ropa</button>
+                        <button class="btn-necesidad" onclick="toggleNecesidad(this, 'Termos')">Vasos/Termos</button>
+                        <button class="btn-necesidad" onclick="toggleNecesidad(this, 'Por Mayor')">Stickers x Mayor</button>
+                    </div>
+
+                    <textarea id="proyecto-notas" placeholder="Cuéntanos brevemente tu idea..."></textarea>
+                    <button class="btn-action" style="background:var(--dark);" onclick="guardarPedidoProyecto()">Registrar Petición (Respuesta Martes)</button>
+                </div>
+            </div>
+        </aside>
+
+        <section id="view-monitor" class="section-view">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3>🖥️ Monitor Backstage</h3>
+                <button onclick="fetchBaseDatos()" style="padding:6px 12px; background:var(--primary); color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 Actualizar</button>
+            </div>
+            <div class="scrollable-content" id="lista-leads"></div>
+        </section>
+
+    </div>
+
+    <nav class="mobile-nav">
+        <button class="nav-tab active" id="btn-tab-render" onclick="switchView('view-render', this)"><span>🎨</span>Prueba</button>
+        <button class="nav-tab" id="btn-tab-catalogo" onclick="switchView('view-catalogo', this)"><span>🛍️</span>Catálogo</button>
+        <button class="nav-tab" id="btn-tab-proyecto" onclick="switchView('view-proyecto', this)"><span>🏢</span>Proyectos</button>
+        <button class="nav-tab" id="btn-tab-monitor" onclick="validarAccesoMonitor(this)"><span>🖥️</span>Monitor</button>
+    </nav>
+
+    <div id="toast-container"></div>
+
+   <script>
+        // Configuración JSONBin dada por el usuario
+        const BIN_ID = "6a404598da38895dfe08fd8b";
+        const API_KEY = "$2a$10$edUNjadfgiG/n42CVVtAXuvMtcvA03U5bi2mel4FIh5Jmx9mL/thW";
+        
+        let dbLeads = [];
+        let catalogoComunitario = [];
+        let misFotosLocales = JSON.parse(localStorage.getItem('misFotosLocales')) || [];
+        let necesidadesSeleccionadas = [];
+        let tagSeleccionado = "Todos";
+
+        // Carga inicial al abrir la app
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchBaseDatos();
+        });
+
+        async function fetchBaseDatos() {
+            try {
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { "X-Master-Key": API_KEY }
+                });
+                const data = await res.json();
+                // Si el formato del bin contiene estructura limpia, mapeamos de lo contrario inicializamos
+                dbLeads = data.record.leads || [];
+                catalogoComunitario = data.record.catalogo || [];
+                renderMonitor();
+                renderCatalogo();
+            } catch (e) {
+                showToast("⚠️ Error conectando al servidor remoto.");
+            }
+        }
+
+        async function actualizarBaseDatos() {
+            try {
+                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Master-Key": API_KEY
+                    },
+                    body: JSON.stringify({ leads: dbLeads, catalogo: catalogoComunitario })
+                });
+            } catch (e) {
+                showToast("⚠️ No se pudo guardar en la nube.");
+            }
+        }
+
+        function switchView(viewId, button) {
+            if (window.innerWidth < 768) {
+                document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.getElementById(viewId).classList.add('active');
+                button.classList.add('active');
+            }
+        }
+
+        function validarAccesoMonitor(btn) {
+            const pass = prompt("Introduce la clave de acceso del administrador:");
+            if (pass === "1234") {
+                switchView('view-monitor', btn);
+                fetchBaseDatos();
+            } else {
+                alert("❌ Clave incorrecta.");
+            }
+        }
+
+        function showToast(mensaje) {
+            const toast = document.getElementById('toast-container');
+            toast.innerText = mensaje;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2300);
+        }
+
+        // --- MANEJO DE MOCKUPS ---
+        function actualizarTipoMockup() {
+            const tipo = document.getElementById('select-tipo').value;
+            const preview = document.getElementById('tarjeta-preview');
+            const chip = document.getElementById('tarjeta-chip');
+            document.getElementById('tipo-badge').innerText = tipo;
+            
+            preview.className = `tarjeta-mockup tipo-${tipo}`;
+            chip.style.display = (tipo === "Tarjeta") ? "block" : "none";
+        }
+
+        function renderizarImagenURL() {
+            const url = document.getElementById('url-imagen').value;
+            if (url.trim()) {
+                document.getElementById('tarjeta-preview').style.backgroundImage = `url('${url}')`;
+                document.getElementById('file-imagen').value = ""; // Resetea el local
+            }
+        }
+
+        function renderizarImagenLocal(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                document.getElementById('tarjeta-preview').style.backgroundImage = `url('${reader.result}')`;
+                document.getElementById('url-imagen').value = ""; // Resetea el URL público
+            };
+            if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function aplicarDisenoCatalogo(url) {
+            document.getElementById('url-imagen').value = url;
+            document.getElementById('tarjeta-preview').style.backgroundImage = `url('${url}')`;
+            if (window.innerWidth < 768) switchView('view-render', document.getElementById('btn-tab-render'));
+        }
+
+        // --- GUARDADO DE DATOS ---
+        async function guardarDisenoYPedido() {
+            const tipo = document.getElementById('select-tipo').value;
+            const url = document.getElementById('url-imagen').value.trim();
+            const fileInput = document.getElementById('file-imagen');
+            const nombre = document.getElementById('nombre-sticker').value.trim() || "Diseño sin nombre";
+            const tag = document.getElementById('tag-sticker').value.trim() || "Geek";
+            const contacto = document.getElementById('cliente-whatsapp-sticker').value.trim();
+
+            if (!contacto) {
+                showToast("⚠️ Deja tu contacto para confirmar el diseño.");
+                return;
+            }
+
+            let finalImgSrc = url;
+
+            // Es una imagen del celular local
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.readAsDataURL(fileInput.files[0]);
+                reader.onload = function () {
+                    const localData = { id: Date.now(), nombre: nombre, url: reader.result, tag: 'Mis Fotos' };
+                    misFotosLocales.unshift(localData);
+                    localStorage.setItem('misFotosLocales', JSON.stringify(misFotosLocales));
+                    registrarTicketInterno(tipo, "Archivo Local (Mis Fotos)", contacto);
+                };
+                return;
+            }
+
+            // Si es un link URL, alimenta el catálogo global en JSONBin
+            if (url) {
+                const existe = catalogoComunitario.some(item => item.url === url);
+                if (!existe) {
+                    catalogoComunitario.unshift({ id: Date.now(), nombre: nombre, url: url, tag: tag });
+                }
+            }
+
+            registrarTicketInterno(tipo, url || "Ninguno", contacto);
+        }
+
+        async function registrarTicketInterno(tipo, imgUrl, contacto) {
+            const nuevoLead = {
+                id: Date.now(),
+                fechaAbierto: new Date().toISOString(),
+                categoria: 'Sticker Personalizado',
+                detalle: `Tipo: ${tipo} | Img: ${imgUrl}`,
+                contacto: contacto,
+                estado: 'Pendiente',
+                notas: 'Esperando confirmación el martes.'
+            };
+
+            dbLeads.unshift(nuevoLead);
+            showToast("🚀 ¡Diseño procesado! Revisa el catálogo o espera respuesta.");
+            
+            // Limpieza
+            document.getElementById('url-imagen').value = "";
+            document.getElementById('file-imagen').value = "";
+            document.getElementById('nombre-sticker').value = "";
+            document.getElementById('cliente-whatsapp-sticker').value = "";
+            document.getElementById('tarjeta-preview').style.backgroundImage = "none";
+
+            await actualizarBaseDatos();
+            renderCatalogo();
+            renderMonitor();
+        }
+
+        function toggleNecesidad(btn, valor) {
+            btn.classList.toggle('active');
+            if (btn.classList.contains('active')) {
+                necesidadesSeleccionadas.push(valor);
+            } else {
+                necesidadesSeleccionadas = necesidadesSeleccionadas.filter(n => n !== valor);
+            }
+        }
+
+        async function guardarPedidoProyecto() {
+            const marca = document.getElementById('proyecto-contacto').value;
+            const redes = document.getElementById('proyecto-redes').value;
+            const notas = document.getElementById('proyecto-notas').value;
+
+            if (!marca || !redes) {
+                showToast("⚠️ Rellena tu marca/nombre y contacto.");
+                return;
+            }
+
+            const nuevoLead = {
+                id: Date.now(),
+                fechaAbierto: new Date().toISOString(),
+                categoria: 'Proyecto Publicitario',
+                detalle: necesidadesSeleccionadas.length > 0 ? necesidadesSeleccionadas.join(', ') : 'Soporte General',
+                contacto: `${marca} (${redes})`,
+                estado: 'Pendiente',
+                notas: notas || 'Sin especificaciones breves.'
+            };
+
+            dbLeads.unshift(nuevoLead);
+            document.getElementById('proyecto-contacto').value = '';
+            document.getElementById('proyecto-redes').value = '';
+            document.getElementById('proyecto-notas').value = '';
+            document.querySelectorAll('.btn-necesidad').forEach(b => b.classList.remove('active'));
+            necesidadesSeleccionadas = [];
+
+            showToast("✅ Requerimiento guardado para el Martes.");
+            await actualizarBaseDatos();
+            renderMonitor();
+        }
+
+        // --- RENDERIZACIÓN DE VISTAS ---
+        function renderCatalogo() {
+            const contenedor = document.getElementById('contenedor-catalogo');
+            const contenedorTags = document.getElementById('lista-tags');
+            
+            // Unir catálogo en la nube + fotos locales del celular actual
+            const todoElCatalogo = [...misFotosLocales, ...catalogoComunitario];
+
+            // Extraer Tags Únicos
+            const tags = ['Todos', ...new Set(todoElCatalogo.map(i => i.tag))];
+            contenedorTags.innerHTML = tags.map(t => `
+                <span class="tag-badge ${tagSeleccionado === t ? 'active' : ''}" onclick="filtrarPorTag('${t}')">${t}</span>
+            `).join('');
+
+            // Filtrado
+            const buscador = document.getElementById('input-buscar').value.toLowerCase();
+            const filtrados = todoElCatalogo.filter(item => {
+                const cumpleTag = (tagSeleccionado === "Todos" || item.tag === tagSeleccionado);
+                const cumpleTexto = item.nombre.toLowerCase().includes(buscador) || item.tag.toLowerCase().includes(buscador);
+                return cumpleTag && cumpleTexto;
+            });
+
+            if(filtrados.length === 0) {
+                contenedor.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:20px; color:#aaa;">No se encontraron diseños.</div>`;
+                return;
+            }
+
+            contenedor.innerHTML = filtrados.map(item => `
+                <div class="card-item" onclick="aplicarDisenoCatalogo('${item.url}')">
+                    <div class="card-img" style="background-image: url('${item.url}')"></div>
+                    <div class="card-info">
+                        <strong>${item.nombre}</strong><br>
+                        <span style="color:var(--primary); font-size:0.7rem;">🏷️ ${item.tag}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filtrarPorTag(tag) {
+            tagSeleccionado = tag;
+            renderCatalogo();
+        }
+
+        function filtrarCatalogo() {
+            renderCatalogo();
+        }
+
+        function cambiarEstadoTicket(id, nuevoEstado) {
+            const ticket = dbLeads.find(l => l.id === id);
+            if (ticket) {
+                ticket.estado = nuevoEstado;
+                actualizarBaseDatos();
+            }
+        }
+
+        function renderMonitor() {
+            const contenedor = document.getElementById('lista-leads');
+            if (dbLeads.length === 0) {
+                contenedor.innerHTML = `<div style="color:#aaa; text-align:center; padding:35px;">No hay registros captados aún.</div>`;
+                return;
+            }
+
+            contenedor.innerHTML = dbLeads.map(l => {
+                const fecha = l.fechaAbierto ? new Date(l.fechaAbierto).toLocaleTimeString() : new Date(l.id).toLocaleTimeString();
+                return `
+                    <div class="lead-ticket" style="border-left-color: ${l.estado === 'Completado' ? 'var(--success)' : l.estado === 'En Proceso' ? 'var(--warning)' : 'var(--danger)'}">
+                        <div style="font-size:0.8rem; display:flex; justify-content:space-between; font-weight:bold;">
+                            <span>📌 ${l.categoria}</span>
+                            <span style="color:#6c757d;">⏱️ ${fecha}</span>
+                        </div>
+                        <div style="font-size:0.9rem; font-weight:bold; margin:4px 0;">Contacto: ${l.contacto}</div>
+                        <div style="font-size:0.8rem; color:#495057;">Detalle: ${l.detalle}</div>
+                        <div style="font-size:0.75rem; background:#f1f3f5; padding:4px; margin-top:5px; border-radius:4px;">
+                            <strong>Nota:</strong> ${l.notas}
+                        </div>
+                        <select class="status-select" onchange="cambiarEstadoTicket(${l.id}, this.value)">
+                            <option value="Pendiente" ${l.estado === 'Pendiente' ? 'selected' : ''}>🔴 Pendiente</option>
+                            <option value="En Proceso" ${l.estado === 'En Proceso' ? 'selected' : ''}>🟡 En Proceso</option>
+                            <option value="Completado" ${l.estado === 'Completado' ? 'selected' : ''}>🟢 Completado</option>
+                        </select>
+                    </div>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

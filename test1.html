@@ -1416,23 +1416,31 @@ function obtenerNumeroPedido(pedido) {
     return fallback || '—';
 }
 
-function calcularMinutosEspera(pedido) {
-    const inicio = pedido.id && typeof pedido.id === 'number' && pedido.id > 1e12 
-        ? pedido.id 
-        : (parsearFechaSegura(pedido.horaLocal || pedido.hora)?.getTime() || pedido.id);
+function calcularMinutosEspera(p) {
+    // Si el pedido ya finalizó (Listo o Pagado) y tiene horaFin, calculamos con ese límite fijo
+    const esFinal = p.estado === 'Listo' || p.estado === 'Pagado';
+    const fin = (esFinal && p.horaFin) ? p.horaFin : Date.now();
 
-    if (!inicio) return 0;
-
-    // KPI: Si el pedido ya está Listo o Pagado, congelamos el tiempo usando la hora fin
-    if ((pedido.estado === 'Listo' || pedido.estado === 'Pagado') && pedido.horaFin) {
-        const diffMs = pedido.horaFin - inicio;
-        return Math.max(0, Math.floor(diffMs / 60000));
+    // Intentar basarse en horaLocal (timestamp ISO)
+    if (p.horaLocal) {
+        const inicio = new Date(p.horaLocal).getTime();
+        if (!isNaN(inicio)) {
+            return Math.max(0, Math.floor((fin - inicio) / 60000));
+        }
     }
-
-    // Si sigue activo, cuenta en tiempo real
-    const diffMs = Date.now() - inicio;
-    return Math.max(0, Math.floor(diffMs / 60000));
+    
+    // Si no tiene horaLocal, intenta deducirla del string de hora ("hh:mm:ss")
+    if (p.hora) {
+        const partes = p.hora.split(':');
+        if (partes.length >= 2) {
+            const ahora = new Date();
+            ahora.setHours(parseInt(partes[0]), parseInt(partes[1]), partes[2] ? parseInt(partes[2]) : 0, 0);
+            return Math.max(0, Math.floor((fin - ahora.getTime()) / 60000));
+        }
+    }
+    return 0;
 }
+
 
 function renderHistorial() {
     const lista = document.getElementById('lista-historial');
@@ -1597,16 +1605,20 @@ function elegirMetodoPagoYCobrar(id) {
         btn.style.cssText = `padding:14px; border:1px solid #e2e8f0; background:#f4f4f8; border-radius:12px; font-size:0.95rem; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; color:#1a1a2e;`;
         btn.innerHTML = `<span>${m.e}</span><span>${m.k}</span>`;
         
-        // ¡CUMPLIMIENTO DE LA ACCIÓN AL DAR CLIC!
+                // Dentro de elegirMetodoPagoYCobrar(id) -> metodos.forEach -> btn.onclick:
         btn.onclick = () => {
             pedido.estado = 'Pagado';
-            pedido.detallePago = m.k;  // Guarda el método real seleccionado (Nequi, Daviplata, etc.)
-            pedido.metodoPago = m.k;   // Respaldo de variable
-            pedido.horaFin = Date.now(); // Detiene el contador de tiempo de atención
+            pedido.detallePago = m.k;  
+            pedido.metodoPago = m.k;   
+            
+            // ¡ESTA LÍNEA ES CRÍTICA PARA DETENER EL RELOJ DE TRAZABILIDAD!
+            if (!pedido.horaFin) {
+                pedido.horaFin = Date.now(); 
+            }
 
             // Guardar cambios en el almacenamiento local del celular
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-            renderHistorial(); // Refresca las tarjetas en pantalla instantáneamente
+            renderHistorial(); 
             
             // Sincronizar de inmediato con Google Sheets
             sincronizarEstado(id, 'Pagado');
@@ -1614,6 +1626,7 @@ function elegirMetodoPagoYCobrar(id) {
             // Quitar el menú flotante
             document.body.removeChild(overlay);
         };
+
         grid.appendChild(btn);
     });
 

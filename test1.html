@@ -1521,36 +1521,61 @@ function avanzarEstado(id) {
 function elegirMetodoPagoYCobrar(id) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido) return;
-    // Mini modal de cobro
+
+    // Crear un contenedor de pantalla completa para el cobro interactivo
     const overlay = document.createElement('div');
-    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center;`;
+    overlay.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px;`;
+    
+    // Métodos de pago disponibles
     const metodos = [
-        { k:'Efectivo', e:'💵' }, { k:'Nequi', e:'📱' },
-        { k:'Daviplata', e:'🔵' }, { k:'Tarjeta', e:'💳' },
-        { k:'Transferencia/PSE', e:'🏦' }, { k:'Llave', e:'🔑' }
+        { k:'Efectivo', e:'💵' },
+        { k:'Nequi', e:'📱' },
+        { k:'Daviplata', e:'💳' },
+        { k:'Bancolombia', e:'🏦' }
     ];
-    overlay.innerHTML = `
-    <div style="background:white;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;">
-        <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">💵 ¿Cómo paga la mesa ${pedido.mesa}?</div>
-        <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">Total: <strong>${formatPeso(pedido.total)}</strong></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
-            ${metodos.map(m => `
-            <button onclick="confirmarCobro(${id},'${m.k}',this.parentElement.parentElement.parentElement)"
-                style="padding:12px 6px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);cursor:pointer;font-size:0.85rem;font-weight:600;">
-                ${m.e}<br>${m.k}
-            </button>`).join('')}
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:8px;">
-            <input id="otro-pago-input" type="text" placeholder="Otro método..."
-                style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;outline:none;">
-            <button onclick="confirmarCobro(${id},document.getElementById('otro-pago-input').value||'Otro',this.parentElement.parentElement.parentElement)"
-                style="padding:10px 14px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">OK</button>
-        </div>
-        <button onclick="this.parentElement.parentElement.remove()"
-            style="width:100%;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;color:var(--text-muted);cursor:pointer;font-size:0.9rem;margin-top:10px;">Cancelar</button>
-    </div>`;
+
+    const box = document.createElement('div');
+    box.style.cssText = `background:white; width:100%; max-width:340px; border-radius:16px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.3); text-align:center; font-family:sans-serif;`;
+    box.innerHTML = `
+        <h4 style="margin-bottom:6px; font-size:1.2rem; color:#1a1a2e;">💰 Registrar Pago</h4>
+        <p style="color:#64748b; font-size:0.85rem; margin-bottom:16px;">Selecciona el método para la <b>${pedido.mesa || 'Comanda'}</b></p>
+        <div id="metodos-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;"></div>
+        <button id="btn-cancelar-cobro" style="width:100%; padding:11px; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; border-radius:8px; font-weight:700; cursor:pointer;">Cancelar</button>
+    `;
+    overlay.appendChild(box);
     document.body.appendChild(overlay);
+
+    const grid = box.querySelector('#metodos-grid');
+    metodos.forEach(m => {
+        const btn = document.createElement('button');
+        btn.style.cssText = `padding:14px; border:1px solid #e2e8f0; background:#f4f4f8; border-radius:12px; font-size:0.95rem; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; color:#1a1a2e;`;
+        btn.innerHTML = `<span>${m.e}</span><span>${m.k}</span>`;
+        
+        // ¡CUMPLIMIENTO DE LA ACCIÓN AL DAR CLIC!
+        btn.onclick = () => {
+            pedido.estado = 'Pagado';
+            pedido.detallePago = m.k;  // Guarda el método real seleccionado (Nequi, Daviplata, etc.)
+            pedido.metodoPago = m.k;   // Respaldo de variable
+            pedido.horaFin = Date.now(); // Detiene el contador de tiempo de atención
+
+            // Guardar cambios en el almacenamiento local del celular
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+            renderHistorial(); // Refresca las tarjetas en pantalla instantáneamente
+            
+            // Sincronizar de inmediato con Google Sheets
+            sincronizarEstado(id, 'Pagado');
+            
+            // Quitar el menú flotante
+            document.body.removeChild(overlay);
+        };
+        grid.appendChild(btn);
+    });
+
+    box.querySelector('#btn-cancelar-cobro').onclick = () => {
+        document.body.removeChild(overlay);
+    };
 }
+
 
 function confirmarCobro(id, metodoPago, overlay) {
     overlay.remove();

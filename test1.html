@@ -1166,20 +1166,11 @@ function eliminarItem(idx) {
     guardarYRender();
 }
 function vaciarComanda() {
+    if (comandaActiva.length === 0) return;
+    if (!confirm('¿Limpiar toda la comanda?')) return;
     comandaActiva = [];
-    document.getElementById('num-mesa').value = "";
-    document.getElementById('campo-mesero').value = "";
-    document.getElementById('comentario-orden').value = "";
-    
-    // Si canceló una edición con este botón, restauramos el estado normal
-    window._pedidoEditandoId = null;
-    window._pedidoEditandoIdSheets = null;
-    window._pedidoEditandoNumero = null;
-    
     guardarYRender();
-    iniciarPolling(); // Volver a activar las consultas automáticas de forma segura
 }
-
 
 function seleccionarPago(btn) {
     document.querySelectorAll('.pago-btn').forEach(b => b.classList.remove('active'));
@@ -1233,11 +1224,7 @@ function guardarYRender() {
 //  PROCESAR ORDEN
 // ═══════════════════════════════════════════════════════════
 async function procesarOrden() {
-    if (comandaActiva.length === 0) {
-        showToast("⚠️ La comanda está vacía.");
-        return;
-    }
-
+    if (comandaActiva.length === 0) { showToast("⚠️ La comanda está vacía."); return; }
     const mesa = document.getElementById('num-mesa').value;
     if (!mesa) {
         showToast("⚠️ Selecciona una mesa o destino.");
@@ -1250,6 +1237,7 @@ async function procesarOrden() {
     const notas = document.getElementById('comentario-orden').value.trim();
     const total = comandaActiva.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
 
+    // Texto de ítems enriquecido con specs
     const textoItems = comandaActiva.map(i => {
         let linea = `${i.cantidad}x ${i.nombre}`;
         if (i.specs) linea += ` [${i.specs}]`;
@@ -1257,67 +1245,51 @@ async function procesarOrden() {
         return linea;
     }).join(', ');
 
-    // EVALUAR SI ES EDICIÓN O PEDIDO NUEVO
-    const esEdicion = window._pedidoEditandoId ? true : false;
-    
+    // Si es edición, reutilizar número de orden y hora original
+    const esEdicion = !!window._pedidoEditandoIdSheets;
+    const numeroPedidoFinal = esEdicion && window._pedidoEditandoNumeroPedido
+        ? window._pedidoEditandoNumeroPedido
+        : siguienteNumeroPedido();
+    const horaLocalFinal = esEdicion && window._pedidoEditandoHoraLocal
+        ? window._pedidoEditandoHoraLocal
+        : new Date().toISOString();
+
     const nuevoPedido = {
-        id: esEdicion ? window._pedidoEditandoId : Date.now(), // No cambia el ID si es edición
-        idSheets: esEdicion ? window._pedidoEditandoIdSheets : null,
-        numeroPedido: esEdicion ? window._pedidoEditandoNumero : siguienteNumeroPedido(), // Mantiene el número de orden
-        mesa,
-        mesero,
-        notas,
-        total,
-        items: textoItems,
+        id: Date.now(),
+        idSheets: null,
+        numeroPedido: numeroPedidoFinal,
+        mesa, mesero, notas,
+        total, items: textoItems,
         itemsRaw: JSON.parse(JSON.stringify(comandaActiva)),
-        metodoPago: "Efectivo",
-        detallePago: "",
+        metodoPago: metodoPagoActual,
         estado: "Pendiente",
-        hora: esEdicion ? (historialPedidos.find(p => p.id === window._pedidoEditandoId)?.hora || new Date().toLocaleTimeString()) : new Date().toLocaleTimeString(),
-        horaLocal: esEdicion ? null : new Date().toISOString()
+        horaLocal: horaLocalFinal,
+        sincronizado: "NO",
+        editado: esEdicion ? true : undefined
     };
 
-    // Guardar localmente
-    historialPedidos.push(nuevoPedido);
+    historialPedidos.unshift(nuevoPedido);
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-    
-    // Limpiar formulario de comanda
-    vaciarComanda();
-    renderHistorial();
-    showToast(esEdicion ? "📝 Pedido actualizado con éxito" : "🚀 Orden enviada a cocina");
 
-    // Ir al monitor de pedidos
-    const tabMonitor = document.getElementById('btn-tab-monitor');
-    if (tabMonitor) switchView('view-monitor', tabMonitor);
-
-    // Enviar datos a Google Sheets
-    try {
-        const payload = {
-            accion: esEdicion ? "editarPedido" : "nuevoPedido", // Si tu script de Sheets maneja editarPedido, o usa el método correspondiente
-            pedido: nuevoPedido,
-            idOriginal: esEdicion ? window._pedidoEditandoIdSheets : null
-        };
-
-        const res = await fetch(API_URL, {
-            method: "POST",
-            redirect: "follow",
-            body: JSON.stringify(payload)
+    // Si estamos editando, archivar el original en Sheets
+    // OJO: NO se nula _pedidoEditandoIdSheets hasta que confirme el archivo,
+    // así el polling no vuelve a meter el pedido viejo mientras tanto (bug de duplicado)
+    if (esEdicion) {
+        const idArchivar = window._pedidoEditandoIdSheets;
+        window._pedidoEditandoId = null;
+        window._pedidoEditandoNumeroPedido = null;
+        window._pedidoEditandoHoraLocal = null;
+        fetch(API_URL, { method: "POST", redirect: "follow",
+            body: JSON.stringify({ accion: "archivarPedido", id: idArchivar })
+        })
+        .catch(() => {})
+        .finally(() => {
+            // Solo liberar cuando Sheets confirme (o falle)
+            if (window._pedidoEditandoIdSheets === idArchivar) {
+                window._pedidoEditandoIdSheets = null;
+            }
         });
-        const data = await res.json();
-        if (data.ok && data.id) {
-            nuevoPedido.idSheets = data.id;
-            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-        }
-    } catch (error) {
-        console.warn("Modo offline: Guardado en el celular, se sincronizará luego.", error);
     }
-
-    // LIMPIAR VARIABLES DE EDICIÓN Y REINICIAR EL POLLING SEGURO
-    window._pedidoEditandoId = null;
-    window._pedidoEditandoIdSheets = null;
-    window._pedidoEditandoNumero = null;
-    iniciarPolling(); 
-}
 
     // Reset comanda
     comandaActiva = [];
@@ -1416,31 +1388,23 @@ function obtenerNumeroPedido(pedido) {
     return fallback || '—';
 }
 
-function calcularMinutosEspera(p) {
-    // Si el pedido ya finalizó (Listo o Pagado) y tiene horaFin, calculamos con ese límite fijo
-    const esFinal = p.estado === 'Listo' || p.estado === 'Pagado';
-    const fin = (esFinal && p.horaFin) ? p.horaFin : Date.now();
+function calcularMinutosEspera(pedido) {
+    const inicio = pedido.id && typeof pedido.id === 'number' && pedido.id > 1e12 
+        ? pedido.id 
+        : (parsearFechaSegura(pedido.horaLocal || pedido.hora)?.getTime() || pedido.id);
 
-    // Intentar basarse en horaLocal (timestamp ISO)
-    if (p.horaLocal) {
-        const inicio = new Date(p.horaLocal).getTime();
-        if (!isNaN(inicio)) {
-            return Math.max(0, Math.floor((fin - inicio) / 60000));
-        }
+    if (!inicio) return 0;
+
+    // KPI: Si el pedido ya está Listo o Pagado, congelamos el tiempo usando la hora fin
+    if ((pedido.estado === 'Listo' || pedido.estado === 'Pagado') && pedido.horaFin) {
+        const diffMs = pedido.horaFin - inicio;
+        return Math.max(0, Math.floor(diffMs / 60000));
     }
-    
-    // Si no tiene horaLocal, intenta deducirla del string de hora ("hh:mm:ss")
-    if (p.hora) {
-        const partes = p.hora.split(':');
-        if (partes.length >= 2) {
-            const ahora = new Date();
-            ahora.setHours(parseInt(partes[0]), parseInt(partes[1]), partes[2] ? parseInt(partes[2]) : 0, 0);
-            return Math.max(0, Math.floor((fin - ahora.getTime()) / 60000));
-        }
-    }
-    return 0;
+
+    // Si sigue activo, cuenta en tiempo real
+    const diffMs = Date.now() - inicio;
+    return Math.max(0, Math.floor(diffMs / 60000));
 }
-
 
 function renderHistorial() {
     const lista = document.getElementById('lista-historial');
@@ -1529,6 +1493,8 @@ function renderHistorial() {
                 <div class="ticket-head-left">
                     <span class="ticket-mesa">📍 ${p.mesa} ${p.mesero && p.mesero !== '—' ? `· ${p.mesero}` : ''}</span>
                     <span class="ticket-num">Orden #${String(obtenerNumeroPedido(p)).slice(-4)}</span>
+${p.editado ? `<span style="font-size:0.65rem;color:var(--primary);font-weight:700;margin-left:4px;">✏️ editado</span>` : ''}
+
                 </div>
                 <span class="ticket-estado-badge ${badgeMap[p.estado] || 'badge-pendiente'}">${estadoEmoji[p.estado] || p.estado}</span>
             </div>
@@ -1572,70 +1538,41 @@ function avanzarEstado(id) {
     }
 }
 
+
+
 function elegirMetodoPagoYCobrar(id) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido) return;
-
-    // Crear un contenedor de pantalla completa para el cobro interactivo
+    // Mini modal de cobro
     const overlay = document.createElement('div');
-    overlay.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px;`;
-    
-    // Métodos de pago disponibles
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center;`;
     const metodos = [
-        { k:'Efectivo', e:'💵' },
-        { k:'Nequi', e:'📱' },
-        { k:'Daviplata', e:'💳' },
-        { k:'Bancolombia', e:'🏦' }
+        { k:'Efectivo', e:'💵' }, { k:'Nequi', e:'📱' },
+        { k:'Daviplata', e:'🔵' }, { k:'Tarjeta', e:'💳' },
+        { k:'Transferencia/PSE', e:'🏦' }, { k:'Llave', e:'🔑' }
     ];
-
-    const box = document.createElement('div');
-    box.style.cssText = `background:white; width:100%; max-width:340px; border-radius:16px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.3); text-align:center; font-family:sans-serif;`;
-    box.innerHTML = `
-        <h4 style="margin-bottom:6px; font-size:1.2rem; color:#1a1a2e;">💰 Registrar Pago</h4>
-        <p style="color:#64748b; font-size:0.85rem; margin-bottom:16px;">Selecciona el método para la <b>${pedido.mesa || 'Comanda'}</b></p>
-        <div id="metodos-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;"></div>
-        <button id="btn-cancelar-cobro" style="width:100%; padding:11px; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; border-radius:8px; font-weight:700; cursor:pointer;">Cancelar</button>
-    `;
-    overlay.appendChild(box);
+    overlay.innerHTML = `
+    <div style="background:white;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;">
+        <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">💵 ¿Cómo paga la mesa ${pedido.mesa}?</div>
+        <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">Total: <strong>${formatPeso(pedido.total)}</strong></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+            ${metodos.map(m => `
+            <button onclick="confirmarCobro(${id},'${m.k}',this.parentElement.parentElement.parentElement)"
+                style="padding:12px 6px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);cursor:pointer;font-size:0.85rem;font-weight:600;">
+                ${m.e}<br>${m.k}
+            </button>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input id="otro-pago-input" type="text" placeholder="Otro método..."
+                style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;outline:none;">
+            <button onclick="confirmarCobro(${id},document.getElementById('otro-pago-input').value||'Otro',this.parentElement.parentElement.parentElement)"
+                style="padding:10px 14px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">OK</button>
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()"
+            style="width:100%;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;color:var(--text-muted);cursor:pointer;font-size:0.9rem;margin-top:10px;">Cancelar</button>
+    </div>`;
     document.body.appendChild(overlay);
-
-    const grid = box.querySelector('#metodos-grid');
-    metodos.forEach(m => {
-        const btn = document.createElement('button');
-        btn.style.cssText = `padding:14px; border:1px solid #e2e8f0; background:#f4f4f8; border-radius:12px; font-size:0.95rem; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; color:#1a1a2e;`;
-        btn.innerHTML = `<span>${m.e}</span><span>${m.k}</span>`;
-        
-                // Dentro de elegirMetodoPagoYCobrar(id) -> metodos.forEach -> btn.onclick:
-        btn.onclick = () => {
-            pedido.estado = 'Pagado';
-            pedido.detallePago = m.k;  
-            pedido.metodoPago = m.k;   
-            
-            // ¡ESTA LÍNEA ES CRÍTICA PARA DETENER EL RELOJ DE TRAZABILIDAD!
-            if (!pedido.horaFin) {
-                pedido.horaFin = Date.now(); 
-            }
-
-            // Guardar cambios en el almacenamiento local del celular
-            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-            renderHistorial(); 
-            
-            // Sincronizar de inmediato con Google Sheets
-            sincronizarEstado(id, 'Pagado');
-            
-            // Quitar el menú flotante
-            document.body.removeChild(overlay);
-        };
-
-        grid.appendChild(btn);
-    });
-
-    box.querySelector('#btn-cancelar-cobro').onclick = () => {
-        document.body.removeChild(overlay);
-    };
 }
-
-
 
 function confirmarCobro(id, metodoPago, overlay) {
     overlay.remove();
@@ -1668,12 +1605,17 @@ async function sincronizarEstado(id, estado) {
     const pedido = historialPedidos.find(p => p.id === id);
     const idRef = pedido?.idSheets || id;
     try {
+        const payload = { accion: "cambiarEstado", id: idRef, estado };
+        // Al cobrar, intentamos también actualizar el método de pago en Sheets
+        if (estado === 'Pagado' && pedido?.metodoPago) {
+            payload.metodoPago = pedido.metodoPago;
+        }
         const res = await fetch(API_URL, { method: "POST", redirect: "follow",
-            body: JSON.stringify({ accion: "cambiarEstado", id: idRef, estado }) });
+            body: JSON.stringify(payload) });
         const data = await res.json();
         if (!data.ok) console.warn("Estado no actualizado en Sheets.");
     } catch { /* offline OK */ }
-}
+    }
 
 // Archivar
 async function archivarPedido(id) {
@@ -1692,15 +1634,7 @@ async function archivarPedido(id) {
 function reabrirParaEditar(id) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido) return;
-
     if (comandaActiva.length > 0 && !confirm("Tienes ítems en la comanda actual. ¿Unificar?")) return;
-
-    // DETENER EL POLLING TEMPORALMENTE MIENTRAS SE EDITA
-    if (pollingTimer) {
-        clearInterval(pollingTimer);
-        pollingTimer = null;
-        console.log("Polling pausado por edición activa.");
-    }
 
     if (pedido.itemsRaw && pedido.itemsRaw.length > 0) {
         comandaActiva = JSON.parse(JSON.stringify(pedido.itemsRaw));
@@ -1721,20 +1655,18 @@ function reabrirParaEditar(id) {
     document.getElementById('campo-mesero').value = pedido.mesero || '';
     document.getElementById('comentario-orden').value = pedido.notas || '';
 
-    // GUARDAR ATRIBUTOS CRÍTICOS ORIGINALES PARA NO DUPLICAR NI CAMBIAR ID
+    // Guardamos todos los datos del pedido original para reutilizarlos al reenviar
     window._pedidoEditandoIdSheets = pedido.idSheets || pedido.id;
     window._pedidoEditandoId = id;
-    window._pedidoEditandoNumero = pedido.numeroPedido; // Conservamos tu número de orden original
+    window._pedidoEditandoNumeroPedido = pedido.numeroPedido || obtenerNumeroPedido(pedido);
+    window._pedidoEditandoHoraLocal = pedido.horaLocal || pedido.hora;
 
-    // Eliminar temporalmente del monitor local para evitar confusiones visuales
     historialPedidos = historialPedidos.filter(p => p.id !== id);
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    guardarYRender();
     renderHistorial();
-
-    // Llevar al usuario visualmente a la pestaña de comanda
-    const tabComanda = document.getElementById('btn-tab-comanda');
-    if (tabComanda) switchView('view-comanda', tabComanda);
-    actualizarTotalesComanda();
+    showToast("✏️ Comanda abierta para editar.");
+    if (window.innerWidth < 768) switchView('view-comanda', document.getElementById('btn-tab-comanda'));
 }
 // ═══════════════════════════════════════════════════════════
 //  SINCRONIZACIÓN CON SHEETS
@@ -1781,11 +1713,29 @@ async function cargarPedidos() {
             const deLaNube = data.pedidos.filter(p => !idsSheets.has(String(p.id)));
             
             deLaNube.forEach(p => {
+                // Buscar si tenemos una versión local más actualizada de este pedido
+                const localMatch = historialPedidos.find(lp => String(lp.idSheets) === String(p.id));
+
                 if (!p.horaLocal && p.hora) p.horaLocal = p.hora;
                 p.sincronizado = "SI";
                 p.idSheets = p.id;
-                // Si la nube nos da un timestamp numérico lo respetamos, si no, usamos el suyo original
-                if (!p.id || p.id < 1e12) p.id = Number(p.id) || Date.now(); 
+                if (!p.id || p.id < 1e12) p.id = Number(p.id) || Date.now();
+
+                if (localMatch) {
+                    // Preservar campos que se actualizan localmente y la nube no refleja aún:
+                    // metodoPago (se cobra local), horaFin (se fija local al cobrar/marcar listo),
+                    // estado (puede adelantarse localmente), numeroPedido y horaLocal propios.
+                    if (localMatch.metodoPago) p.metodoPago = localMatch.metodoPago;
+                    if (localMatch.horaFin)    p.horaFin    = localMatch.horaFin;
+                    if (localMatch.estado)     p.estado     = localMatch.estado;
+                    if (localMatch.numeroPedido) p.numeroPedido = localMatch.numeroPedido;
+                    if (localMatch.horaLocal)  p.horaLocal  = localMatch.horaLocal;
+                    if (localMatch.editado)    p.editado    = localMatch.editado;
+                    // Preservar el id timestamp local (más preciso que el row ID de Sheets)
+                    if (localMatch.id && typeof localMatch.id === 'number' && localMatch.id > 1e12) {
+                        p.id = localMatch.id;
+                    }
+                }
             });
 
             historialPedidos = [...noSync, ...deLaNube].sort((a, b) => a.id - b.id);
@@ -1796,7 +1746,7 @@ async function cargarPedidos() {
         console.error("Error cargando pedidos, usando modo offline:", error);
         renderHistorial(); // modo offline
     }
-}
+    }
 // ═══════════════════════════════════════════════════════════
 //  POLLING AUTOMÁTICO
 // ═══════════════════════════════════════════════════════════

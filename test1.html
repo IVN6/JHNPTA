@@ -1166,11 +1166,20 @@ function eliminarItem(idx) {
     guardarYRender();
 }
 function vaciarComanda() {
-    if (comandaActiva.length === 0) return;
-    if (!confirm('¿Limpiar toda la comanda?')) return;
     comandaActiva = [];
+    document.getElementById('num-mesa').value = "";
+    document.getElementById('campo-mesero').value = "";
+    document.getElementById('comentario-orden').value = "";
+    
+    // Si canceló una edición con este botón, restauramos el estado normal
+    window._pedidoEditandoId = null;
+    window._pedidoEditandoIdSheets = null;
+    window._pedidoEditandoNumero = null;
+    
     guardarYRender();
+    iniciarPolling(); // Volver a activar las consultas automáticas de forma segura
 }
+
 
 function seleccionarPago(btn) {
     document.querySelectorAll('.pago-btn').forEach(b => b.classList.remove('active'));
@@ -1224,7 +1233,11 @@ function guardarYRender() {
 //  PROCESAR ORDEN
 // ═══════════════════════════════════════════════════════════
 async function procesarOrden() {
-    if (comandaActiva.length === 0) { showToast("⚠️ La comanda está vacía."); return; }
+    if (comandaActiva.length === 0) {
+        showToast("⚠️ La comanda está vacía.");
+        return;
+    }
+
     const mesa = document.getElementById('num-mesa').value;
     if (!mesa) {
         showToast("⚠️ Selecciona una mesa o destino.");
@@ -1237,7 +1250,6 @@ async function procesarOrden() {
     const notas = document.getElementById('comentario-orden').value.trim();
     const total = comandaActiva.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
 
-    // Texto de ítems enriquecido con specs
     const textoItems = comandaActiva.map(i => {
         let linea = `${i.cantidad}x ${i.nombre}`;
         if (i.specs) linea += ` [${i.specs}]`;
@@ -1245,30 +1257,66 @@ async function procesarOrden() {
         return linea;
     }).join(', ');
 
+    // EVALUAR SI ES EDICIÓN O PEDIDO NUEVO
+    const esEdicion = window._pedidoEditandoId ? true : false;
+    
     const nuevoPedido = {
-        id: Date.now(),
-        idSheets: null,        // se llenará cuando Sheets responda
-        numeroPedido: siguienteNumeroPedido(),
-        mesa, mesero, notas,
-        total, items: textoItems,
+        id: esEdicion ? window._pedidoEditandoId : Date.now(), // No cambia el ID si es edición
+        idSheets: esEdicion ? window._pedidoEditandoIdSheets : null,
+        numeroPedido: esEdicion ? window._pedidoEditandoNumero : siguienteNumeroPedido(), // Mantiene el número de orden
+        mesa,
+        mesero,
+        notas,
+        total,
+        items: textoItems,
         itemsRaw: JSON.parse(JSON.stringify(comandaActiva)),
-        metodoPago: metodoPagoActual,
+        metodoPago: "Efectivo",
+        detallePago: "",
         estado: "Pendiente",
-        horaLocal: new Date().toISOString(),
-        sincronizado: "NO"
+        hora: esEdicion ? (historialPedidos.find(p => p.id === window._pedidoEditandoId)?.hora || new Date().toLocaleTimeString()) : new Date().toLocaleTimeString(),
+        horaLocal: esEdicion ? null : new Date().toISOString()
     };
 
-    historialPedidos.unshift(nuevoPedido);
-localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    // Guardar localmente
+    historialPedidos.push(nuevoPedido);
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    
+    // Limpiar formulario de comanda
+    vaciarComanda();
+    renderHistorial();
+    showToast(esEdicion ? "📝 Pedido actualizado con éxito" : "🚀 Orden enviada a cocina");
 
-// Si estamos editando un pedido existente, archivar el original en Sheets
-if (window._pedidoEditandoIdSheets) {
-    const idArchivar = window._pedidoEditandoIdSheets;
-    window._pedidoEditandoIdSheets = null;
+    // Ir al monitor de pedidos
+    const tabMonitor = document.getElementById('btn-tab-monitor');
+    if (tabMonitor) switchView('view-monitor', tabMonitor);
+
+    // Enviar datos a Google Sheets
+    try {
+        const payload = {
+            accion: esEdicion ? "editarPedido" : "nuevoPedido", // Si tu script de Sheets maneja editarPedido, o usa el método correspondiente
+            pedido: nuevoPedido,
+            idOriginal: esEdicion ? window._pedidoEditandoIdSheets : null
+        };
+
+        const res = await fetch(API_URL, {
+            method: "POST",
+            redirect: "follow",
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.ok && data.id) {
+            nuevoPedido.idSheets = data.id;
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+        }
+    } catch (error) {
+        console.warn("Modo offline: Guardado en el celular, se sincronizará luego.", error);
+    }
+
+    // LIMPIAR VARIABLES DE EDICIÓN Y REINICIAR EL POLLING SEGURO
     window._pedidoEditandoId = null;
-    fetch(API_URL, { method:"POST", redirect:"follow",
-        body: JSON.stringify({ accion:"archivarPedido", id: idArchivar })
-    }).catch(() => {});
+    window._pedidoEditandoIdSheets = null;
+    window._pedidoEditandoNumero = null;
+    iniciarPolling(); 
 }
 
     // Reset comanda
@@ -1516,8 +1564,6 @@ function avanzarEstado(id) {
     }
 }
 
-
-
 function elegirMetodoPagoYCobrar(id) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido) return;
@@ -1577,6 +1623,7 @@ function elegirMetodoPagoYCobrar(id) {
 }
 
 
+
 function confirmarCobro(id, metodoPago, overlay) {
     overlay.remove();
     const pedido = historialPedidos.find(p => p.id === id);
@@ -1632,7 +1679,15 @@ async function archivarPedido(id) {
 function reabrirParaEditar(id) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido) return;
+
     if (comandaActiva.length > 0 && !confirm("Tienes ítems en la comanda actual. ¿Unificar?")) return;
+
+    // DETENER EL POLLING TEMPORALMENTE MIENTRAS SE EDITA
+    if (pollingTimer) {
+        clearInterval(pollingTimer);
+        pollingTimer = null;
+        console.log("Polling pausado por edición activa.");
+    }
 
     if (pedido.itemsRaw && pedido.itemsRaw.length > 0) {
         comandaActiva = JSON.parse(JSON.stringify(pedido.itemsRaw));
@@ -1653,18 +1708,21 @@ function reabrirParaEditar(id) {
     document.getElementById('campo-mesero').value = pedido.mesero || '';
     document.getElementById('comentario-orden').value = pedido.notas || '';
 
-    // Guardamos el idSheets del pedido original para archivarlo al reenviar
+    // GUARDAR ATRIBUTOS CRÍTICOS ORIGINALES PARA NO DUPLICAR NI CAMBIAR ID
     window._pedidoEditandoIdSheets = pedido.idSheets || pedido.id;
     window._pedidoEditandoId = id;
+    window._pedidoEditandoNumero = pedido.numeroPedido; // Conservamos tu número de orden original
 
+    // Eliminar temporalmente del monitor local para evitar confusiones visuales
     historialPedidos = historialPedidos.filter(p => p.id !== id);
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-    guardarYRender();
     renderHistorial();
-    showToast("✏️ Comanda abierta para editar.");
-    if (window.innerWidth < 768) switchView('view-comanda', document.getElementById('btn-tab-comanda'));
-}
 
+    // Llevar al usuario visualmente a la pestaña de comanda
+    const tabComanda = document.getElementById('btn-tab-comanda');
+    if (tabComanda) switchView('view-comanda', tabComanda);
+    actualizarTotalesComanda();
+}
 // ═══════════════════════════════════════════════════════════
 //  SINCRONIZACIÓN CON SHEETS
 // ═══════════════════════════════════════════════════════════

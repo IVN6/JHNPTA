@@ -1407,15 +1407,78 @@ function siguienteNumeroPedido() {
 }
 
 function calcularMinutosEspera(pedido) {
-    const inicio = pedido.creadoEn || parsearFechaSegura(pedido.horaLocal || pedido.hora)?.getTime();
-    if (!inicio) return 0;
+    // Función interna para combinar la fecha (DD/MM/AAAA) y la hora (HH:MM:SS)
+    function juntarFechaYHora(fechaStr, horaStr) {
+        if (!fechaStr || !horaStr) return null;
+        try {
+            // Limpiamos espacios
+            const fStr = String(fechaStr).trim();
+            const hStr = String(horaStr).trim();
+            
+            // Si la fecha viene en formato DD/MM/AAAA
+            if (fStr.includes('/')) {
+                const partesFecha = fStr.split('/');
+                const partesHora = hStr.split(':');
+                
+                const dia = parseInt(partesFecha[0], 10);
+                const mes = parseInt(partesFecha[1], 10) - 1; // Enero es 0 en JS
+                const anio = parseInt(partesFecha[2], 10);
+                
+                const hora = parseInt(partesHora[0], 10);
+                const min = parseInt(partesHora[1], 10);
+                const seg = partesHora[2] ? parseInt(partesHora[2], 10) : 0;
+                
+                return new Date(anio, mes, dia, hora, min, seg);
+            }
+        } catch (e) {
+            console.error("Error al juntar fecha y hora:", e);
+        }
+        return null;
+    }
 
+    // 1. OBTENER FECHA DE INICIO
+    let fechaInicio = null;
+    
+    // Si viene de la tabla con columnas separadas (pedido.fecha y pedido.hora)
+    if (pedido.fecha && (pedido.hora || pedido.horaLocal)) {
+        fechaInicio = juntarFechaYHora(pedido.fecha, pedido.horaLocal || pedido.hora);
+    }
+    
+    // Si lo anterior no funcionó, usamos el parsearFechaSegura normal (por si es un timestamp)
+    if (!fechaInicio) {
+        fechaInicio = parsearFechaSegura(pedido.creadoEn) || parsearFechaSegura(pedido.horaLocal || pedido.hora);
+    }
+    
+    if (!fechaInicio) return 0;
+    const inicioMs = fechaInicio.getTime();
+
+
+    // 2. OBTENER FECHA DE FIN (Si ya está 'Listo' o 'Pagado')
     if ((pedido.estado === 'Listo' || pedido.estado === 'Pagado') && pedido.horaFin) {
-        const diffMs = pedido.horaFin - inicio;
+        let fechaFin = null;
+        
+        // Si hay una columna fecha, intentamos combinarla con la horaFin por si solo es un string "13:18:42"
+        if (pedido.fecha && String(pedido.horaFin).includes(':') && !String(pedido.horaFin).includes('/')) {
+            fechaFin = juntarFechaYHora(pedido.fecha, pedido.horaFin);
+        }
+        
+        // Si no se pudo combinar, usamos el parseador estándar
+        if (!fechaFin) {
+            fechaFin = parsearFechaSegura(pedido.horaFin);
+        }
+        
+        if (!fechaFin) return 0;
+        
+        const diffMs = fechaFin.getTime() - inicioMs;
+        
+        // Si da negativo por segundos de desfase o formatos, dejamos 1 min por defecto
+        if (diffMs < 0) return 1; 
+        
         return Math.max(0, Math.floor(diffMs / 60000));
     }
 
-    const diffMs = Date.now() - inicio;
+    // 3. SI SIGUE PENDIENTE (Calcula contra el tiempo real actual)
+    const diffMs = Date.now() - inicioMs;
     return Math.max(0, Math.floor(diffMs / 60000));
 }
 

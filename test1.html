@@ -713,7 +713,7 @@
 // ═══════════════════════════════════════════════════════════
 const API_URL = "https://script.google.com/macros/s/AKfycbyTgsY2YYD5IZCmDXC_QjDTdFntpTG11VQrQbukrb19xSPjIx9F3JT1B5JOqO7jtU0x/exec";
 const POLLING_MS = 25000; // actualización automática del monitor cada 25s
-let metodoPagoActual = "Efectivo";
+let metodoPagoActual = "Por cobrar";
 let pollingTimer = null;
 
 // ═══════════════════════════════════════════════════════════
@@ -945,7 +945,16 @@ function switchView(viewId, btn) {
         btn.classList.add('active');
     }
 }
-
+function generarUUID() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
 // ═══════════════════════════════════════════════════════════
 //  CATÁLOGO
 // ═══════════════════════════════════════════════════════════
@@ -1172,11 +1181,6 @@ function vaciarComanda() {
     guardarYRender();
 }
 
-function seleccionarPago(btn) {
-    document.querySelectorAll('.pago-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    metodoPagoActual = btn.dataset.pago;
-}
 
 function guardarYRender() {
     localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
@@ -1224,6 +1228,7 @@ function guardarYRender() {
 //  PROCESAR ORDEN
 // ═══════════════════════════════════════════════════════════
 async function procesarOrden() {
+    if (window._enviandoOrden) return;
     if (comandaActiva.length === 0) { showToast("⚠️ La comanda está vacía."); return; }
     const mesa = document.getElementById('num-mesa').value;
     if (!mesa) {
@@ -1232,99 +1237,119 @@ async function procesarOrden() {
         setTimeout(() => document.getElementById('num-mesa').style.borderColor = 'var(--border)', 1500);
         return;
     }
+    window._enviandoOrden = true;
 
     const mesero = document.getElementById('campo-mesero').value.trim() || "—";
     const notas = document.getElementById('comentario-orden').value.trim();
     const total = comandaActiva.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
+    const itemsSnapshot = JSON.parse(JSON.stringify(comandaActiva));
 
-    // Texto de ítems enriquecido con specs
-    const textoItems = comandaActiva.map(i => {
+    const textoItems = itemsSnapshot.map(i => {
         let linea = `${i.cantidad}x ${i.nombre}`;
         if (i.specs) linea += ` [${i.specs}]`;
         if (i.notaItem) linea += ` (${i.notaItem})`;
         return linea;
     }).join(', ');
 
-    // Si es edición, reutilizar número de orden y hora original
-    const esEdicion = !!window._pedidoEditandoIdSheets;
-    const numeroPedidoFinal = esEdicion && window._pedidoEditandoNumeroPedido
-        ? window._pedidoEditandoNumeroPedido
-        : siguienteNumeroPedido();
-    const horaLocalFinal = esEdicion && window._pedidoEditandoHoraLocal
-        ? window._pedidoEditandoHoraLocal
-        : new Date().toISOString();
+    const esEdicion = !!window._pedidoEditandoId;
 
-    const nuevoPedido = {
-        id: Date.now(),
-        idSheets: null,
-        numeroPedido: numeroPedidoFinal,
-        mesa, mesero, notas,
-        total, items: textoItems,
-        itemsRaw: JSON.parse(JSON.stringify(comandaActiva)),
-        metodoPago: metodoPagoActual,
-        estado: "Pendiente",
-        horaLocal: horaLocalFinal,
-        sincronizado: "NO",
-        editado: esEdicion ? true : undefined
-    };
-
-    historialPedidos.unshift(nuevoPedido);
-    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-
-    // Si estamos editando, archivar el original en Sheets
-    // OJO: NO se nula _pedidoEditandoIdSheets hasta que confirme el archivo,
-    // así el polling no vuelve a meter el pedido viejo mientras tanto (bug de duplicado)
-    if (esEdicion) {
-        const idArchivar = window._pedidoEditandoIdSheets;
-        window._pedidoEditandoId = null;
-        window._pedidoEditandoNumeroPedido = null;
-        window._pedidoEditandoHoraLocal = null;
-        fetch(API_URL, { method: "POST", redirect: "follow",
-            body: JSON.stringify({ accion: "archivarPedido", id: idArchivar })
-        })
-        .catch(() => {})
-        .finally(() => {
-            // Solo liberar cuando Sheets confirme (o falle)
-            if (window._pedidoEditandoIdSheets === idArchivar) {
-                window._pedidoEditandoIdSheets = null;
-            }
-        });
-    }
-
-    // Reset comanda
     comandaActiva = [];
     localStorage.removeItem('comandaActiva');
     document.getElementById('comentario-orden').value = '';
     document.getElementById('num-mesa').value = '';
     guardarYRender();
-    renderHistorial();
-    showToast(`⚡ Enviando a cocina…`);
-
+    showToast(esEdicion ? "✏️ Guardando cambios…" : "⚡ Enviando a cocina…");
     if (window.innerWidth < 768) switchView('view-monitor', document.getElementById('btn-tab-monitor'));
 
-    // Enviar a Sheets
+    if (esEdicion) {
+        const idPedido = window._pedidoEditandoId;
+        const versionEsperada = window._pedidoEditandoVersion || 1;
+        window._pedidoEditandoId = null;
+        window._pedidoEditandoVersion = null;
+
+        const payload = {
+            accion: "actualizarPedido",
+            id: idPedido,
+            versionEsperada,
+            mesa, mesero, notas, total,
+            items: textoItems,
+            itemsRaw: JSON.stringify(itemsSnapshot)
+        };
+        try {
+            const res = await fetch(API_URL, { method: "POST", redirect: "follow", body: JSON.stringify(payload) });
+            const data = await res.json();
+            if (data.ok) {
+                const pedido = historialPedidos.find(p => p.id === idPedido);
+                if (pedido) {
+                    pedido.mesa = mesa; pedido.mesero = mesero; pedido.notas = notas;
+                    pedido.total = total; pedido.items = textoItems;
+                    pedido.itemsRaw = itemsSnapshot;
+                    pedido.version = data.version;
+                    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+                }
+                showToast("✅ Cambios guardados.");
+            } else if (data.conflicto) {
+                showToast("⚠️ Alguien más editó este pedido. Se recargó la versión más reciente.");
+                await cargarPedidos();
+            } else {
+                showToast("⚠️ No se pudo guardar la edición.");
+            }
+            renderHistorial();
+        } catch {
+            showToast("⚠️ Sin conexión. Reintenta la edición cuando vuelva el internet.");
+        } finally {
+            window._enviandoOrden = false;
+        }
+        return;
+    }
+
+    const nuevoPedido = {
+        id: generarUUID(),
+        creadoEn: Date.now(),
+        numeroPedido: null,
+        mesa, mesero, notas,
+        total, items: textoItems,
+        itemsRaw: itemsSnapshot,
+        metodoPago: "Por cobrar",
+        estado: "Pendiente",
+        estadoSincronizado: "SI",
+        version: 1,
+        horaLocal: new Date().toISOString(),
+        sincronizado: "NO",
+        enviando: true
+    };
+
+    historialPedidos.unshift(nuevoPedido);
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    renderHistorial();
+
     const payload = {
         accion: "nuevoPedido",
+        id: nuevoPedido.id,
         mesa, mesero, total,
         items: textoItems,
+        itemsRaw: JSON.stringify(itemsSnapshot),
         notas,
-        metodoPago: metodoPagoActual
+        metodoPago: nuevoPedido.metodoPago
     };
     try {
         const res = await fetch(API_URL, { method: "POST", redirect: "follow", body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.ok) {
-            nuevoPedido.idSheets = data.id;
             nuevoPedido.sincronizado = "SI";
+            nuevoPedido.numeroPedido = data.numeroPedido;
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             showToast(`✅ Mesa ${mesa} en la nube.`);
             renderHistorial();
         }
     } catch {
         showToast("⚠️ Guardado offline. Subirá al recuperar internet.");
+    } finally {
+        nuevoPedido.enviando = false;
+        localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+        window._enviandoOrden = false;
     }
 }
-
 // ═══════════════════════════════════════════════════════════
 //  MONITOR
 // ═══════════════════════════════════════════════════════════
@@ -1381,29 +1406,22 @@ function siguienteNumeroPedido() {
     return ultimoNumeroPedido;
 }
 
-function obtenerNumeroPedido(pedido) {
-    if (pedido?.numeroPedido) return pedido.numeroPedido;
-    if (pedido?.numero) return pedido.numero;
-    const fallback = pedido?.idSheets || pedido?.id;
-    return fallback || '—';
-}
-
 function calcularMinutosEspera(pedido) {
-    const inicio = pedido.id && typeof pedido.id === 'number' && pedido.id > 1e12 
-        ? pedido.id 
-        : (parsearFechaSegura(pedido.horaLocal || pedido.hora)?.getTime() || pedido.id);
-
+    const inicio = pedido.creadoEn || parsearFechaSegura(pedido.horaLocal || pedido.hora)?.getTime();
     if (!inicio) return 0;
 
-    // KPI: Si el pedido ya está Listo o Pagado, congelamos el tiempo usando la hora fin
     if ((pedido.estado === 'Listo' || pedido.estado === 'Pagado') && pedido.horaFin) {
         const diffMs = pedido.horaFin - inicio;
         return Math.max(0, Math.floor(diffMs / 60000));
     }
 
-    // Si sigue activo, cuenta en tiempo real
     const diffMs = Date.now() - inicio;
     return Math.max(0, Math.floor(diffMs / 60000));
+}
+
+function obtenerNumeroPedido(pedido) {
+    if (pedido?.numeroPedido) return pedido.numeroPedido;
+    return '—';
 }
 
 function renderHistorial() {
@@ -1416,37 +1434,28 @@ function renderHistorial() {
         return;
     }
 
-    historialPedidos.forEach(p => {
-        if (!p.numeroPedido) p.numeroPedido = obtenerNumeroPedido(p);
-    });
-    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-
-    // Ordenar de forma inteligente para el monitor
     const ordenados = [...historialPedidos].sort((a, b) => {
         if (a.estado !== 'Pagado' && b.estado === 'Pagado') return -1;
         if (a.estado === 'Pagado' && b.estado !== 'Pagado') return 1;
-        return a.id - b.id;
+        return (a.creadoEn || 0) - (b.creadoEn || 0);
     });
 
     lista.innerHTML = ordenados.map(p => {
         const minutos = calcularMinutosEspera(p);
         const horaLabel = formatearHora(p.horaLocal || p.hora);
-        
-        // Detener visualmente el texto del reloj
+
         const esFinal = p.estado === 'Listo' || p.estado === 'Pagado';
         const textoTiempo = esFinal ? `Tomó ${minutos} min` : (minutos <= 0 ? 'Recién' : `${minutos} min`);
         const tiempoLabel = `${horaLabel} · ${textoTiempo}`;
-        
-        // KPI: Alertas semafóricas visuales
+
         let alertaTiempo = '';
         let estiloTarjetaAlerta = '';
         if (!esFinal && minutos >= 15) {
             alertaTiempo = `<span class="ticket-alerta-tiempo" style="background:var(--danger); color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem;">🚨 RETRASADO</span>`;
-            estiloTarjetaAlerta = 'border: 2px solid var(--danger);'; // Bordes rojos en monitor
+            estiloTarjetaAlerta = 'border: 2px solid var(--danger);';
         } else if (!esFinal && minutos >= 10) {
             alertaTiempo = `<span class="ticket-alerta-tiempo" style="background:var(--warning); color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem;">⏳ Alerta</span>`;
         } else if (!esFinal && minutos >= 20) {
-            // Mantener tu alerta antigua por si acaso
             alertaTiempo = `<span class="ticket-alerta-tiempo">⚠️ ${minutos} min</span>`;
         }
 
@@ -1466,8 +1475,8 @@ function renderHistorial() {
         const idxActual = flujo.indexOf(p.estado);
         const siguienteEstado = idxActual < flujo.length - 1 ? flujo[idxActual + 1] : null;
         const btnCambio = siguienteEstado
-            ? `<button class="btn-estado-ticket" onclick="avanzarEstado(${p.id})">${siguienteEstado === 'Preparando' ? '👨‍🍳 Preparar' : siguienteEstado === 'Listo' ? '✅ Listo' : '💵 Cobrar'}</button>`
-            : `<button class="btn-estado-ticket" style="color:var(--text-muted);" onclick="regresarEstado(${p.id})">↩ Reabrir</button>`;
+            ? `<button class="btn-estado-ticket" onclick="avanzarEstado('${p.id}')">${siguienteEstado === 'Preparando' ? '👨‍🍳 Preparar' : siguienteEstado === 'Listo' ? '✅ Listo' : '💵 Cobrar'}</button>`
+            : `<button class="btn-estado-ticket" style="color:var(--text-muted);" onclick="regresarEstado('${p.id}')">↩ Reabrir</button>`;
 
         const itemsHtml = p.items.split(', ').map(it => {
             const matchQty = it.match(/^(\d+)x (.+)$/);
@@ -1493,7 +1502,7 @@ function renderHistorial() {
                 <div class="ticket-head-left">
                     <span class="ticket-mesa">📍 ${p.mesa} ${p.mesero && p.mesero !== '—' ? `· ${p.mesero}` : ''}</span>
                     <span class="ticket-num">Orden #${String(obtenerNumeroPedido(p)).slice(-4)}</span>
-${p.editado ? `<span style="font-size:0.65rem;color:var(--primary);font-weight:700;margin-left:4px;">✏️ editado</span>` : ''}
+${p.version > 1 ? `<span style="font-size:0.65rem;color:var(--primary);font-weight:700;margin-left:4px;">✏️ editado</span>` : ''}
 
                 </div>
                 <span class="ticket-estado-badge ${badgeMap[p.estado] || 'badge-pendiente'}">${estadoEmoji[p.estado] || p.estado}</span>
@@ -1506,8 +1515,8 @@ ${p.editado ? `<span style="font-size:0.65rem;color:var(--primary);font-weight:7
                 <span class="ticket-hora">🕒 ${tiempoLabel}</span>
                 ${alertaTiempo}
                 ${btnCambio}
-                <button class="btn-editar-ticket" onclick="reabrirParaEditar(${p.id})">✏️</button>
-                <button class="btn-archivar-ticket" onclick="archivarPedido(${p.id})">✕</button>
+                <button class="btn-editar-ticket" onclick="reabrirParaEditar('${p.id}')">✏️</button>
+                <button class="btn-archivar-ticket" onclick="archivarPedido('${p.id}')">✕</button>
             </div>
         </div>`;
     }).join('');
@@ -1526,12 +1535,12 @@ function avanzarEstado(id) {
             return;
         }
         pedido.estado = siguiente;
-        
-        // Si pasó a "Listo", congelamos el tiempo de cocina
+
         if (siguiente === 'Listo') {
             pedido.horaFin = Date.now();
         }
 
+        pedido.estadoSincronizado = 'NO'; // se marca "SI" cuando Sheets confirme
         localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
         renderHistorial();
         sincronizarEstado(id, pedido.estado);
@@ -1539,11 +1548,9 @@ function avanzarEstado(id) {
 }
 
 
-
 function elegirMetodoPagoYCobrar(id) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido) return;
-    // Mini modal de cobro
     const overlay = document.createElement('div');
     overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center;`;
     const metodos = [
@@ -1557,7 +1564,7 @@ function elegirMetodoPagoYCobrar(id) {
         <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">Total: <strong>${formatPeso(pedido.total)}</strong></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
             ${metodos.map(m => `
-            <button onclick="confirmarCobro(${id},'${m.k}',this.parentElement.parentElement.parentElement)"
+            <button onclick="confirmarCobro('${id}','${m.k}',this.parentElement.parentElement.parentElement)"
                 style="padding:12px 6px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);cursor:pointer;font-size:0.85rem;font-weight:600;">
                 ${m.e}<br>${m.k}
             </button>`).join('')}
@@ -1565,7 +1572,7 @@ function elegirMetodoPagoYCobrar(id) {
         <div style="display:flex;gap:8px;margin-bottom:8px;">
             <input id="otro-pago-input" type="text" placeholder="Otro método..."
                 style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;outline:none;">
-            <button onclick="confirmarCobro(${id},document.getElementById('otro-pago-input').value||'Otro',this.parentElement.parentElement.parentElement)"
+            <button onclick="confirmarCobro('${id}',document.getElementById('otro-pago-input').value||'Otro',this.parentElement.parentElement.parentElement)"
                 style="padding:10px 14px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">OK</button>
         </div>
         <button onclick="this.parentElement.parentElement.remove()"
@@ -1581,52 +1588,58 @@ function confirmarCobro(id, metodoPago, overlay) {
     pedido.estado = 'Pagado';
     pedido.metodoPago = metodoPago;
     pedido.detallePago = '';
-    
-    // Si no pasó por el botón "Listo" antes, capturamos su fin ahora al cobrar
+
     if (!pedido.horaFin) {
         pedido.horaFin = Date.now();
     }
 
+    pedido.estadoSincronizado = 'NO'; // se marca "SI" cuando Sheets confirme
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
     renderHistorial();
     sincronizarEstado(id, 'Pagado');
     showToast(`✅ Cobrado con ${metodoPago}`);
 }
 
+
 function regresarEstado(id) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido) return;
     pedido.estado = 'Pendiente';
+    pedido.estadoSincronizado = 'NO';
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
     renderHistorial();
     sincronizarEstado(id, 'Pendiente');
 }
+
 async function sincronizarEstado(id, estado) {
     const pedido = historialPedidos.find(p => p.id === id);
-    const idRef = pedido?.idSheets || id;
+    if (!pedido || pedido.sincronizado === 'NO') return;
     try {
-        const payload = { accion: "cambiarEstado", id: idRef, estado };
-        // Al cobrar, intentamos también actualizar el método de pago en Sheets
-        if (estado === 'Pagado' && pedido?.metodoPago) {
-            payload.metodoPago = pedido.metodoPago;
-        }
+        const payload = { accion: "cambiarEstado", id: pedido.id, estado };
+        if (pedido.metodoPago) payload.metodoPago = pedido.metodoPago;
+        if (pedido.horaFin)    payload.horaFin    = pedido.horaFin;
+
         const res = await fetch(API_URL, { method: "POST", redirect: "follow",
             body: JSON.stringify(payload) });
         const data = await res.json();
-        if (!data.ok) console.warn("Estado no actualizado en Sheets.");
-    } catch { /* offline OK */ }
-    }
+        if (data.ok) {
+            pedido.estadoSincronizado = 'SI';
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+        } else {
+            console.warn("Estado no actualizado en Sheets.");
+        }
+    } catch { /* offline: sincronizarEstadosPendientes() reintentará */ }
+}
 
 // Archivar
 async function archivarPedido(id) {
     if (!confirm("¿Archivar este pedido? Desaparecerá del monitor (queda en Sheets).")) return;
-    const idRef = historialPedidos.find(p => p.id === id)?.idSheets || id;
     historialPedidos = historialPedidos.filter(p => p.id !== id);
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
     renderHistorial();
     try {
         await fetch(API_URL, { method: "POST", redirect: "follow",
-            body: JSON.stringify({ accion: "archivarPedido", id: idRef }) });
+            body: JSON.stringify({ accion: "archivarPedido", id }) });
     } catch { /* offline OK */ }
 }
 
@@ -1636,9 +1649,10 @@ function reabrirParaEditar(id) {
     if (!pedido) return;
     if (comandaActiva.length > 0 && !confirm("Tienes ítems en la comanda actual. ¿Unificar?")) return;
 
-    if (pedido.itemsRaw && pedido.itemsRaw.length > 0) {
+    if (Array.isArray(pedido.itemsRaw) && pedido.itemsRaw.length > 0) {
         comandaActiva = JSON.parse(JSON.stringify(pedido.itemsRaw));
     } else {
+        // Solo pasa con pedidos muy antiguos, de antes de guardar itemsRaw.
         comandaActiva = [];
         pedido.items.split(', ').forEach(parte => {
             const m = parte.match(/^(\d+)x ([^\[]+)/);
@@ -1655,16 +1669,10 @@ function reabrirParaEditar(id) {
     document.getElementById('campo-mesero').value = pedido.mesero || '';
     document.getElementById('comentario-orden').value = pedido.notas || '';
 
-    // Guardamos todos los datos del pedido original para reutilizarlos al reenviar
-    window._pedidoEditandoIdSheets = pedido.idSheets || pedido.id;
-    window._pedidoEditandoId = id;
-    window._pedidoEditandoNumeroPedido = pedido.numeroPedido || obtenerNumeroPedido(pedido);
-    window._pedidoEditandoHoraLocal = pedido.horaLocal || pedido.hora;
+    window._pedidoEditandoId = pedido.id;
+    window._pedidoEditandoVersion = pedido.version || 1;
 
-    historialPedidos = historialPedidos.filter(p => p.id !== id);
-    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
     guardarYRender();
-    renderHistorial();
     showToast("✏️ Comanda abierta para editar.");
     if (window.innerWidth < 768) switchView('view-comanda', document.getElementById('btn-tab-comanda'));
 }
@@ -1672,81 +1680,100 @@ function reabrirParaEditar(id) {
 //  SINCRONIZACIÓN CON SHEETS
 // ═══════════════════════════════════════════════════════════
 async function sincronizarPendientes() {
-    const pendientes = historialPedidos.filter(p => p.sincronizado === "NO");
+    const pendientes = historialPedidos.filter(p => p.sincronizado === "NO" && !p.enviando);
     for (const pedido of pendientes) {
+        pedido.enviando = true;
         try {
             const res = await fetch(API_URL, {
                 method: "POST", redirect: "follow",
                 body: JSON.stringify({
                     accion: "nuevoPedido",
+                    id: pedido.id,
                     mesa: pedido.mesa, mesero: pedido.mesero,
                     total: pedido.total, items: pedido.items,
+                    itemsRaw: JSON.stringify(pedido.itemsRaw || []),
                     notas: pedido.notas, metodoPago: pedido.metodoPago
                 })
             });
             const data = await res.json();
             if (data.ok) {
-                pedido.idSheets = data.id;
                 pedido.sincronizado = "SI";
+                if (data.numeroPedido) pedido.numeroPedido = data.numeroPedido;
                 localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             }
-        } catch { break; }
+        } catch {
+            pedido.enviando = false;
+            break;
+        }
+        pedido.enviando = false;
+    }
+}
+
+async function sincronizarEstadosPendientes() {
+    const pendientes = historialPedidos.filter(p =>
+        p.estadoSincronizado !== 'SI' && p.sincronizado === 'SI' && !p.enviando
+    );
+    for (const pedido of pendientes) {
+        await sincronizarEstado(pedido.id, pedido.estado);
     }
 }
 
 async function cargarPedidos() {
-    await sincronizarPendientes();
+    if (window._cargandoPedidos) return;
+    window._cargandoPedidos = true;
     try {
+        await sincronizarPendientes();
+        await sincronizarEstadosPendientes();
+
         const res = await fetch(`${API_URL}?accion=obtenerPedidos`);
         const data = await res.json();
         if (data.ok) {
             const noSync = historialPedidos.filter(p => p.sincronizado === "NO");
-            
-            // Convertimos a String para comparar de forma segura los IDs de Sheets
-            const idsSheets = new Set(noSync.map(p => String(p.idSheets)).filter(Boolean));
-            
-            // Si estás editando un pedido, protegemos que el polling no lo vuelva a meter
-            if (window._pedidoEditandoIdSheets) {
-                idsSheets.add(String(window._pedidoEditandoIdSheets));
-            }
+            const idsLocalesPendientes = new Set(noSync.map(p => p.id));
 
-            const deLaNube = data.pedidos.filter(p => !idsSheets.has(String(p.id)));
-            
+            const deLaNube = data.pedidos.filter(p => !idsLocalesPendientes.has(p.id));
+
             deLaNube.forEach(p => {
-                // Buscar si tenemos una versión local más actualizada de este pedido
-                const localMatch = historialPedidos.find(lp => String(lp.idSheets) === String(p.id));
+                const localMatch = historialPedidos.find(lp => String(lp.id) === String(p.id));
 
                 if (!p.horaLocal && p.hora) p.horaLocal = p.hora;
                 p.sincronizado = "SI";
-                p.idSheets = p.id;
-                if (!p.id || p.id < 1e12) p.id = Number(p.id) || Date.now();
+
+                if (typeof p.itemsRaw === 'string' && p.itemsRaw) {
+                    try { p.itemsRaw = JSON.parse(p.itemsRaw); } catch { p.itemsRaw = []; }
+                } else if (!Array.isArray(p.itemsRaw)) {
+                    p.itemsRaw = [];
+                }
+
+                p.creadoEn = (localMatch && localMatch.creadoEn)
+                    || parsearFechaSegura(p.horaLocal || p.hora)?.getTime()
+                    || Date.now();
 
                 if (localMatch) {
-                    // Preservar campos que se actualizan localmente y la nube no refleja aún:
-                    // metodoPago (se cobra local), horaFin (se fija local al cobrar/marcar listo),
-                    // estado (puede adelantarse localmente), numeroPedido y horaLocal propios.
-                    if (localMatch.metodoPago) p.metodoPago = localMatch.metodoPago;
-                    if (localMatch.horaFin)    p.horaFin    = localMatch.horaFin;
-                    if (localMatch.estado)     p.estado     = localMatch.estado;
-                    if (localMatch.numeroPedido) p.numeroPedido = localMatch.numeroPedido;
-                    if (localMatch.horaLocal)  p.horaLocal  = localMatch.horaLocal;
-                    if (localMatch.editado)    p.editado    = localMatch.editado;
-                    // Preservar el id timestamp local (más preciso que el row ID de Sheets)
-                    if (localMatch.id && typeof localMatch.id === 'number' && localMatch.id > 1e12) {
-                        p.id = localMatch.id;
+                    const localPendiente = localMatch.estadoSincronizado && localMatch.estadoSincronizado !== 'SI';
+                    if (localPendiente) {
+                        if (localMatch.metodoPago) p.metodoPago = localMatch.metodoPago;
+                        if (localMatch.horaFin)    p.horaFin    = localMatch.horaFin;
+                        if (localMatch.estado)     p.estado     = localMatch.estado;
                     }
+                    p.estadoSincronizado = localPendiente ? localMatch.estadoSincronizado : 'SI';
+                } else {
+                    p.estadoSincronizado = 'SI';
                 }
             });
 
-            historialPedidos = [...noSync, ...deLaNube].sort((a, b) => a.id - b.id);
+            historialPedidos = [...noSync, ...deLaNube].sort((a, b) => (a.creadoEn || 0) - (b.creadoEn || 0));
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             renderHistorial();
         }
     } catch (error) {
         console.error("Error cargando pedidos, usando modo offline:", error);
-        renderHistorial(); // modo offline
+        renderHistorial();
+    } finally {
+        window._cargandoPedidos = false;
     }
-    }
+}
+
 // ═══════════════════════════════════════════════════════════
 //  POLLING AUTOMÁTICO
 // ═══════════════════════════════════════════════════════════

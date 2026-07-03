@@ -81,6 +81,7 @@
 
         .grid-productos-scroll {
             flex: 1; overflow-y: auto;
+            padding-top: 30px;
             padding-bottom: calc(var(--cat-height) + var(--nav-height) + 20px);
         }
         .grid-productos {
@@ -553,7 +554,7 @@
         #toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         /* ── DESKTOP ── */
-        @media (min-width: 768px) {
+        @media (min-width: 968px) {
             .mobile-nav { display: none; }
             .app-container {
                 height: 100vh;
@@ -573,8 +574,8 @@
                 box-shadow: none; padding: 8px 0 10px;
                 margin-bottom: 10px; flex-direction: column; gap: 6px;
             }
-            .grid-productos-scroll { padding-bottom: 20px; }
-            .comanda-footer { padding-bottom: 14px; }
+            .grid-productos-scroll { padding-bottom: 60px; }
+            .comanda-footer { padding-bottom: 24px; }
         }
     </style>
 </head>

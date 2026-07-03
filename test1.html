@@ -742,7 +742,7 @@ const SALSAS_MERENGON = ["Mora", "Fresa", "Salsa Inglesa", "Uchuva", "Tomate de 
 
 // 2. Adiciones base ($3000)
 const ADICIONES_BASE = [
-    { nombre: "Coco", precio: 3000 },
+    { nombre: "Arequipe de coco", precio: 3000 },
     { nombre: "Arequipe", precio: 3000 },
     { nombre: "Natas", precio: 3000 },
     { nombre: "Un durazno", precio: 3000 },
@@ -762,7 +762,7 @@ const ADICIONES_GENERALES = [...ADICIONES_BASE, ...SALSAS_COMO_ADICIONES];
 const SABORES_HELADO = ["Vainilla","Fresa","Chocolate","Mora","Mango","Maracuyá","Arequipe","Coco"];
 
 // 5b. Sabores de Cremitas (Agregado para evitar el error de variable indefinida)
-const SABORES_CREMITAS = ["Tradicional", "Arequipe", "Coco"];
+const SABORES_CREMITAS = ["Tradicional", "Arequipe", "Arequipe de coco", 'Chicle'];
 
 // 6. Paletas con sistema de AGOTADOS
 const SABORES_PALETAS = [
@@ -773,7 +773,7 @@ const SABORES_PALETAS = [
     { nombre: "Guanábana", disponible: true },
     { nombre: "Fresa", disponible: true },
     { nombre: "Curuba", disponible: true },
-    { nombre: "Feijoa", disponible: false }, // <-- Cambia a true/false para ocultar o mostrar
+    { nombre: "Feijoa", disponible: true }, // <-- Cambia a true/false para ocultar o mostrar
     { nombre: "Chicle", disponible: true },
     { nombre: "Oreo", disponible: true },
     { nombre: "Chocolate", disponible: true },
@@ -793,13 +793,12 @@ const listaProductos = [
     { id: 6,  categoria: "Postres", nombre: "Natilla", precio: 8000, imgPostre: "https://colmaiz.co/wp-content/uploads/2019/03/Producto-Preparacion-Natilla-1024x1024-1.png" },
     { id: 7,  categoria: "Postres", nombre: "Gelatina Grande", precio: 8500, imgPostre: "https://lh3.googleusercontent.com/d/1rqIPaJrFMb1vIkPKRMWcEDkCoXNpJYAR" },
     { id: 8,  categoria: "Postres", nombre: "Napoleón de Coco", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" },
-    { id: 9,  categoria: "Postres", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ",
-      opciones: { adiciones: ADICIONES_GENERALES } },
-    { id: 10, categoria: "Postres", nombre: "Fresas Achocolatadas", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv",
-      opciones: { adiciones: ADICIONES_GENERALES } },
+    { id: 9,  categoria: "Postres", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ"},
+    { id: 10, categoria: "Postres", nombre: "Fresas Achocolatadas", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv"},
     { id: 11, categoria: "Postres", nombre: "Leche asada", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" },
     { id: 12, categoria: "Postres", nombre: "Mousse", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr" },
-    { id: 13, categoria: "Postres", nombre: "Cheesecakes", precio: 9500, imgPostre: "https://img.freepik.com/psd-premium/deliciosa-rebanada-pastel-queso-fresa-aislada-sobre-fondo-transparente_1290427-9886.jpg" },
+    { id: 13, categoria: "Postres", nombre: "Cheesecakes", precio: 9500, imgPostre: "https://img.freepik.com/psd-premium/deliciosa-rebanada-pastel-queso-fresa-aislada-sobre-fondo-transparente_1290427-9886.jpg",
+      opciones: { grupos: [{ label: "Sabor del Cheesecake", tipo: "unico", requerido: true, opciones: ["Frutos Rojos", "Maracuyá", "Oreo", "Limón", 'arequipe'] }] } },
     { id: 14, categoria: "Postres", nombre: "Pie de limón", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf" },
     { id: 15, categoria: "Postres", nombre: "Tiramisú", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh" },
     { id: 16, categoria: "Postres", nombre: "Torta tres leches", precio: 9500, imgPostre: "https://i.etsystatic.com/64503388/r/il/9d0573/7804607087/il_300x300.7804607087_kb0z.jpg" },
@@ -888,20 +887,11 @@ const listaProductos = [
     { id: 66, categoria: "Bebidas Calientes", nombre: "Moka", precio: 4800, imgPostre: "https://img.magnific.com/psd-gratis/disfrute-lujosa-experiencia-chocolate-caliente-rico-crema-rematado-virutas-chocolate_191095-83178.jpg" },
     { id: 67, categoria: "Bebidas Calientes", nombre: "Campesino", precio: 5500, imgPostre: "https://static.vecteezy.com/system/resources/previews/048/112/478/non_2x/cup-of-coffee-without-background-transparent-free-png.png" },
     { id: 68, categoria: "Bebidas Calientes", nombre: "Affogato", precio: 8500, imgPostre: "https://thumbs.dreamstime.com/b/caf%C3%A9-affogato-crema-de-hielo-con-fondo-transparente-384065281.jpg",
-      opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } }
+      opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
+    { id: 69, categoria: "Adiciones", nombre: "Adicion extra", precio: 3000, imgPostre: "https://cdn-icons-png.flaticon.com/512/1046/1046874.png",
+      opciones: { grupos: [{ label: "adicion", tipo: "unico", requerido: true, opciones: ADICIONES_BASE.map(a => a.nombre) }] } },  
+      
 ];
-
-// Inyectamos las adiciones como productos independientes en la categoría "Adicionales"
-const productosAdicionales = ADICIONES_BASE.map((adicion, index) => ({
-    id: 500 + index, 
-    categoria: "Adicionales", 
-    nombre: adicion.nombre, 
-    precio: adicion.precio, 
-    imgPostre: "https://cdn-icons-png.flaticon.com/512/1046/1046874.png"
-}));
-
-// Unimos tu lista original con los productos adicionales automáticamente
-listaProductos.push(...productosAdicionales);
 // ═══════════════════════════════════════════════════════════
 //  ESTADO
 // ═══════════════════════════════════════════════════════════

@@ -794,6 +794,14 @@ const listaProductos = [
     { id: 6,  categoria: "Postres", nombre: "Natilla", precio: 8000, imgPostre: "https://colmaiz.co/wp-content/uploads/2019/03/Producto-Preparacion-Natilla-1024x1024-1.png" },
     { id: 7,  categoria: "Postres", nombre: "Gelatina Grande", precio: 8500, imgPostre: "https://lh3.googleusercontent.com/d/1rqIPaJrFMb1vIkPKRMWcEDkCoXNpJYAR" },
     { id: 8,  categoria: "Postres", nombre: "Napoleón de Coco", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" },
+    {
+    "id": 70,
+    "nombre": "Gelatina Tricolor",
+    "categoria": "Postres",
+    "precio": 8500,
+    "descripcion": "Postre tricolor que hace alusión al fútbol y al mundial con los colores de la bandera de Colombia.",
+    "imgPostre": "https://lh3.googleusercontent.com/d/1iLU0kOYGpMwiilLDJ7ib5aRBIZKKUuUS",
+  },
     { id: 9,  categoria: "Postres", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ"},
     { id: 10, categoria: "Postres", nombre: "Fresas Achocolatadas", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv"},
     { id: 11, categoria: "Postres", nombre: "Leche asada", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" },
@@ -877,7 +885,7 @@ const listaProductos = [
       opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: ["Vainilla","Fresa","Chocolate","Mora","Oreo","Arequipe"] }] } },
     { id: 58, categoria: "Bebidas Frías", nombre: "Hatsu", precio: 12000, imgPostre: "https://mercasur.com.co/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6ODQ4NjUsInB1ciI6ImJsb2JfaWQifX0=--67f1e5358012f66bde25b9d79f558106d38bed99/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJqcGciLCJyZXNpemVfdG9fZml0IjpbNjAwLDYwMF19LCJwdXIiOiJ2YXJpYXRpb24ifX0=--121ebfcd4293f99df590ac1a60ec2d53d6f75b42/7702090048643" },
     { id: 59, categoria: "Bebidas Frías", nombre: "Coca Cola Zero", precio: 3500, imgPostre: "https://nocomasmasmentiras.org/wp-content/uploads/2023/10/Coca-cola-sin-azucar-540x510-c-default.jpg" },
-    { id: 58, categoria: "Bebidas Frías", nombre: "Hatsu cajita ", precio: 2500, imgPostre: "https://hatsu.co/wp-content/uploads/2023/11/PRODUCTOS-SITIO-WEB_24.png" },
+    { id: 72, categoria: "Bebidas Frías", nombre: "Hatsu cajita ", precio: 2500, imgPostre: "https://hatsu.co/wp-content/uploads/2023/11/PRODUCTOS-SITIO-WEB_24.png" },
     // BEBIDAS CALIENTES
     { id: 60, categoria: "Bebidas Calientes", nombre: "Aromática", precio: 4800, imgPostre: "https://w7.pngwing.com/pngs/1007/585/png-transparent-green-tea-fizzy-drinks-ginger-tea-lemon-juice-tea-tea-cocktail-non-alcoholic-beverage-thumbnail.png" },
     { id: 61, categoria: "Bebidas Calientes", nombre: "Americano", precio: 4500, imgPostre: "https://static.vecteezy.com/system/resources/thumbnails/069/564/525/small/hot-coffee-cup-with-saucer-and-coffee-beans-steam-rising-isolated-png.png" },
@@ -891,15 +899,7 @@ const listaProductos = [
       opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
     { id: 69, categoria: "Adiciones", nombre: "Adicion extra", precio: 3000, imgPostre: "https://cdn-icons-png.flaticon.com/512/1046/1046874.png",
       opciones: { grupos: [{ label: "adicion", tipo: "unico", requerido: true, opciones: ADICIONES_BASE.map(a => a.nombre) }] } },
-  {
-    "id": 70,
-    "nombre": "Gelatina Tricolor",
-    "categoria": "Postres",
-    "precio": 8500,
-    "descripcion": "Postre tricolor que hace alusión al fútbol y al mundial con los colores de la bandera de Colombia.",
-    "imgPostre": "https://lh3.googleusercontent.com/d/1iLU0kOYGpMwiilLDJ7ib5aRBIZKKUuUS",
-    "opciones": null
-  },
+  
   {
     "id": 71,
     "nombre": "Bolsa de Café ",

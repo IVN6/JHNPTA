@@ -1,17 +1,15 @@
-ℹ️ Fichero: rol.html
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comanda Pro v7 - Event Sourcing & Permisos Granulares</title>
+    <title>Comanda Pro v8 - Papel Inmutable</title>
     <style>
         :root {
             --primary: #6366f1; --primary-bg: #f0f1ff;
             --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
             --dark: #0f172a; --bg: #f8fafc; --card: #ffffff;
             --border: #e2e8f0; --muted: #64748b;
-            --hecho: #94a3b8;
         }
         .tema-l1 { --primary: #d63384; --primary-bg: #fff0f6; }
         .tema-l2 { --primary: #0284c7; --primary-bg: #f0f9ff; }
@@ -21,16 +19,10 @@
         
         .cheat-sheet { background: #1e293b; color: #f8fafc; padding: 12px; font-size: 11px; border-bottom: 3px solid var(--primary); }
         .cheat-sheet summary { cursor: pointer; font-weight: bold; color: #38bdf8;}
-        .grid-claves { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; margin-top: 6px; }
-        .clave-tag { background: #334155; padding: 4px 6px; border-radius: 4px; border-left: 3px solid #38bdf8; }
 
-        .network-banner { background: var(--success); color: white; padding: 6px; text-align: center; font-size: 12px; font-weight: bold; }
-        .network-banner.offline { background: var(--danger); }
-
-        /* PANTALLAS DE ACCESO */
         .login-overlay { position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px; flex-direction: column; gap: 15px;}
         .login-overlay.hidden { display: none; }
-        .login-card { background: white; padding: 24px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .login-card { background: white; padding: 24px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; }
         .login-card input, .login-card select { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; text-align: center; margin-bottom: 12px; }
         .login-card button { width: 100%; padding: 12px; background: #6366f1; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
@@ -40,9 +32,9 @@
 
         .nav-capacidades { background: var(--card); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; gap: 4px; padding: 4px 8px; }
         .nav-capacidades.hidden { display: none; }
-        .tab-btn { padding: 8px 12px; border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--muted); border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .tab-btn { padding: 8px 12px; border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--muted); border-radius: 6px; white-space: nowrap; cursor: pointer; }
         .tab-btn.active { background: var(--primary-bg); color: var(--primary); }
-        .badge-contador { background: var(--danger); color: white; font-size: 10px; padding: 1px 5px; border-radius: 10px; font-weight: bold; }
+        .badge-contador { background: var(--danger); color: white; font-size: 10px; padding: 1px 5px; border-radius: 10px; font-weight: bold; margin-left: 4px; }
 
         .app-content { flex: 1; padding: 16px; overflow-y: auto; display: none; }
         .app-content.active { display: block; }
@@ -56,63 +48,48 @@
         .btn-enviar { background: var(--success); color: white; border: none; width: 100%; padding: 10px; border-radius: 6px; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
         /* COMANDAS ESTILO PAPEL FÍSICO */
-        .ticket-card { background: white; border-top: 6px solid var(--warning); padding: 14px; border-radius: 8px; margin-bottom: 14px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.02); position: relative;}
-        .ticket-card.archivado { border-top-color: #94a3b8; opacity: 0.85; }
+        .ticket-card { background: white; border-top: 6px solid var(--warning); padding: 14px; border-radius: 8px; margin-bottom: 14px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .ticket-card.archivado { border-top-color: #94a3b8; opacity: 0.7; }
         
-        /* COLORES Y ESTADOS BASADOS EN PAPEL */
-        .item-linea { padding: 8px; font-size: 13px; border-bottom: 1px dashed #e2e8f0; margin-bottom: 4px; border-radius: 4px; background: #fff; border-left: 4px solid var(--primary); }
-        .item-linea.tachado { text-decoration: line-through; color: var(--danger); background: #fef2f2; border-left-color: var(--danger); }
-        .item-linea.nuevo { background: #f0fdf4; border-left-color: var(--success); animation: pulse 1.5s ease-in-out; }
-        .item-linea.hecho { background: #f1f5f9; color: var(--hecho); border-left-color: var(--hecho); }
-        .item-linea.hecho span { text-decoration: dotted underline; }
-
-        .nota-linea { font-size: 11px; font-style: italic; color: #64748b; padding-left: 12px; display: block; margin-top: 2px;}
-        .nota-linea.tachada { text-decoration: line-through; color: var(--danger); background: #fee2e2; }
-
-        .sync-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: inline-block; }
-        .sync-badge.pendiente { background: #ffedd5; color: #c2410c; }
+        /* RENGLONES INDIVIDUALES DE LA COMANDA */
+        .renglon-papel { padding: 8px; border-bottom: 1px dashed #e2e8f0; background: #fff; margin-bottom: 4px; border-left: 4px solid var(--primary); border-radius: 4px; }
+        .renglon-papel.origen-original { border-left-color: #6366f1; }
+        .renglon-papel.origen-extra { border-left-color: #0284c7; background: #f0f9ff; } /* Azul para lo agregado en cocina */
         
+        /* ESTADO TACHADO (BORRADO) -> PRIORIDAD MÁXIMA */
+        .renglon-papel.estado-tachado { text-decoration: line-through; color: var(--danger); background: #fef2f2; border-left-color: var(--danger); }
+        
+        /* ESTADO HECHO (CHULITO VERDE PARA EL CHEF) */
+        .renglon-papel.estado-hecho { border-left-color: var(--success); background: #f0fdf4; }
+        .badge-chulito { background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+
+        .nota-text { font-size: 11px; font-style: italic; color: var(--muted); display: block; margin-top: 2px; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
-        .ctrl-acciones { display: flex; gap: 6px; align-items: center; }
-        .btn-check { background: #e2e8f0; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
-        .btn-check.activo { background: var(--success); color: white; }
-        .btn-tachar { background: var(--danger); color: white; border: none; padding: 4px 6px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-
-        @keyframes pulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+        .btn-mini-accion { border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <!-- MONITOR DE CONTROL INMUTABLE -->
+    <!-- MONITOR SUPERIOR DE AUDITORÍA -->
     <div class="cheat-sheet">
-        <details>
-            <summary>🔑 Monitor de Eventos de Auditoría Absoluta (Event Sourcing)</summary>
-            <div class="grid-claves" id="monitorClaves"></div>
-            <div style="margin-top: 6px; background:#0f172a; padding:6px; border-radius:4px;">
-                <b>Log de Mutaciones en Caliente (Local Storage Backend-Ready):</b>
-                <div id="logsEventos" style="font-family:monospace; color:#38bdf8; max-height:80px; overflow-y:auto; margin-top:4px;">Ninguno.</div>
-            </div>
+        <details open>
+            <summary>🔑 Logs Globales del Sistema Inmutable (Persistido)</summary>
+            <div id="logsEventos" style="font-family:monospace; color:#38bdf8; max-height:60px; overflow-y:auto; margin-top:4px;">Ninguno.</div>
         </details>
     </div>
 
-    <!-- BANNER DE CONEXIÓN CON PARÁMETROS PENSADOS EN BACKEND -->
-    <div id="bannerRed" class="network-banner offline">
-        🔴 Estado Local Autónomo (Modo Offline Estricto - Guardando en Buffer Local listo para API)
-    </div>
-
-    <!-- LOGIN Y SELECCIÓN DE LOCAL DINÁMICO -->
+    <!-- PANTALLAS DE ACCESO -->
     <div id="loginOverlay" class="login-overlay">
         <div class="login-card" id="cardPaso1">
-            <h2>Comanda Pro v7</h2>
-            <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Ingresa tu clave de Acceso Granular</p>
+            <h2>Comanda Pro v8</h2>
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Ingresa tu clave granular</p>
             <input type="password" id="inputClave" placeholder="••" pattern="\d*" inputmode="numeric" maxlength="2">
-            <button onclick="procesarClaveAcceso()">Siguiente</button>
+            <button onclick="loginPaso1()">Siguiente</button>
         </div>
-        <div class="login-card hidden" id="cardPaso2" style="display:none;">
-            <h2>Seleccionar Destino</h2>
-            <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Tu perfil cuenta con múltiples locales asociados</p>
+        <div class="login-card" id="cardPaso2" style="display:none;">
+            <h2>Seleccionar Local</h2>
             <select id="selectLocalAsignado"></select>
-            <button onclick="confirmarLocalYSesion()">Ingresar a Operaciones</button>
+            <button onclick="loginPaso2()">Ingresar</button>
         </div>
     </div>
 
@@ -122,65 +99,64 @@
         <div style="display: flex; align-items: center; gap: 12px;">
             <span id="txtOperador" style="font-size:11px; color:var(--muted); font-weight:bold;"></span>
             <span id="txtLocal" class="badge-local">LOCAL</span>
-            <button class="btn-logout" onclick="salirSesion()">Salir</button>
+            <button class="btn-logout" onclick="salir()">Salir</button>
         </div>
     </header>
 
     <!-- NAVEGACIÓN -->
     <nav id="navCapacidades" class="nav-capacidades hidden"></nav>
 
-    <!-- MÓDULO 1: CATÁLOGO -->
+    <!-- MÓDULO 1: MENÚ -->
     <main id="pantalla-catalogo" class="app-content">
         <div class="flex-between" style="margin-bottom: 10px;">
-            <h3 style="font-size:14px; color:var(--muted);">Menú Digital</h3>
-            <div style="display: flex; gap: 6px; align-items: center;">
-                <label style="font-size:12px; font-weight:bold;">Mesa Activa:</label>
-                <select id="selectMesaActual" onchange="cambiarMesaFlujo()" style="padding:4px; border-radius:4px;"></select>
+            <h3 style="font-size:14px; color:var(--muted);">Menú</h3>
+            <div>
+                <label style="font-size:12px; font-weight:bold;">Mesa:</label>
+                <select id="selectMesaActual" onchange="cambiarMesa()" style="padding:4px; border-radius:4px;"></select>
             </div>
         </div>
         <div class="grid-productos" id="contenedorProductos"></div>
     </main>
 
-    <!-- MÓDULO 2: CARRITO CON FLUJO DE NOTAS UNITARIAS -->
+    <!-- MÓDULO 2: CARRITO -->
     <main id="pantalla-carrito" class="app-content">
-        <h3 style="font-size:14px; color:var(--muted); margin-bottom:10px;" id="tituloCarritoMesa">Tomar Pedido</h3>
+        <h3 style="font-size:14px; color:var(--muted); margin-bottom:10px;" id="tituloCarrito">Pedido</h3>
         <div class="carrito-container">
-            <strong>Ítems a ser transferidos a Cocina:</strong>
             <div class="lista-carrito" id="contenedorCarrito">No hay productos.</div>
             <div style="text-align: right; font-weight: bold; margin-top: 10px;" id="txtTotalCarrito">Total: $0</div>
-            <button class="btn-enviar" onclick="enviarComandaACocina()">🚀 Lanzar a Cocina Física</button>
+            <button class="btn-enviar" onclick="lanzarAComanda()">🚀 Enviar a Cocina</button>
         </div>
     </main>
 
-    <!-- MÓDULO 3: MONITOR DE COCINA (DESGLOSE UNITARIO) -->
+    <!-- MÓDULO 3: COCINA -->
     <main id="pantalla-cocina" class="app-content">
-        <h3 style="font-size:14px; color:var(--muted); margin-bottom:10px;">Líneas Físicas en Tiempo Real</h3>
-        <div id="contenedorCocina">No hay órdenes en preparación.</div>
+        <h3 style="font-size:14px; color:var(--muted); margin-bottom:10px;">Comandas en Cocina</h3>
+        <div id="contenedorCocina">No hay órdenes.</div>
     </main>
 
-    <!-- MÓDULO 4: CAJA Y LIQUIDACIÓN -->
+    <!-- MÓDULO 4: CAJA -->
     <main id="pantalla-caja" class="app-content">
-        <h3 style="font-size:14px; color:var(--muted); margin-bottom:10px;">Cuentas Abiertas del Local</h3>
+        <h3 style="font-size:14px; color:var(--muted); margin-bottom:10px;">Cuentas Activas</h3>
         <div id="contenedorCaja">No hay cuentas pendientes.</div>
         
-        <h3 style="font-size:14px; color:var(--muted); margin-top:20px; margin-bottom:10px;">Historial de Comandas Liquidadas (Finanzas)</h3>
-        <div id="contenedorHistorialCaja">No hay transacciones registradas.</div>
+        <h3 style="font-size:14px; color:var(--muted); margin-top:20px; margin-bottom:10px;">Historial de Cierres</h3>
+        <div id="contenedorHistorialCaja">No hay cierres.</div>
     </main>
 
-    <!-- MÓDULO 5: ADMINISTRACIÓN -->
+    <!-- MÓDULO 5: ADMIN -->
     <main id="pantalla-admin" class="app-content">
         <div class="panel-permisos">
-            <h4 style="font-size: 13px; margin-bottom:8px;">⚙️ Matriz de Control de Capacidades Habilitadas</h4>
+            <h4 style="font-size: 13px; margin-bottom:8px;">⚙️ Configuración de Usuarios e Infraestructura</h4>
             <div id="contenedorMatrizPermisos"></div>
         </div>
     </main>
 
     <script>
-        // --- MAESTROS ---
+        // --- DATA MAESTRA ---
         const DiccionarioMaestro = {
             LOCALES: {
-                "l1": { nombre: "Sabor Central - Centro", tema: "tema-l1" },
-                "l2": { nombre: "Sabor Norte - Express", tema: "tema-l2" }
+                "l1": { nombre: "Sabor Central", tema: "tema-l1" },
+                "l2": { nombre: "Sabor Norte", tema: "tema-l2" }
             },
             CAPACIDADES: {
                 "catalogo": { nombre: "📖 Menú", pantallaId: "pantalla-catalogo" },
@@ -197,578 +173,469 @@
             MESAS: ["Mesa 1", "Mesa 2", "Mesa 3", "Mesa 4", "Mesa 5"]
         };
 
-        // --- SISTEMA DE EVENTOS (PUB/SUB) ---
+        // --- SISTEMA PUB/SUB ---
         const SistemaEventos = {
             suscriptores: {},
-            suscribir(evento, f) { if (!this.suscriptores[evento]) this.suscriptores[evento] = []; this.suscriptores[evento].push(f); },
-            publicar(evento, d) { if (this.suscriptores[evento]) this.suscriptores[evento].forEach(f => f(d)); }
+            suscribir(ev, f) { if (!this.suscriptores[ev]) this.suscriptores[ev] = []; this.suscriptores[ev].push(f); },
+            publicar(ev, d) { if (this.suscriptores[ev]) this.suscriptores[ev].forEach(f => f(d)); }
         };
 
-        // --- ESTADO GLOBAL RESPALDADO EN STORAGE (API READY) ---
+        // --- ESTADO Y PERSISTENCIA A PRUEBA DE RECARGAS ---
         const EstadoApp = {
             usuarioActivo: null,
             localActivoId: null,
             mesaSeleccionada: "Mesa 1",
-            carritosPorMesa: {}, 
-            historialEventosGlobal: JSON.parse(localStorage.getItem('inkflow_eventos')) || []
+            carritos: {}, 
+            historialEventos: JSON.parse(localStorage.getItem('inkflow_v8_eventos')) || []
         };
 
-        // --- MATRIZ DE CONFIGURACIÓN GRANULAR (PERFIL ÚNICO) ---
-        const basePermisos = JSON.parse(localStorage.getItem('inkflow_permisos')) || {
+        const basePermisos = JSON.parse(localStorage.getItem('inkflow_v8_permisos')) || {
             "11": { nombre: "Trabajador 1", localesAcceso: ["l1"], capacidades: ["catalogo", "carrito", "cocina"] },
             "22": { nombre: "Trabajador 2", localesAcceso: ["l1", "l2"], capacidades: ["catalogo", "carrito"] },
-            "14": { nombre: "Administrador General", localesAcceso: ["l1", "l2"], capacidades: ["admin", "catalogo", "carrito", "cocina", "caja"] }
+            "14": { nombre: "Administrador", localesAcceso: ["l1", "l2"], capacidades: ["admin", "catalogo", "carrito", "cocina", "caja"] }
         };
 
-        // --- REPRODUCTOR DE ALERTAS SONORAS ---
-        function dispararNotificacionSonora() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.type = "sine"; osc.frequency.setValueAtTime(587.33, ctx.currentTime); // Nota Re5
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                osc.start(); osc.stop(ctx.currentTime + 0.15);
-            } catch(e) { console.log("Audio Bloqueado por interacción"); }
-        }
-
-        // --- PERSISTENCIA Y REGISTRO MUTABLE DE AUDITORÍA ---
-        function registrarMutacionInmutable(tipo, payload) {
-            const nuevoEvento = {
-                idUnico: "EVT-" + Date.now() + "-" + Math.floor(Math.random()*1000),
-                timestamp: new Date().toLocaleTimeString(),
+        function registrarEvento(tipo, payload) {
+            const ev = {
+                id: "EV-" + Date.now() + "-" + Math.floor(Math.random()*1000),
                 tipo: tipo,
                 localId: EstadoApp.localActivoId,
                 operador: EstadoApp.usuarioActivo ? EstadoApp.usuarioActivo.nombre : "Sistema",
                 datos: payload
             };
-
-            EstadoApp.historialEventosGlobal.push(nuevoEvento);
-            localStorage.setItem('inkflow_eventos', JSON.stringify(EstadoApp.historialEventosGlobal));
+            EstadoApp.historialEventos.push(ev);
+            localStorage.setItem('inkflow_v8_eventos', JSON.stringify(EstadoApp.historialEventos));
             
-            // Logueo en pantalla del monitor de auditoría superior
-            loguearEnMonitor(`[${nuevoEvento.timestamp}] ${tipo} por ${nuevoEvento.operador}`);
-            
-            if (tipo === 'CREAR_COMANDA' || tipo === 'MUTAR_ITEM_COCINA' || tipo === 'CAMBIAR_ESTADO_LINEA') {
-                dispararNotificacionSonora();
-            }
+            // Alerta sonora sutil y vibración en dispositivos móviles habilitados
+            try {
+                if (navigator.vibrate) navigator.vibrate(100);
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator(); const g = ctx.createGain();
+                osc.connect(g); g.connect(ctx.destination);
+                osc.frequency.setValueAtTime(600, ctx.currentTime); g.gain.setValueAtTime(0.1, ctx.currentTime);
+                osc.start(); osc.stop(ctx.currentTime + 0.1);
+            } catch(e){}
 
-            SistemaEventos.publicar('estadoModificado');
+            loguearMonitor(`[${tipo}] hecho por ${ev.operador}`);
+            SistemaEventos.publicar('renderizarTodo');
         }
 
-        // --- REDUCCIÓN DE EVENTOS DE PAPEL (PROCESADOR EVENT SOURCING) ---
-        function calcularComandasDesdeHistorial() {
-            const mapaComandas = {};
+        // --- CÁLCULO DETERMINISTA DEL ESTADO (EVENT SOURCING SEGURO) ---
+        function obtenerComandasProcesadas() {
+            const comandas = {};
 
-            EstadoApp.historialEventosGlobal.forEach(evt => {
-                if (evt.localId !== EstadoApp.localActivoId) return;
+            EstadoApp.historialEventos.forEach(ev => {
+                if (ev.localId !== EstadoApp.localActivoId) return;
+                const cId = ev.datos.comandaId;
 
-                const cId = evt.datos.comandaId;
-
-                if (evt.tipo === 'CREAR_COMANDA') {
-                    mapaComandas[cId] = {
+                if (ev.tipo === 'CREAR_COMANDA') {
+                    comandas[cId] = {
                         id: cId,
-                        mesa: evt.datos.mesa,
-                        operadorOriginal: evt.operador,
-                        estadoComanda: 'cocina', 
+                        mesa: ev.datos.mesa,
+                        operador: ev.operador,
+                        estado: 'cocina',
                         metodoPago: null,
-                        lineasFisicas: [] 
+                        renglones: []
                     };
-
-                    // Desglose Estricto Unitario: Si se piden 3, creamos 3 registros físicos únicos
-                    evt.datos.items.forEach(it => {
-                        for(let i = 0; i < it.cantidad; i++) {
-                            mapaComandas[cId].lineasFisicas.push({
-                                lineaId: `${cId}-L${Math.random().toString(36).substr(2, 5)}`,
-                                prodId: it.id,
-                                nombre: it.nombre,
-                                precio: it.precio,
-                                tachado: false,
-                                hecho: false,
-                                notaInterna: it.nota || "",
-                                historialNotas: it.nota ? [{ texto: it.nota, tachada: false }] : [],
-                                origen: 'original'
-                            });
-                        }
+                    // Generación inmutable de renglones individuales basada en índice fijo (no rompe al recargar)
+                    ev.datos.items.forEach((it, idxX) => {
+                        comandas[cId].renglones.push({
+                            renglonId: `${cId}-R-${idxX}`,
+                            prodId: it.id,
+                            nombre: it.nombre,
+                            precio: it.precio,
+                            nota: it.nota || "",
+                            origen: 'original',
+                            tachado: false,
+                            hecho: false
+                        });
                     });
                 }
-                else if (evt.tipo === 'MUTAR_ITEM_COCINA') {
-                    const comanda = mapaComandas[cId];
-                    if (comanda) {
-                        if (evt.datos.accion === 'TACHAR') {
-                            const linea = comanda.lineasFisicas.find(l => l.lineaId === evt.datos.lineaId);
-                            if (linea) linea.tachado = true;
-                        } 
-                        else if (evt.datos.accion === 'AGREGAR_EXTRA') {
-                            const pBase = DiccionarioMaestro.PRODUCTOS.find(p => p.id === evt.datos.prodId);
-                            comanda.lineasFisicas.push({
-                                lineaId: `${cId}-L${Math.random().toString(36).substr(2, 5)}`,
-                                prodId: pBase.id,
-                                nombre: pBase.nombre,
-                                precio: pBase.precio,
-                                tachado: false,
-                                hecho: false,
-                                notaInterna: "",
-                                historialNotas: [],
-                                origen: 'extra'
-                            });
-                        }
+                else if (ev.tipo === 'TACHAR_RENGLON') {
+                    const c = comandas[cId];
+                    if (c) {
+                        const r = c.renglones.find(x => x.renglonId === ev.datos.renglonId);
+                        if (r) r.tachado = true;
                     }
                 }
-                else if (evt.tipo === 'CAMBIAR_ESTADO_LINEA') {
-                    const comanda = mapaComandas[cId];
-                    if (comanda) {
-                        const linea = comanda.lineasFisicas.find(l => l.lineaId === evt.datos.lineaId);
-                        if (linea) linea.hecho = evt.datos.hecho;
+                else if (ev.tipo === 'CHECK_HECHO_RENGLON') {
+                    const c = comandas[cId];
+                    if (c) {
+                        const r = c.renglones.find(x => x.renglonId === ev.datos.renglonId);
+                        if (r) r.hecho = ev.datos.hecho;
                     }
                 }
-                else if (evt.tipo === 'MUTAR_NOTA_LINEA') {
-                    const comanda = mapaComandas[cId];
-                    if (comanda) {
-                        const linea = comanda.lineasFisicas.find(l => l.lineaId === evt.datos.lineaId);
-                        if (linea) {
-                            linea.historialNotas.forEach(n => n.tachada = true);
-                            if (evt.datos.nuevaNota.trim() !== "") {
-                                linea.historialNotas.push({ texto: evt.datos.nuevaNota, tachada: false });
-                                linea.notaInterna = evt.datos.nuevaNota;
-                            } else {
-                                linea.notaInterna = "";
-                            }
-                        }
+                else if (ev.tipo === 'AGREGAR_EXTRA_COCINA') {
+                    const c = comandas[cId];
+                    if (c) {
+                        const pBase = DiccionarioMaestro.PRODUCTOS.find(p => p.id === ev.datos.prodId);
+                        const nuevoIndex = c.renglones.length;
+                        c.renglones.push({
+                            renglonId: `${cId}-EXTRA-${nuevoIndex}`,
+                            prodId: pBase.id,
+                            nombre: pBase.nombre,
+                            precio: pBase.precio,
+                            nota: "",
+                            origen: 'extra',
+                            tachado: false,
+                            hecho: false
+                        });
                     }
                 }
-                else if (evt.tipo === 'DESPACHAR_A_CAJA') {
-                    if (mapaComandas[cId]) mapaComandas[cId].estadoComanda = 'caja';
+                else if (ev.tipo === 'MUTAR_NOTA_RENGLON') {
+                    const c = comandas[cId];
+                    if (c) {
+                        const r = c.renglones.find(x => x.renglonId === ev.datos.renglonId);
+                        if (r) r.nota = ev.datos.nota;
+                    }
                 }
-                else if (evt.tipo === 'FINALIZAR_TRANSACCION') {
-                    if (mapaComandas[cId]) {
-                        mapaComandas[cId].estadoComanda = 'archivado';
-                        mapaComandas[cId].metodoPago = evt.datos.metodoPago;
+                else if (ev.tipo === 'ENVIAR_A_CAJA') {
+                    if (comandas[cId]) comandas[cId].estado = 'caja';
+                }
+                else if (ev.tipo === 'LIQUIDAR_CUENTA') {
+                    if (comandas[cId]) {
+                        comandas[cId].estado = 'archivado';
+                        comandas[cId].metodoPago = ev.datos.metodoPago;
                     }
                 }
             });
 
-            return Object.values(mapaComandas);
+            return Object.values(comandas);
         }
 
-        // --- SISTEMA DE CONTROL DE ACCESO (AUTENTICACIÓN POR CAPACIDADES) ---
-        let infoClaveTemporal = null;
-
-        function procesarClaveAcceso() {
+        // --- SISTEMA DE AUTENTICACIÓN Y LOCAL SEGÚN PERMISOS ---
+        let claveTemporal = null;
+        function loginPaso1() {
             const cl = document.getElementById("inputClave").value.trim();
             if (basePermisos[cl]) {
-                infoClaveTemporal = basePermisos[cl];
+                claveTemporal = basePermisos[cl];
                 document.getElementById("cardPaso1").style.display = "none";
                 
-                if (infoClaveTemporal.localesAcceso.length > 1) {
-                    const sel = document.getElementById("selectLocalAsignado");
-                    sel.innerHTML = "";
-                    infoClaveTemporal.localesAcceso.forEach(lId => {
+                if (claveTemporal.localesAcceso.length > 1) {
+                    const sel = document.getElementById("selectLocalAsignado"); sel.innerHTML = "";
+                    claveTemporal.localesAcceso.forEach(lId => {
                         sel.innerHTML += `<option value="${lId}">${DiccionarioMaestro.LOCALES[lId].nombre}</option>`;
                     });
                     document.getElementById("cardPaso2").style.display = "block";
                 } else {
-                    EstadoApp.localActivoId = infoClaveTemporal.localesAcceso[0];
-                    completarInicializacion();
+                    EstadoApp.localActivoId = claveTemporal.localesAcceso[0];
+                    finalizarLogin();
                 }
             } else {
-                alert("Identificador Granular Inválido.");
+                alert("Clave no registrada.");
                 document.getElementById("inputClave").value = "";
             }
         }
 
-        function confirmarLocalYSesion() {
+        function loginPaso2() {
             EstadoApp.localActivoId = document.getElementById("selectLocalAsignado").value;
-            completarInicializacion();
+            finalizarLogin();
         }
 
-        function completarInicializacion() {
-            EstadoApp.usuarioActivo = infoClaveTemporal;
+        function finalizarLogin() {
+            EstadoApp.usuarioActivo = claveTemporal;
             document.getElementById("loginOverlay").classList.add("hidden");
-            
-            // Establecer Tema Visual según Local
-            const infoLocal = DiccionarioMaestro.LOCALES[EstadoApp.localActivoId];
-            document.body.className = infoLocal.tema;
-            document.getElementById("txtLocal").innerText = infoLocal.nombre;
+            document.body.className = DiccionarioMaestro.LOCALES[EstadoApp.localActivoId].tema;
+            document.getElementById("txtLocal").innerText = DiccionarioMaestro.LOCALES[EstadoApp.localActivoId].nombre;
             document.getElementById("txtOperador").innerText = `👤 ${EstadoApp.usuarioActivo.nombre}`;
             
-            construirBarraNavegacion();
+            construirMenuNavegacion();
+            SistemaEventos.publicar('renderizarTodo');
         }
 
-        function construirBarraNavegacion() {
-            const nav = document.getElementById("navCapacidades");
-            nav.innerHTML = "";
-            if (EstadoApp.usuarioActivo.capacidades.length > 0) {
-                nav.classList.remove("hidden");
-                EstadoApp.usuarioActivo.capacidades.forEach((cap, idx) => {
-                    nav.innerHTML += `
-                        <button class="tab-btn ${idx === 0 ? 'active' : ''}" onclick="cambiarVistaModulo('${DiccionarioMaestro.CAPACIDADES[cap].pantallaId}', this)">
-                            ${DiccionarioMaestro.CAPACIDADES[cap].nombre}
-                            <span class="badge-contador" id="badge-nav-${cap}" style="display:none;">0</span>
-                        </button>`;
-                });
-                cambiarVistaModulo(DiccionarioMaestro.CAPACIDADES[EstadoApp.usuarioActivo.capacidades[0]].pantallaId);
-                actualizarNotificacionesContadores();
-            }
-            if (EstadoApp.usuarioActivo.capacidades.includes("admin")) renderizarPanelAdministrador();
-        }
-
-        function cambiarVistaModulo(idPantalla, boton = null) {
-            document.querySelectorAll(".app-content").forEach(p => p.classList.remove("active"));
-            if (idPantalla) document.getElementById(idPantalla).classList.add("active");
-            if (boton) {
-                document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-                boton.classList.add("active");
-            }
-        }
-
-        function salirSesion() {
-            EstadoApp.usuarioActivo = null;
-            EstadoApp.localActivoId = null;
-            infoClaveTemporal = null;
-            document.getElementById("cardPaso2").style.display = "none";
-            document.getElementById("cardPaso1").style.display = "block";
-            document.getElementById("inputClave").value = "";
-            document.getElementById("loginOverlay").classList.remove("hidden");
-            document.getElementById("navCapacidades").classList.add("hidden");
-            cambiarVistaModulo(null);
-        }
-
-        // --- MANEJO DEL MÓDULO: CATÁLOGO Y CARRITO ---
-        function inicializarSelectores() {
-            const sMesa = document.getElementById("selectMesaActual");
-            sMesa.innerHTML = "";
-            DiccionarioMaestro.MESAS.forEach(m => sMesa.innerHTML += `<option value="${m}">${m}</option>`);
-            actualizarFlujoCarritoUI();
-        }
-
-        function cambiarMesaFlujo() {
-            EstadoApp.mesaSeleccionada = document.getElementById("selectMesaActual").value;
-            actualizarFlujoCarritoUI();
-        }
-
-        function agregarProductoAlCarrito(pId) {
-            if (!EstadoApp.carritosPorMesa[EstadoApp.mesaSeleccionada]) {
-                EstadoApp.carritosPorMesa[EstadoApp.mesaSeleccionada] = [];
-            }
-            
-            const pBase = DiccionarioMaestro.PRODUCTOS.find(p => p.id === pId);
-            // Empujamos como línea unitaria con id único temporal para poder asignarle una nota específica si se requiere
-            EstadoApp.carritosPorMesa[EstadoApp.mesaSeleccionada].push({
-                carritoItemId: "CARR-" + Math.random().toString(36).substr(2, 5),
-                id: pBase.id,
-                nombre: pBase.nombre,
-                precio: pBase.precio,
-                nota: ""
+        function construirMenuNavegacion() {
+            const nav = document.getElementById("navCapacidades"); nav.innerHTML = "";
+            nav.classList.remove("hidden");
+            EstadoApp.usuarioActivo.capacidades.forEach((cap, idx) => {
+                nav.innerHTML += `<button class="tab-btn ${idx===0?'active':''}" onclick="irAPantalla('${DiccionarioMaestro.CAPACIDADES[cap].pantallaId}', this)">${DiccionarioMaestro.CAPACIDADES[cap].nombre}<span class="badge-contador" id="badge-nav-${cap}" style="display:none;">0</span></button>`;
             });
-            
-            SistemaEventos.publicar('carritoActualizado');
+            irAPantalla(DiccionarioMaestro.CAPACIDADES[EstadoApp.usuarioActivo.capacidades[0]].pantallaId);
+            if (EstadoApp.usuarioActivo.capacidades.includes("admin")) renderizarAdmin();
         }
 
-        function actualizarNotaItemCarrito(cItemId, input) {
-            const cart = EstadoApp.carritosPorMesa[EstadoApp.mesaSeleccionada] || [];
-            const item = cart.find(i => i.carritoItemId === cItemId);
-            if (item) item.nota = input.value;
+        function irAPantalla(id, btn = null) {
+            document.querySelectorAll(".app-content").forEach(p => p.classList.remove("active"));
+            if (id) document.getElementById(id).classList.add("active");
+            if (btn) { document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active")); btn.classList.add("active"); }
         }
 
-        function removerItemCarrito(cItemId) {
-            EstadoApp.carritosPorMesa[EstadoApp.mesaSeleccionada] = EstadoApp.carritosPorMesa[EstadoApp.mesaSeleccionada].filter(i => i.carritoItemId !== cItemId);
-            SistemaEventos.publicar('carritoActualizado');
+        function salir() {
+            EstadoApp.usuarioActivo = null; EstadoApp.localActivoId = null; claveTemporal = null;
+            document.getElementById("cardPaso2").style.display = "none"; document.getElementById("cardPaso1").style.display = "block";
+            document.getElementById("inputClave").value = ""; document.getElementById("loginOverlay").classList.remove("hidden");
+            document.getElementById("navCapacidades").classList.add("hidden"); irAPantalla(null);
         }
 
-        SistemaEventos.suscribir('carritoActualizado', () => { actualizarFlujoCarritoUI(); });
+        // --- CÓDIGO DEL MENÚ Y DEL CARRITO MULTIMESA ---
+        function iniciarSelectorMesas() {
+            const sel = document.getElementById("selectMesaActual"); sel.innerHTML = "";
+            DiccionarioMaestro.MESAS.forEach(m => sel.innerHTML += `<option value="${m}">${m}</option>`);
+            renderizarCarritoUI();
+        }
 
-        function actualizarFlujoCarritoUI() {
-            document.getElementById("tituloCarritoMesa").innerText = `${EstadoApp.mesaSeleccionada} - Tomar Pedido`;
-            const contenedor = document.getElementById("contenedorCarrito");
-            const txtTotal = document.getElementById("txtTotalCarrito");
-            
-            const listado = EstadoApp.carritosPorMesa[EstadoApp.mesaSeleccionada] || [];
-            actualizarNotificacionesContadores();
+        function cambiarMesa() {
+            EstadoApp.mesaSeleccionada = document.getElementById("selectMesaActual").value;
+            renderizarCarritoUI();
+        }
 
-            if (listado.length === 0) {
-                contenedor.innerHTML = "No hay productos en el borrador de esta mesa.";
-                txtTotal.innerText = "Total: $0";
-                return;
+        function agregarAlCarrito(pId) {
+            if (!EstadoApp.carritos[EstadoApp.mesaSeleccionada]) EstadoApp.carritos[EstadoApp.mesaSeleccionada] = [];
+            const p = DiccionarioMaestro.PRODUCTOS.find(x => x.id === pId);
+            EstadoApp.carritos[EstadoApp.mesaSeleccionada].push({
+                cItemId: "ITEM-" + Date.now() + "-" + Math.floor(Math.random()*100),
+                id: p.id, nombre: p.nombre, precio: p.precio, nota: ""
+            });
+            renderizarCarritoUI();
+        }
+
+        function quitarDelCarrito(cItemId) {
+            EstadoApp.carritos[EstadoApp.mesaSeleccionada] = EstadoApp.carritos[EstadoApp.mesaSeleccionada].filter(x => x.cItemId !== cItemId);
+            renderizarCarritoUI();
+        }
+
+        function mutarNotaCarrito(cItemId, val) {
+            const it = EstadoApp.carritos[EstadoApp.mesaSeleccionada].find(x => x.cItemId === cItemId);
+            if (it) it.nota = val;
+        }
+
+        function renderizarCarritoUI() {
+            document.getElementById("tituloCarrito").innerText = `Pedido de la ${EstadoApp.mesaSeleccionada}`;
+            const cont = document.getElementById("contenedorCarrito");
+            const tot = document.getElementById("txtTotalCarrito");
+            const lista = EstadoApp.carritos[EstadoApp.mesaSeleccionada] || [];
+
+            actualizarBadgesNav();
+
+            if (lista.length === 0) {
+                cont.innerHTML = "No hay productos agregados en esta mesa."; tot.innerText = "Total: $0"; return;
             }
 
-            let html = "", total = 0;
-            listado.forEach(it => {
-                total += it.precio;
+            let html = "", suma = 0;
+            lista.forEach(it => {
+                suma += it.precio;
                 html += `
                     <div class="item-carrito-bloque">
                         <div class="flex-between">
                             <span><b>1x</b> ${it.nombre} ($${it.precio})</span>
-                            <button class="btn-tachar" onclick="removerItemCarrito('${it.carritoItemId}')">Quitar</button>
+                            <button class="btn-mini-accion" style="background:var(--danger); color:white;" onclick="quitarDelCarrito('${it.cItemId}')">Eliminar</button>
                         </div>
-                        <input type="text" placeholder="Escribe una nota para este plato..." value="${it.nota}" 
-                               onchange="actualizarNotaItemCarrito('${it.carritoItemId}', this)" 
-                               style="width:100%; font-size:11px; padding:4px; margin-top:4px; border:1px solid var(--border); border-radius:4px;">
+                        <input type="text" placeholder="Añadir nota o especificación..." value="${it.nota}" onchange="mutarNotaCarrito('${it.cItemId}', this.value)" style="width:100%; font-size:11px; padding:4px; margin-top:4px; border:1px solid var(--border); border-radius:4px;">
                     </div>`;
             });
-            contenedor.innerHTML = html;
-            txtTotal.innerText = `Total: $${total}`;
+            cont.innerHTML = html; tot.innerText = `Total: $${suma}`;
         }
 
-        function enviarComandaACocina() {
-            const listado = EstadoApp.carritosPorMesa[EstadoApp.mesaSeleccionada] || [];
-            if (listado.length === 0) return;
-
-            // Mapeamos los elementos del carrito
-            const itemsEmpaquetados = listado.map(i => ({ id: i.id, nombre: i.nombre, precio: i.precio, cantidad: 1, nota: i.nota }));
-
-            registrarMutacionInmutable('CREAR_COMANDA', {
-                comandaId: "CMD-" + Math.floor(Math.random()*9000 + 1000),
+        function lanzarAComanda() {
+            const lista = EstadoApp.carritos[EstadoApp.mesaSeleccionada] || [];
+            if (lista.length === 0) return;
+            
+            registrarEvento('CREAR_COMANDA', {
+                comandaId: "CMD-" + Math.floor(Date.now() % 10000),
                 mesa: EstadoApp.mesaSeleccionada,
-                items: itemsEmpaquetados
+                items: lista.map(x => ({ id: x.id, nombre: x.nombre, precio: x.precio, nota: x.nota }))
             });
 
-            EstadoApp.carritosPorMesa[EstadoApp.mesaSeleccionada] = [];
-            SistemaEventos.publicar('carritoActualizado');
+            EstadoApp.carritos[EstadoApp.mesaSeleccionada] = [];
+            renderizarCarritoUI();
         }
 
-        // --- CONTROLADORES EN CALIENTE DE LA COMANDA (COCINA MÓDULO) ---
-        function mutarCheckLineaCocina(comandaId, lineaId, checkActual) {
-            registrarMutacionInmutable('CAMBIAR_ESTADO_LINEA', { comandaId, lineaId, hecho: !checkActual });
-        }
+        // --- RENDER REACTIVO DE TODO EL SISTEMA (PÁGINAS DE COCINA Y CAJA) ---
+        SistemaEventos.suscribir('renderizarTodo', () => {
+            const todas = obtenerComandasProcesadas();
+            actualizarBadgesNav();
 
-        function mutarTachonLineaCocina(comandaId, lineaId) {
-            registrarMutacionInmutable('MUTAR_ITEM_COCINA', { accion: 'TACHAR', comandaId, lineaId });
-        }
-
-        function inyectarExtraEnCaliente(comandaId, prodId) {
-            registrarMutacionInmutable('MUTAR_ITEM_COCINA', { accion: 'AGREGAR_EXTRA', comandaId, prodId });
-        }
-
-        function procesarCambioNotaCocina(comandaId, lineaId, input) {
-            registrarMutacionInmutable('MUTAR_NOTA_LINEA', { comandaId, lineaId, nuevaNota: input.value });
-        }
-
-        function enviarComandaACaja(comandaId) {
-            registrarMutacionInmutable('DESPACHAR_A_CAJA', { comandaId });
-        }
-
-        function liquidarCuentaTransaccion(comandaId) {
-            const metodo = document.getElementById(`pay-${comandaId}`).value;
-            registrarMutacionInmutable('FINALIZAR_TRANSACCION', { comandaId, metodoPago: metodo });
-        }
-
-        // --- RENDERIZADOR CENTRAL REACCIONARIO (EVENT DRIVEN) ---
-        SistemaEventos.suscribir('estadoModificado', () => {
-            const listadoComandas = calcularComandasDesdeHistorial();
-            actualizarNotificacionesContadores();
-
-            // RENDER: MONITOREO DE COCINA
+            // 1. RENDERIZADO DE COCINA
             const contCocina = document.getElementById("contenedorCocina");
-            const enCocina = listadoComandas.filter(c => c.estadoComanda === 'cocina');
+            const activas = todas.filter(x => x.estado === 'cocina');
 
-            if(enCocina.length === 0) {
-                contCocina.innerHTML = "No hay órdenes activas en la cocina física.";
+            if (activas.length === 0) {
+                contCocina.innerHTML = "No hay comandas activas en Cocina.";
             } else {
                 let html = "";
-                enCocina.forEach(c => {
-                    let lineasHtml = "";
-                    c.lineasFisicas.forEach(l => {
-                        let claseEstilo = "";
-                        if (l.tachado) claseEstilo = "tachado";
-                        else if (l.hecho) claseEstilo = "hecho";
-                        else if (l.origen === 'extra') claseEstilo = "nuevo";
+                activas.forEach(c => {
+                    let renglonesHtml = "";
+                    c.renglones.forEach(r => {
+                        let claseDinamica = `origen-${r.origen}`;
+                        if (r.tachado) claseDinamica += " estado-tachado";
+                        else if (r.hecho) claseDinamica += " estado-hecho";
 
-                        // Construcción de la UX de notas de papel físico (Historial inmutable tachado)
-                        let notasFisicasHtml = "";
-                        l.historialNotas.forEach(n => {
-                            notasFisicasHtml += `<span class="nota-linea ${n.tachada ? 'tachada' : ''}">📝 Nota: ${n.texto}</span>`;
-                        });
-
-                        lineasHtml += `
-                            <div class="item-linea ${claseEstilo}">
+                        renglonesHtml += `
+                            <div class="renglon-papel ${claseDinamica}">
                                 <div class="flex-between">
-                                    <span><b>1x</b> ${l.nombre}</span>
-                                    ${!l.tachado ? `
-                                        <div class="ctrl-acciones">
-                                            <button class="btn-check ${l.hecho ? 'activo' : ''}" onclick="mutarCheckLineaCocina('${c.id}', '${l.lineaId}', ${l.hecho})">
-                                                ${l.hecho ? '✅ Hecho' : ' hacer'}
+                                    <span>
+                                        <b>1x</b> ${r.nombre} 
+                                        ${r.hecho && !r.tachado ? '<span class="badge-chulito">✅ Hecho</span>' : ''}
+                                    </span>
+                                    
+                                    <div style="display:flex; gap:4px;">
+                                        ${!r.tachado ? `
+                                            <button class="btn-mini-accion" style="background:#e2e8f0;" onclick="registrarEvento('CHECK_HECHO_RENGLON', { comandaId:'${c.id}', renglonId:'${r.renglonId}', hecho:${!r.hecho} })">
+                                                ${r.hecho ? 'Desmarcar' : '✅ Hecho'}
                                             </button>
-                                            <button class="btn-tachar" onclick="mutarTachonLineaCocina('${c.id}', '${l.lineaId}')">❌ Tachar</button>
-                                        </div>
-                                    ` : '<span>[ANULADO]</span>'}
+                                            <button class="btn-mini-accion" style="background:var(--danger); color:white;" onclick="registrarEvento('TACHAR_RENGLON', { comandaId:'${c.id}', renglonId:'${r.renglonId}' })">❌ Tachar</button>
+                                        ` : '<span>[TACHADO]</span>'}
+                                    </div>
                                 </div>
-                                <div>${notasFisicasHtml}</div>
-                                ${!l.tachado ? `
-                                    <input type="text" placeholder="Modificar/Añadir nota al plato..." value="${l.notaInterna}"
-                                           onchange="procesarCambioNotaCocina('${c.id}', '${l.lineaId}', this)"
-                                           style="width:90%; font-size:10px; padding:2px; margin-top:4px; border:1px dashed #ccc; border-radius:3px;">
+                                ${r.nota ? `<span class="nota-text">📝 Nota: ${r.nota}</span>` : ''}
+                                ${!r.tachado ? `
+                                    <input type="text" placeholder="Escribir nota sobre la marcha..." value="${r.nota}" onchange="registrarEvento('MUTAR_NOTA_RENGLON', { comandaId:'${c.id}', renglonId:'${r.renglonId}', nota:this.value })" style="width:100%; font-size:10px; padding:2px; margin-top:4px; border:1px dashed #ccc;">
                                 ` : ''}
                             </div>`;
                     });
 
                     html += `
                         <div class="ticket-card">
-                            <div class="flex-between" style="border-bottom: 1px solid var(--border); padding-bottom:4px; margin-bottom:6px;">
-                                <strong>${c.mesa} - Orden #${c.id}</strong>
-                                <span style="font-size:10px; color:var(--muted)">Tomado por: ${c.operadorOriginal}</span>
+                            <div class="flex-between" style="font-size:12px; font-weight:bold; border-bottom:1px solid #eee; margin-bottom:6px; padding-bottom:4px;">
+                                <span>${c.mesa} (#${c.id})</span>
+                                <span style="color:var(--muted)">Mesero: ${c.operador}</span>
                             </div>
-                            <div>${lineasHtml}</div>
+                            <div>${renglonesHtml}</div>
                             
-                            <div style="font-size:11px; color:var(--muted); margin-top:8px;">➕ Agregar Ítem Extra a Comanda Física:</div>
-                            <div style="display:flex; gap:4px; margin-top:2px; margin-bottom:10px;">
-                                ${DiccionarioMaestro.PRODUCTOS.map(p => `
-                                    <button style="font-size:10px; padding:4px; cursor:pointer;" onclick="inyectarExtraEnCaliente('${c.id}', '${p.id}')">+ ${p.nombre.split(' ')[0]}</button>
-                                `).join('')}
+                            <div style="font-size:11px; color:var(--muted); margin-top:8px;">➕ Agregar Renglón Extra abajo:</div>
+                            <div style="display:flex; gap:4px; margin-top:2px; margin-bottom:8px;">
+                                ${DiccionarioMaestro.PRODUCTOS.map(p => `<button style="font-size:10px; padding:3px; cursor:pointer;" onclick="registrarEvento('AGREGAR_EXTRA_COCINA', { comandaId:'${c.id}', prodId:'${p.id}' })">+ ${p.nombre.split(' ')[0]}</button>`).join('')}
                             </div>
-                            
-                            <button class="btn-enviar" style="padding:6px; font-size:12px;" onclick="enviarComandaACaja('${c.id}')">Transferir a Caja 💵</button>
+                            <button class="btn-enviar" style="padding:6px; font-size:12px;" onclick="registrarEvento('ENVIAR_A_CAJA', { comandaId:'${c.id}' })">Despachar a Caja Financiera 💵</button>
                         </div>`;
                 });
                 contCocina.innerHTML = html;
             }
 
-            // RENDER: FINANZAS (CAJA COBROS)
+            // 2. RENDERIZADO DE CAJA (LIQUIDACIONES)
             const contCaja = document.getElementById("contenedorCaja");
-            const enCaja = listadoComandas.filter(c => c.estadoComanda === 'caja');
+            const enCaja = todas.filter(x => x.estado === 'caja');
 
             if(enCaja.length === 0) {
-                contCaja.innerHTML = "No hay cuentas pendientes por liquidar.";
+                contCaja.innerHTML = "No hay cuentas por cobrar.";
             } else {
                 let html = "";
                 enCaja.forEach(c => {
-                    let totalLimpio = 0, desglose = "";
-                    c.lineasFisicas.forEach(l => {
-                        if(!l.tachado) {
-                            totalLimpio += l.precio;
-                            desglose += `• 1x ${l.nombre} ($${l.precio})<br>`;
+                    let desglose = "", totalNeto = 0;
+                    c.renglones.forEach(r => {
+                        if (!r.tachado) {
+                            totalNeto += r.precio;
+                            desglose += `• 1x ${r.nombre} ($${r.precio})<br>`;
+                        } else {
+                            desglose += `<span style="text-decoration:line-through; color:red;">• 1x ${r.nombre} ($0 Tachado)</span><br>`;
                         }
                     });
-
                     html += `
-                        <div class="ticket-card" style="border-top-color: var(--success)">
-                            <strong>Mesa: ${c.mesa} - Cuenta #${c.id}</strong>
+                        <div class="ticket-card" style="border-top-color:var(--success)">
+                            <strong>${c.mesa} - Liquidación #${c.id}</strong>
                             <div style="font-size:12px; margin:6px 0; color:var(--muted);">${desglose}</div>
-                            <div style="font-size:14px; font-weight:bold; color:var(--success); margin-bottom:8px;">Total Líquido: $${totalLimpio}</div>
+                            <div style="font-size:14px; font-weight:bold; color:var(--success); margin-bottom:6px;">Total Neto: $${totalNeto}</div>
                             
-                            <div style="margin-bottom:8px;">
-                                <label style="font-size:11px; font-weight:bold;">Método de Liquidación:</label>
-                                <select id="pay-${c.id}" style="padding:4px; width:100%; margin-top:2px;">
+                            <div style="margin-bottom:6px;">
+                                <select id="select-pago-${c.id}" style="padding:4px; font-size:12px; width:100%;">
                                     <option value="Efectivo">💵 Efectivo</option>
-                                    <option value="Tarjeta">💳 Tarjeta Débito/Crédito</option>
+                                    <option value="Tarjeta">💳 Tarjeta</option>
                                 </select>
                             </div>
-                            <button class="btn-enviar" style="background:var(--primary);" onclick="liquidarCuentaTransaccion('${c.id}')">Finalizar y Archivar Transacción</button>
+                            <button class="btn-enviar" style="background:var(--primary);" onclick="registrarEvento('LIQUIDAR_CUENTA', { comandaId:'${c.id}', metodoPago: document.getElementById('select-pago-${c.id}').value })">Registrar Transacción</button>
                         </div>`;
                 });
                 contCaja.innerHTML = html;
             }
 
-            // RENDER: MONITOREO DE COMANDAS ARCHIVADAS (EVITA EL LIMBO)
-            const contHistorial = document.getElementById("contenedorHistorialCaja");
-            const archivadas = listadoComandas.filter(c => c.estadoComanda === 'archivado');
-
-            if (archivadas.length === 0) {
-                contHistorial.innerHTML = "No se registran transacciones cerradas en este turno.";
+            // 3. ARCHIVADOS (EVITA EL LIMBO)
+            const contHist = document.getElementById("contenedorHistorialCaja");
+            const archivados = todas.filter(x => x.estado === 'archivado');
+            if(archivados.length === 0) {
+                contHist.innerHTML = "No hay cierres en este turno.";
             } else {
                 let html = "";
-                archivadas.forEach(c => {
-                    let totalArc = 0;
-                    c.lineasFisicas.forEach(l => { if(!l.tachado) totalArc += l.precio; });
-                    html += `
-                        <div class="ticket-card archivado" style="margin-bottom:6px; padding:8px;">
-                            <div class="flex-between" style="font-size:12px;">
-                                <span><b>#${c.id}</b> (${c.mesa})</span>
-                                <span style="font-weight:bold; color:var(--success)">$${totalArc} [${c.metodoPago}]</span>
-                            </div>
-                        </div>`;
+                archivados.forEach(c => {
+                    let totalA = 0; c.renglones.forEach(r => { if(!r.tachado) totalA += r.precio; });
+                    html += `<div style="background:white; padding:8px; border-radius:6px; margin-bottom:4px; border:1px solid var(--border); font-size:12px;" class="flex-between"><span><b>#${c.id}</b> (${c.mesa})</span> <b>$${totalA} [${c.metodoPago}]</b></div>`;
                 });
-                contHistorial.innerHTML = html;
+                contHist.innerHTML = html;
             }
         });
 
-        // --- UTILIDADES DRY GENERALES ---
-        function actualizarNotificacionesContadores() {
-            const listado = calcularComandasDesdeHistorial();
+        // --- SISTEMA DE CONTROL DE PERMISOS DINÁMICOS POR EL ADMINISTRADOR ---
+        function renderizarAdmin() {
+            const cont = document.getElementById("contenedorMatrizPermisos"); cont.innerHTML = "";
             
-            const badgeCar = document.getElementById("badge-nav-carrito");
-            const badgeCoc = document.getElementById("badge-nav-cocina");
-            const badgeCaj = document.getElementById("badge-nav-caja");
+            for (let cl in basePermisos) {
+                // Generación de Checkboxes para Capacidades
+                let capsHtml = "";
+                for(let cap in DiccionarioMaestro.CAPACIDADES) {
+                    capsHtml += `
+                        <label style="font-size:12px; display:flex; align-items:center; gap:4px;">
+                            <input type="checkbox" ${basePermisos[cl].capacidades.includes(cap)?'checked':''} onchange="mutarPermisoAdmin('${cl}', 'CAPACIDAD', '${cap}', this.checked)"> ${DiccionarioMaestro.CAPACIDADES[cap].nombre}
+                        </label>`;
+                }
 
-            if (badgeCar) {
-                const totalItems = (EstadoApp.carritosPorMesa[EstadoApp.mesaSeleccionada] || []).length;
-                badgeCar.innerText = totalItems; badgeCar.style.display = totalItems > 0 ? "inline-block" : "none";
-            }
-            if (badgeCoc) {
-                const cantCocina = listado.filter(c => c.estadoComanda === 'cocina').length;
-                badgeCoc.innerText = cantCocina; badgeCoc.style.display = cantCocina > 0 ? "inline-block" : "none";
-            }
-            if (badgeCaj) {
-                const cantCaja = listado.filter(c => c.estadoComanda === 'caja').length;
-                badgeCaj.innerText = cantCaja; badgeCaj.style.display = cantCaja > 0 ? "inline-block" : "none";
+                // Generación de Checkboxes para Locales (ESTO AGREGADO SOLUCIONA LO QUE TE HACÍA FALTA)
+                let localesHtml = "";
+                for(let loc in DiccionarioMaestro.LOCALES) {
+                    localesHtml += `
+                        <label style="font-size:12px; display:flex; align-items:center; gap:4px; color:var(--muted)">
+                            <input type="checkbox" ${basePermisos[cl].localesAcceso.includes(loc)?'checked':''} onchange="mutarPermisoAdmin('${cl}', 'LOCAL', '${loc}', this.checked)"> 🏬 ${DiccionarioMaestro.LOCALES[loc].nombre}
+                        </label>`;
+                }
+
+                cont.innerHTML += `
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--border); margin-bottom:10px;">
+                        <strong style="font-size:13px; color:var(--dark);">${basePermisos[cl].nombre} (Clave: ${cl})</strong>
+                        <div style="font-size:11px; font-weight:bold; margin-top:6px; color:var(--primary);">Módulos Permitidos:</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-bottom:6px;">${capsHtml}</div>
+                        <div style="font-size:11px; font-weight:bold; color:var(--success);">Locales con Acceso Autorizado:</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">${localesHtml}</div>
+                    </div>`;
             }
         }
 
-        function renderizarCatalogoProductos() {
-            const c = document.getElementById("contenedorProductos"); c.innerHTML = "";
+        function mutarPermisoAdmin(cl, tipo, objetivo, checked) {
+            if (tipo === 'CAPACIDAD') {
+                if(checked) { if(!basePermisos[cl].capacidades.includes(objetivo)) basePermisos[cl].capacidades.push(objetivo); }
+                else { basePermisos[cl].capacidades = basePermisos[cl].capacidades.filter(x => x !== objetivo); }
+            } else if (tipo === 'LOCAL') {
+                if(checked) { if(!basePermisos[cl].localesAcceso.includes(objetivo)) basePermisos[cl].localesAcceso.push(objetivo); }
+                else { basePermisos[cl].localesAcceso = basePermisos[cl].localesAcceso.filter(x => x !== objetivo); }
+            }
+            
+            localStorage.setItem('inkflow_v8_permisos', JSON.stringify(basePermisos));
+            if (EstadoApp.usuarioActivo) construirMenuNavegacion();
+            renderizarAdmin();
+        }
+
+        // --- AUXILIARES ---
+        function actualizarBadgesNav() {
+            const todas = obtenerComandasProcesadas();
+            const bCar = document.getElementById("badge-nav-carrito");
+            const bCoc = document.getElementById("badge-nav-cocina");
+            const bCaj = document.getElementById("badge-nav-caja");
+
+            if (bCar) {
+                const totalC = (EstadoApp.carritos[EstadoApp.mesaSeleccionada] || []).length;
+                bCar.innerText = totalC; bCar.style.display = totalC > 0 ? "inline-block" : "none";
+            }
+            if (bCoc) {
+                const totalC = todas.filter(x => x.estado === 'cocina').length;
+                bCoc.innerText = totalC; bCoc.style.display = totalC > 0 ? "inline-block" : "none";
+            }
+            if (bCaj) {
+                const totalC = todas.filter(x => x.estado === 'caja').length;
+                bCaj.innerText = totalC; bCaj.style.display = totalC > 0 ? "inline-block" : "none";
+            }
+        }
+
+        function renderizarMenuBase() {
+            const cont = document.getElementById("contenedorProductos"); cont.innerHTML = "";
             DiccionarioMaestro.PRODUCTOS.forEach(p => {
-                c.innerHTML += `
-                    <div class="item-producto">
-                        <div><strong>${p.nombre}</strong><br><small style="color:var(--muted)">$${p.precio}</small></div>
-                        <button class="btn-add" style="background:var(--primary); color:white; border:none; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-top:6px;" 
-                                onclick="agregarProductoAlCarrito('${p.id}')">+ Añadir Fila</button>
-                    </div>`;
+                cont.innerHTML += `<div class="item-producto"><div><strong>${p.nombre}</strong><br><small style="color:var(--muted)">$${p.precio}</small></div><button class="btn-mini-accion" style="background:var(--primary); color:white; margin-top:6px;" onclick="agregarAlCarrito('${p.id}')">+ Añadir renglón</button></div>`;
             });
         }
 
-        function renderizarPanelAdministrador() {
-            const c = document.getElementById("contenedorMatrizPermisos"); c.innerHTML = "";
-            for (let cl in basePermisos) {
-                let cbHtml = "";
-                for (let cap in DiccionarioMaestro.CAPACIDADES) {
-                    cbHtml += `
-                        <label style="display:flex; align-items:center; gap:4px; font-size:12px;">
-                            <input type="checkbox" ${basePermisos[cl].capacidades.includes(cap)?"checked":""} onchange="mutarCapacidadMatriz('${cl}', '${cap}', this.checked)">
-                            ${DiccionarioMaestro.CAPACIDADES[cap].nombre}
-                        </label>`;
-                }
-                c.innerHTML += `
-                    <div style="padding:8px 0; border-bottom:1px solid var(--border)">
-                        <strong>${basePermisos[cl].nombre} (Clave: ${cl})</strong>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:4px;">${cbHtml}</div>
-                    </div>`;
-            }
+        function loguearMonitor(txt) {
+            const b = document.getElementById("logsEventos"); if(b.innerHTML === "Ninguno.") b.innerHTML = "";
+            b.innerHTML = `> ${txt}<br>` + b.innerHTML;
         }
 
-        function mutarCapacidadMatriz(cl, cap, checked) {
-            if (checked) {
-                if (!basePermisos[cl].capacidades.includes(cap)) basePermisos[cl].capacidades.push(cap);
-            } else {
-                basePermisos[cl].capacidades = basePermisos[cl].capacidades.filter(c => c !== cap);
-            }
-            localStorage.setItem('inkflow_permisos', JSON.stringify(basePermisos));
-            actualizarMonitorSuperiorUI();
-            if (EstadoApp.usuarioActivo) construirBarraNavegacion();
-        }
-
-        function actualizarMonitorSuperiorUI() {
-            const c = document.getElementById("monitorClaves"); c.innerHTML = "";
-            for (let cl in basePermisos) {
-                c.innerHTML += `<div class="clave-tag"><b>${cl}</b>: ${basePermisos[cl].capacidades.join("+")}</div>`;
-            }
-        }
-
-        function loguearEnMonitor(t) {
-            const b = document.getElementById("logsEventos");
-            if(b.innerHTML === "Ninguno.") b.innerHTML = "";
-            b.innerHTML = `> ${t}<br>` + b.innerHTML;
-        }
-
-        // --- ARRANQUE DE LA APLICACIÓN ---
-        renderizarCatalogoProductos();
-        inicializarSelectores();
-        actualizarMonitorSuperiorUI();
-        
-        // Carga inicial reactiva si ya existieran eventos guardados en caché local
-        if (EstadoApp.historialEventosGlobal.length > 0) {
-            SistemaEventos.publicar('estadoModificado');
-        }
+        // --- INICIALIZACIÓN ---
+        renderizarMenuBase();
+        iniciarSelectorMesas();
     </script>
 </body>
 </html>

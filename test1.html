@@ -74,7 +74,7 @@
         .section-view {
             display: none; flex-direction: column;
             width: 100%; height: 100%;
-            padding: 30px 12px calc(var(--nav-height) + 8px);
+            padding: 12px 12px calc(var(--nav-height) + 8px);
             overflow: hidden;
         }
         .section-view.active { display: flex; }
@@ -717,6 +717,83 @@ const POLLING_MS = 25000; // actualización automática del monitor cada 25s
 let metodoPagoActual = "Por cobrar";
 let pollingTimer = null;
 
+
+
+let miLocal = sessionStorage.getItem('miLocal') || null;
+
+const CODIGOS_LOCAL = {
+    '11': '1',
+    'l2': '2'
+};
+
+function aplicarTemaLocal(local) {
+    if (local === '2') {
+        document.documentElement.style.setProperty('--primary', '#0d9488');
+        document.documentElement.style.setProperty('--primary-light', '#f0fdfa');
+    } else {
+        document.documentElement.style.setProperty('--primary', '#d63384');
+        document.documentElement.style.setProperty('--primary-light', '#fff0f6');
+    }
+}
+
+function mostrarPromptCodigo(callback) {
+    const overlay = document.createElement('div');
+    overlay.id = 'codigo-overlay';
+    overlay.style.cssText = `position:fixed;inset:0;background:var(--dark);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;`;
+    overlay.innerHTML = `
+        <input id="codigo-input" type="password" inputmode="text" placeholder="Código de acceso"
+            style="padding:14px 18px;font-size:1.1rem;border-radius:10px;border:none;text-align:center;width:220px;outline:none;">
+        <button id="codigo-btn" style="padding:12px 28px;font-size:1rem;font-weight:700;border:none;border-radius:10px;background:var(--primary);color:white;cursor:pointer;">Entrar</button>
+        <div id="codigo-error" style="color:#fca5a5;font-size:0.85rem;height:16px;"></div>
+    `;
+    document.body.appendChild(overlay);
+
+    const input = document.getElementById('codigo-input');
+    const intentar = () => {
+        const val = input.value.trim().toLowerCase();
+        const local = CODIGOS_LOCAL[val];
+        if (local) {
+            sessionStorage.setItem('miLocal', local);
+            overlay.remove();
+            callback(local);
+        } else {
+            document.getElementById('codigo-error').textContent = 'Código incorrecto';
+            input.value = '';
+            input.focus();
+        }
+    };
+    document.getElementById('codigo-btn').onclick = intentar;
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') intentar(); });
+    setTimeout(() => input.focus(), 50);
+}
+
+function insertarBotonSalir() {
+    const contenedor = document.querySelector('.monitor-top div[style]');
+    if (!contenedor) return;
+    const btn = document.createElement('button');
+    btn.textContent = 'Salir';
+    btn.title = 'Cerrar sesión de este dispositivo';
+    btn.style.cssText = `background:var(--primary);color:white;border:none;padding:7px 13px;border-radius:7px;cursor:pointer;font-weight:700;font-size:0.78rem;margin-right:8px;`;
+    btn.onclick = cerrarSesionLocal;
+    contenedor.prepend(btn);
+}
+
+function cerrarSesionLocal() {
+    const localAnterior = miLocal;
+    sessionStorage.removeItem('miLocal');
+    mostrarPromptCodigo((local) => {
+        if (local === localAnterior) {
+            // Mismo local: solo se destapa la pantalla, no se pierde ni se recarga nada.
+            return;
+        }
+        // Código de OTRO local en este mismo aparato: se recarga para partir
+        // de cero y no mezclar datos de los dos locales en memoria.
+        location.reload();
+    });
+}
+
+
+
 // ═══════════════════════════════════════════════════════════
 //  CATÁLOGO — con campo "opciones" para personalización
 // ═══════════════════════════════════════════════════════════
@@ -1336,7 +1413,9 @@ async function procesarOrden() {
 }
 
     const nuevoPedido = {
+        
         id: generarUUID(),
+        local: miLocal,
         creadoEn: Date.now(),
         numeroPedido: null,
         mesa, mesero, notas,
@@ -1356,6 +1435,7 @@ async function procesarOrden() {
     renderHistorial();
 
     const payload = {
+        local: miLocal,
         accion: "nuevoPedido",
         id: nuevoPedido.id,
         mesa, mesero, total,
@@ -1813,7 +1893,8 @@ async function sincronizarPendientes() {
                     mesa: pedido.mesa, mesero: pedido.mesero,
                     total: pedido.total, items: pedido.items,
                     itemsRaw: JSON.stringify(pedido.itemsRaw || []),
-                    notas: pedido.notas, metodoPago: pedido.metodoPago
+                    notas: pedido.notas, metodoPago: pedido.metodoPago,
+                    local: pedido.local
                 })
             });
             const data = await res.json();
@@ -1852,7 +1933,9 @@ async function cargarPedidos() {
         if (data.ok) {
             const noSync = historialPedidos.filter(p => p.sincronizado === "NO");
             const idsLocalesPendientes = new Set(noSync.map(p => p.id));
-            const deLaNube = data.pedidos.filter(p => !idsLocalesPendientes.has(p.id));
+            const deLaNube = data.pedidos.filter(p =>
+    !idsLocalesPendientes.has(p.id) && String(p.local || '1') === String(miLocal)
+);
 
             deLaNube.forEach(p => {
                 const localMatch = historialPedidos.find(lp => String(lp.id) === String(p.id));
@@ -2040,11 +2123,24 @@ function cerrarResumenDiaBtn() {
 // ═══════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════
-initCategorias();
-renderGrid();
-guardarYRender();
-cargarPedidos();
-iniciarPolling();
+function iniciarApp() {
+    aplicarTemaLocal(miLocal);
+    initCategorias();
+    renderGrid();
+    guardarYRender();
+    insertarBotonSalir();
+    cargarPedidos();
+    iniciarPolling();
+}
+
+if (miLocal) {
+    iniciarApp();
+} else {
+    mostrarPromptCodigo((local) => {
+        miLocal = local;
+        iniciarApp();
+    });
+}
 </script>
 </body>
 </html>

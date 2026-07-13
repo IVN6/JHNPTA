@@ -2141,6 +2141,100 @@ if (miLocal) {
         iniciarApp();
     });
 }
+
+// ═══════════════════════════════════════════════════════════
+//  MÓDULO DE NOTIFICACIONES POR VOZ, SONIDO Y VIBRACIÓN (AÑADIDO)
+// ═══════════════════════════════════════════════════════════
+
+// Conjunto en memoria para evitar repetir alertas en la sesión actual
+const PEDIDOS_NOTIFICADOS = new Set();
+
+/**
+ * Filtra y limpia el nombre del mesero para la lectura de voz
+ * @param {string} mesero 
+ * @returns {string} Texto formateado o 'sin mesero'
+ */
+function limpiarNombreMesero(mesero) {
+    if (!mesero) return "sin mesero";
+    const limpio = mesero.trim();
+    // Si contiene números o caracteres especiales rudimentarios, retorna "sin mesero"
+    const soloLetrasYEspacios = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+    if (!soloLetrasYEspacios.test(limpio) || limpio === "—") {
+        return "sin mesero";
+    }
+    return limpio.length > 12 ? limpio.substring(0, 12) : limpio;
+}
+
+/**
+ * Ejecuta alertas físicas en el dispositivo (Vibración y Sonido Sintético)
+ */
+function ejecutarAlertasDispositivo() {
+    // 1. Vibración profesional (Patrón: corto - pausa - largo)
+    if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 300]);
+    }
+
+    // 2. Notificación de Audio (Beep nativo por Web Audio API sin depender de archivos .mp3)
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Nota D5 (Agradable pero alerta)
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.4);
+        oscillator.stop(audioCtx.currentTime + 0.4);
+    } catch (e) {
+        console.warn("AudioContext no permitido o soportado aún en este navegador.");
+    }
+}
+
+/**
+ * Función Principal Reutilizable y Profesional para lectura de pedidos por primera vez
+ * @param {Object} pedido - Objeto completo del pedido proveniente del backend o persistencia
+ */
+function hablar(pedido) {
+    // Guardas de seguridad obligatorias
+    if (!pedido || !pedido.id) return;
+    
+    // Si ya fue notificado en este ciclo de vida de la app, ignorar (Filtro anti-polling)
+    if (PEDIDOS_NOTIFICADOS.has(pedido.id)) return;
+    
+    // Registrar inmediatamente para evitar condiciones de carrera por respuestas lentas
+    PEDIDOS_NOTIFICADOS.add(pedido.id);
+
+    // Procesar metadatos del pedido de forma limpia
+    const mesaLimpia = pedido.mesa ? pedido.mesa.replace(/🪑|🛍️|🛵/g, '').trim() : "indefinida";
+    const meseroLimpio = limpiarNombreMesero(pedido.mesero);
+    
+    // Estructurar mensaje corto, claro y profesional
+    const mensaje = `Nuevo, ${mesaLimpia}, de ${meseroLimpio}`;
+
+    // Disparar alertas físicas de inmediato
+    ejecutarAlertasDispositivo();
+
+    // Disparar Síntesis de voz (Web Speech API)
+    if ('speechSynthesis' in window) {
+        // Cancelar lecturas previas en cola para evitar retrasos acumulados
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(mensaje);
+        utterance.lang = 'es-CO'; // Configuración regional preferida para Colombia
+        utterance.rate = 1.0;     // Velocidad profesional estándar
+        utterance.pitch = 1.0;    // Tono natural
+
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+    
+    
 </script>
 </body>
 </html>

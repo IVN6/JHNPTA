@@ -2214,5 +2214,120 @@ if (miCodigo && miLocal) {
     });
 }
 </script>
+    <!-- ================= SCRIPT DE PRUEBA: ALERTAS DE NUEVOS PEDIDOS ================= -->
+<script>
+(function() {
+    // Registro interno para no repetir alertas de pedidos ya procesados
+    let pedidosConocidos = new Set();
+    let esPrimeraCarga = true;
+
+    // 1. Vibración nativa
+    function vibrar() {
+        if (navigator.vibrate) {
+            navigator.vibrate([300, 100, 300]);
+        }
+    }
+
+    // 2. Alarma de audio (Beep digital dinámico)
+    function reproducirAlarma() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Nota 1
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.connect(gain1);
+            gain1.connect(audioCtx.destination);
+            osc1.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Re5
+            gain1.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            osc1.start();
+            osc1.stop(audioCtx.currentTime + 0.15);
+
+            // Nota 2 (más aguda, suena un poco después)
+            setTimeout(() => {
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.frequency.setValueAtTime(880, audioCtx.currentTime); // La5
+                gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                osc2.start();
+                osc2.stop(audioCtx.currentTime + 0.25);
+            }, 180);
+        } catch (e) {
+            console.warn("Audio bloqueado. Haz un clic en cualquier parte de la pantalla para activarlo.");
+        }
+    }
+
+    // 3. Sintetizador de voz (Text-to-Speech)
+    function notificarPorVoz(mesero, mesa) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Cancela lecturas anteriores en cola
+
+            const nombreMesero = (mesero && mesero !== '—' && mesero.trim() !== '') ? mesero : '';
+            const numeroMesa = mesa ? mesa : '';
+            
+            let frase = "Nuevo pedido. ";
+            if (nombreMesero && numeroMesa) {
+                frase += `Del mesero ${nombreMesero} en la ${numeroMesa}.`;
+            } else if (numeroMesa) {
+                frase += `Para la ${numeroMesa}.`;
+            } else if (nombreMesero) {
+                frase += `Del mesero ${nombreMesero}.`;
+            }
+
+            const locucion = new SpeechSynthesisUtterance(frase);
+            locucion.lang = 'es-ES';
+            locucion.rate = 1.0; 
+            window.speechSynthesis.speak(locucion);
+        }
+    }
+
+    // 4. Interceptor "invisible" de peticiones de red
+    const originalFetch = window.fetch;
+    window.fetch = async function(...args) {
+        const respuesta = await originalFetch.apply(this, args);
+        const url = args[0] ? args[0].toString() : '';
+
+        // Si la petición es para cargar pedidos, la analizamos en segundo plano
+        if (url.includes('cargarPedidos') || url.includes('pedidos')) {
+            try {
+                const clon = respuesta.clone();
+                const data = await clon.json();
+
+                if (data && Array.isArray(data.pedidos)) {
+                    let hayNuevos = false;
+                    let ultimoPedidoNuevo = null;
+
+                    data.pedidos.forEach(p => {
+                        if (!pedidosConocidos.has(p.id)) {
+                            pedidosConocidos.add(p.id);
+                            if (!esPrimeraCarga) {
+                                hayNuevos = true;
+                                ultimoPedidoNuevo = p;
+                            }
+                        }
+                    });
+
+                    if (esPrimeraCarga) {
+                        esPrimeraCarga = false;
+                        console.log("🔔 Interceptor de alarmas listo y vigilando nuevos pedidos...");
+                    }
+
+                    if (hayNuevos && ultimoPedidoNuevo) {
+                        vibrar();
+                        reproducirAlarma();
+                        notificarPorVoz(ultimoPedidoNuevo.mesero, ultimoPedidoNuevo.mesa);
+                    }
+                }
+            } catch (err) {
+                // Falla silenciosa para evitar romper la app si la respuesta no es JSON
+            }
+        }
+        return respuesta;
+    };
+})();
+</script>
+<!-- ================= FIN SCRIPT DE PRUEBA ================= -->
 </body>
 </html>

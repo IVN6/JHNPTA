@@ -719,12 +719,14 @@ let pollingTimer = null;
 
 
 
+let miCodigo = sessionStorage.getItem('miCodigo') || null;
 let miLocal = sessionStorage.getItem('miLocal') || null;
+let miNombre = sessionStorage.getItem('miNombre') || null;
+let misCapacidades = JSON.parse(sessionStorage.getItem('misCapacidades') || '[]');
 
-const CODIGOS_LOCAL = {
-    'p01': '1',
-    '0l2': '2'
-};
+function tieneCapacidad(cap) {
+    return misCapacidades.includes(cap) || misCapacidades.includes('admin');
+}
 
 function aplicarTemaLocal(local) {
     if (local === '2') {
@@ -733,6 +735,33 @@ function aplicarTemaLocal(local) {
     } else {
         document.documentElement.style.setProperty('--primary', '#d63384');
         document.documentElement.style.setProperty('--primary-light', '#fff0f6');
+    }
+}
+
+async function intentarLogin(codigo) {
+    try {
+        const res = await fetch(API_URL, {
+            method: "POST", redirect: "follow",
+            body: JSON.stringify({ accion: "validarAcceso", codigo })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            localStorage.setItem('permisos_cache_' + codigo, JSON.stringify({
+                nombre: data.nombre, local: data.local, capacidades: data.capacidades,
+                horario: data.horario, esAdmin: data.esAdmin, ts: Date.now()
+            }));
+            return { ok: true, ...data };
+        }
+        return { ok: false, error: data.error || 'Código incorrecto' };
+    } catch {
+        // Sin internet: si este código ya se validó antes en este dispositivo,
+        // deja entrar con esos permisos (para sobrevivir un turno sin conexión).
+        const cache = localStorage.getItem('permisos_cache_' + codigo);
+        if (cache) {
+            const c = JSON.parse(cache);
+            return { ok: true, nombre: c.nombre, local: c.local, capacidades: c.capacidades, horario: c.horario, esAdmin: c.esAdmin };
+        }
+        return { ok: false, error: 'Sin conexión y este código nunca se validó en este dispositivo.' };
     }
 }
 
@@ -749,15 +778,24 @@ function mostrarPromptCodigo(callback) {
     document.body.appendChild(overlay);
 
     const input = document.getElementById('codigo-input');
-    const intentar = () => {
+    const intentar = async () => {
         const val = input.value.trim().toLowerCase();
-        const local = CODIGOS_LOCAL[val];
-        if (local) {
-            sessionStorage.setItem('miLocal', local);
+        if (!val) return;
+        const btn = document.getElementById('codigo-btn');
+        btn.disabled = true;
+        const resultado = await intentarLogin(val);
+        btn.disabled = false;
+        if (resultado.ok) {
+            sessionStorage.setItem('miCodigo', val);
+            sessionStorage.setItem('miLocal', resultado.local);
+            sessionStorage.setItem('miNombre', resultado.nombre);
+            sessionStorage.setItem('misCapacidades', JSON.stringify(resultado.capacidades));
+            sessionStorage.setItem('miHorario', JSON.stringify(resultado.horario || null));
+            sessionStorage.setItem('miEsAdmin', String(!!resultado.esAdmin));
             overlay.remove();
-            callback(local);
+            callback(resultado);
         } else {
-            document.getElementById('codigo-error').textContent = 'Código incorrecto';
+            document.getElementById('codigo-error').textContent = resultado.error;
             input.value = '';
             input.focus();
         }
@@ -767,9 +805,30 @@ function mostrarPromptCodigo(callback) {
     setTimeout(() => input.focus(), 50);
 }
 
+function iniciarChequeoHorario() {
+    const horario = JSON.parse(sessionStorage.getItem('miHorario') || 'null');
+    const esAdmin = sessionStorage.getItem('miEsAdmin') === 'true';
+    if (!horario || !horario.bloqueoActivo || esAdmin) return;
+    setInterval(() => {
+        const ahora = new Date().toTimeString().slice(0, 5);
+        const dentro = horario.apertura <= horario.cierre
+            ? (ahora >= horario.apertura && ahora <= horario.cierre)
+            : (ahora >= horario.apertura || ahora <= horario.cierre);
+        if (!dentro) {
+            showToast('🔒 Fuera de horario. Cerrando sesión…');
+            setTimeout(() => cerrarSesionLocal(), 1500);
+        }
+    }, 60000);
+}
+
 function insertarBotonSalir() {
     const contenedor = document.querySelector('.monitor-top div[style]');
     if (!contenedor) return;
+    const info = document.createElement('span');
+    info.textContent = miNombre || '';
+    info.style.cssText = `background:var(--bg);color:var(--text-muted);padding:6px 10px;border-radius:7px;font-size:0.75rem;font-weight:700;margin-right:8px;`;
+    contenedor.prepend(info);
+
     const btn = document.createElement('button');
     btn.textContent = 'Salir';
     btn.title = 'Cerrar sesión de este dispositivo';
@@ -780,19 +839,21 @@ function insertarBotonSalir() {
 
 function cerrarSesionLocal() {
     const localAnterior = miLocal;
+    sessionStorage.removeItem('miCodigo');
     sessionStorage.removeItem('miLocal');
-    mostrarPromptCodigo((local) => {
-        if (local === localAnterior) {
-            // Mismo local: solo se destapa la pantalla, no se pierde ni se recarga nada.
+    sessionStorage.removeItem('miNombre');
+    sessionStorage.removeItem('misCapacidades');
+    sessionStorage.removeItem('miHorario');
+    sessionStorage.removeItem('miEsAdmin');
+    mostrarPromptCodigo((resultado) => {
+        if (resultado.local === localAnterior) {
+            miLocal = resultado.local; miNombre = resultado.nombre; misCapacidades = resultado.capacidades;
+            miCodigo = sessionStorage.getItem('miCodigo');
             return;
         }
-        // Código de OTRO local en este mismo aparato: se recarga para partir
-        // de cero y no mezclar datos de los dos locales en memoria.
         location.reload();
     });
 }
-
-
 
 // ═══════════════════════════════════════════════════════════
 //  CATÁLOGO — con campo "opciones" para personalización
@@ -1436,6 +1497,7 @@ async function procesarOrden() {
 
     const payload = {
         local: miLocal,
+        codigo: miCodigo, 
         accion: "nuevoPedido",
         id: nuevoPedido.id,
         mesa, mesero, total,
@@ -1473,12 +1535,14 @@ async function sincronizarEventosPendientes() {
         try {
             const res = await fetch(API_URL, {
                 method: "POST", redirect: "follow",
-                body: JSON.stringify({ accion: "registrarEventos", id: pedido.id, autor: pedido.mesero, eventos: pedido.eventosPendientes })
+                body: JSON.stringify({
+                    accion: "registrarEventos", id: pedido.id, autor: pedido.mesero,
+                    codigo: miCodigo, local: pedido.local,
+                    eventos: pedido.eventosPendientes
+                })
             });
             const data = await res.json();
             if (data.ok) {
-                // El servidor manda: puede traer también eventos de otro
-                // dispositivo que llegaron mientras tanto — se fusionan solos.
                 pedido.itemsRaw = data.itemsRaw;
                 pedido.items = data.items;
                 pedido.total = data.total;
@@ -1786,7 +1850,7 @@ async function sincronizarEstado(id, estado) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido || pedido.sincronizado === 'NO') return;
     try {
-        const payload = { accion: "cambiarEstado", id: pedido.id, estado };
+        const payload = { accion: "cambiarEstado", id: pedido.id, estado, codigo: miCodigo, local: pedido.local };
         if (pedido.metodoPago) payload.metodoPago = pedido.metodoPago;
         if (pedido.horaFin)    payload.horaFin    = pedido.horaFin;
 
@@ -1797,7 +1861,8 @@ async function sincronizarEstado(id, estado) {
             pedido.estadoSincronizado = 'SI';
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
         } else {
-            console.warn("Estado no actualizado en Sheets.");
+            console.warn("Estado no actualizado en Sheets:", data.error);
+            showToast(`⚠️ ${data.error || 'No autorizado'}`);
         }
     } catch { /* offline: sincronizarEstadosPendientes() reintentará */ }
 }
@@ -1805,12 +1870,14 @@ async function sincronizarEstado(id, estado) {
 // Archivar
 async function archivarPedido(id) {
     if (!confirm("¿Archivar este pedido? Desaparecerá del monitor (queda en Sheets).")) return;
+    const pedido = historialPedidos.find(p => p.id === id);
+    const localPedido = pedido ? pedido.local : miLocal;
     historialPedidos = historialPedidos.filter(p => p.id !== id);
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
     renderHistorial();
     try {
         await fetch(API_URL, { method: "POST", redirect: "follow",
-            body: JSON.stringify({ accion: "archivarPedido", id }) });
+            body: JSON.stringify({ accion: "archivarPedido", id, codigo: miCodigo, local: localPedido }) });
     } catch { /* offline OK */ }
 }
 
@@ -1890,11 +1957,12 @@ async function sincronizarPendientes() {
                 body: JSON.stringify({
                     accion: "nuevoPedido",
                     id: pedido.id,
+                    codigo: miCodigo,
+                    local: pedido.local,
                     mesa: pedido.mesa, mesero: pedido.mesero,
                     total: pedido.total, items: pedido.items,
                     itemsRaw: JSON.stringify(pedido.itemsRaw || []),
-                    notas: pedido.notas, metodoPago: pedido.metodoPago,
-                    local: pedido.local
+                    notas: pedido.notas, metodoPago: pedido.metodoPago
                 })
             });
             const data = await res.json();
@@ -1928,7 +1996,7 @@ async function cargarPedidos() {
         await sincronizarEventosPendientes();
         await sincronizarEstadosPendientes();
 
-        const res = await fetch(`${API_URL}?accion=obtenerPedidos`);
+        const res = await fetch(`${API_URL}?accion=obtenerPedidos&codigo=${encodeURIComponent(miCodigo)}&local=${encodeURIComponent(miLocal)}`);
         const data = await res.json();
         if (data.ok) {
             const noSync = historialPedidos.filter(p => p.sincronizado === "NO");
@@ -2131,110 +2199,20 @@ function iniciarApp() {
     insertarBotonSalir();
     cargarPedidos();
     iniciarPolling();
+    iniciarChequeoHorario();
 }
 
-if (miLocal) {
+if (miCodigo && miLocal) {
     iniciarApp();
 } else {
-    mostrarPromptCodigo((local) => {
-        miLocal = local;
+    mostrarPromptCodigo((resultado) => {
+        miLocal = resultado.local;
+        miNombre = resultado.nombre;
+        misCapacidades = resultado.capacidades;
+        miCodigo = sessionStorage.getItem('miCodigo');
         iniciarApp();
     });
 }
-
-// ═══════════════════════════════════════════════════════════
-//  MÓDULO DE NOTIFICACIONES POR VOZ, SONIDO Y VIBRACIÓN (AÑADIDO)
-// ═══════════════════════════════════════════════════════════
-
-// Conjunto en memoria para evitar repetir alertas en la sesión actual
-const PEDIDOS_NOTIFICADOS = new Set();
-
-/**
- * Filtra y limpia el nombre del mesero para la lectura de voz
- * @param {string} mesero 
- * @returns {string} Texto formateado o 'sin mesero'
- */
-function limpiarNombreMesero(mesero) {
-    if (!mesero) return "sin mesero";
-    const limpio = mesero.trim();
-    // Si contiene números o caracteres especiales rudimentarios, retorna "sin mesero"
-    const soloLetrasYEspacios = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
-    if (!soloLetrasYEspacios.test(limpio) || limpio === "—") {
-        return "sin mesero";
-    }
-    return limpio.length > 12 ? limpio.substring(0, 12) : limpio;
-}
-
-/**
- * Ejecuta alertas físicas en el dispositivo (Vibración y Sonido Sintético)
- */
-function ejecutarAlertasDispositivo() {
-    // 1. Vibración profesional (Patrón: corto - pausa - largo)
-    if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 300]);
-    }
-
-    // 2. Notificación de Audio (Beep nativo por Web Audio API sin depender de archivos .mp3)
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Nota D5 (Agradable pero alerta)
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        
-        oscillator.start();
-        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.4);
-        oscillator.stop(audioCtx.currentTime + 0.4);
-    } catch (e) {
-        console.warn("AudioContext no permitido o soportado aún en este navegador.");
-    }
-}
-
-/**
- * Función Principal Reutilizable y Profesional para lectura de pedidos por primera vez
- * @param {Object} pedido - Objeto completo del pedido proveniente del backend o persistencia
- */
-function hablar(pedido) {
-    // Guardas de seguridad obligatorias
-    if (!pedido || !pedido.id) return;
-    
-    // Si ya fue notificado en este ciclo de vida de la app, ignorar (Filtro anti-polling)
-    if (PEDIDOS_NOTIFICADOS.has(pedido.id)) return;
-    
-    // Registrar inmediatamente para evitar condiciones de carrera por respuestas lentas
-    PEDIDOS_NOTIFICADOS.add(pedido.id);
-
-    // Procesar metadatos del pedido de forma limpia
-    const mesaLimpia = pedido.mesa ? pedido.mesa.replace(/🪑|🛍️|🛵/g, '').trim() : "indefinida";
-    const meseroLimpio = limpiarNombreMesero(pedido.mesero);
-    
-    // Estructurar mensaje corto, claro y profesional
-    const mensaje = `Nuevo, ${mesaLimpia}, de ${meseroLimpio}`;
-
-    // Disparar alertas físicas de inmediato
-    ejecutarAlertasDispositivo();
-
-    // Disparar Síntesis de voz (Web Speech API)
-    if ('speechSynthesis' in window) {
-        // Cancelar lecturas previas en cola para evitar retrasos acumulados
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(mensaje);
-        utterance.lang = 'es-CO'; // Configuración regional preferida para Colombia
-        utterance.rate = 1.0;     // Velocidad profesional estándar
-        utterance.pitch = 1.0;    // Tono natural
-
-        window.speechSynthesis.speak(utterance);
-    }
-}
-
-    
-    
 </script>
 </body>
 </html>

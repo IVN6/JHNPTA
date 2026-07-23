@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Comanda Pro</title>
     <style>
-        :root {
+:root {
             --primary: #d63384;
             --primary-light: #fff0f6;
             --success: #25D366;
@@ -577,7 +577,8 @@
             .grid-productos-scroll { padding-bottom: 60px; }
             .comanda-footer { padding-bottom: 24px; }
         }
-    </style>
+
+</style>
 </head>
 <body>
 
@@ -709,6 +710,7 @@
 <div id="toast-container"></div>
 
 <script>
+// ── config.js ──
 // ═══════════════════════════════════════════════════════════
 //  CONFIG
 // ═══════════════════════════════════════════════════════════
@@ -719,6 +721,7 @@ let pollingTimer = null;
 
 
 
+// ── permisos.js ──
 let miCodigo = sessionStorage.getItem('miCodigo') || null;
 let miLocal = sessionStorage.getItem('miLocal') || null;
 let miNombre = sessionStorage.getItem('miNombre') || null;
@@ -747,7 +750,7 @@ async function intentarLogin(codigo) {
         const data = await res.json();
         if (data.ok) {
             localStorage.setItem('permisos_cache_' + codigo, JSON.stringify({
-                nombre: data.nombre, local: data.local, capacidades: data.capacidades,
+                nombre: data.nombre, local: data.local, locales: data.locales, capacidades: data.capacidades,
                 horario: data.horario, esAdmin: data.esAdmin, ts: Date.now()
             }));
             return { ok: true, ...data };
@@ -759,10 +762,29 @@ async function intentarLogin(codigo) {
         const cache = localStorage.getItem('permisos_cache_' + codigo);
         if (cache) {
             const c = JSON.parse(cache);
-            return { ok: true, nombre: c.nombre, local: c.local, capacidades: c.capacidades, horario: c.horario, esAdmin: c.esAdmin };
+            return { ok: true, nombre: c.nombre, local: c.local, locales: c.locales, capacidades: c.capacidades, horario: c.horario, esAdmin: c.esAdmin };
         }
         return { ok: false, error: 'Sin conexión y este código nunca se validó en este dispositivo.' };
     }
+}
+
+function mostrarSelectorLocalMultiple(locales, callback) {
+    const overlay = document.createElement('div');
+    overlay.id = 'multi-local-overlay';
+    overlay.style.cssText = `position:fixed;inset:0;background:var(--dark);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;`;
+    overlay.innerHTML = `
+        <div style="color:white;font-size:1rem;font-weight:700;margin-bottom:4px;text-align:center;">¿En cuál local trabajas ahora?</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;" id="multi-local-botones"></div>
+    `;
+    document.body.appendChild(overlay);
+    const cont = overlay.querySelector('#multi-local-botones');
+    locales.forEach(loc => {
+        const btn = document.createElement('button');
+        btn.textContent = `Local ${loc}`;
+        btn.style.cssText = `padding:18px 28px;font-size:1rem;font-weight:800;border:none;border-radius:12px;background:${loc === '2' ? '#0d9488' : '#d63384'};color:white;cursor:pointer;`;
+        btn.onclick = () => { overlay.remove(); callback(loc); };
+        cont.appendChild(btn);
+    });
 }
 
 function mostrarPromptCodigo(callback) {
@@ -778,6 +800,15 @@ function mostrarPromptCodigo(callback) {
     document.body.appendChild(overlay);
 
     const input = document.getElementById('codigo-input');
+    const finalizar = (resultado) => {
+        sessionStorage.setItem('miCodigo', resultado._codigoIngresado);
+        sessionStorage.setItem('miLocal', resultado.local);
+        sessionStorage.setItem('miNombre', resultado.nombre);
+        sessionStorage.setItem('misCapacidades', JSON.stringify(resultado.capacidades));
+        sessionStorage.setItem('miHorario', JSON.stringify(resultado.horario || null));
+        sessionStorage.setItem('miEsAdmin', String(!!resultado.esAdmin));
+        callback(resultado);
+    };
     const intentar = async () => {
         const val = input.value.trim().toLowerCase();
         if (!val) return;
@@ -786,14 +817,17 @@ function mostrarPromptCodigo(callback) {
         const resultado = await intentarLogin(val);
         btn.disabled = false;
         if (resultado.ok) {
-            sessionStorage.setItem('miCodigo', val);
-            sessionStorage.setItem('miLocal', resultado.local);
-            sessionStorage.setItem('miNombre', resultado.nombre);
-            sessionStorage.setItem('misCapacidades', JSON.stringify(resultado.capacidades));
-            sessionStorage.setItem('miHorario', JSON.stringify(resultado.horario || null));
-            sessionStorage.setItem('miEsAdmin', String(!!resultado.esAdmin));
+            resultado._codigoIngresado = val;
             overlay.remove();
-            callback(resultado);
+            const locales = resultado.locales && resultado.locales.length ? resultado.locales : [resultado.local];
+            if (locales.length > 1) {
+                mostrarSelectorLocalMultiple(locales, (localElegido) => {
+                    resultado.local = localElegido;
+                    finalizar(resultado);
+                });
+            } else {
+                finalizar(resultado);
+            }
         } else {
             document.getElementById('codigo-error').textContent = resultado.error;
             input.value = '';
@@ -855,210 +889,9 @@ function cerrarSesionLocal() {
     });
 }
 
-// ═══════════════════════════════════════════════════════════
-//  CATÁLOGO — con campo "opciones" para personalización
-// ═══════════════════════════════════════════════════════════
-/*
-  Estructura de opciones:
-  {
-    grupos: [
-      {
-        label: "Sabor",           // texto que ve el mesero
-        tipo: "unico" | "multiple",  // unico = radio, multiple = checkbox
-        requerido: true,          // si es true, no se puede confirmar sin elegir
-        opciones: ["Vainilla","Fresa","Chocolate"]
-      }
-    ],
-    adiciones: [
-      { nombre: "Arequipe", precio: 3000 },
-      ...
-    ]
-  }
-*/
 
-// 1. Sabores del Merengón
-const SALSAS_MERENGON = ["Mora", "Fresa", "Salsa Inglesa", "Uchuva", "Tomate de árbol rojo", "Tomate de árbol amarillo", "Mango", "Guayaba"];
 
-// 2. Adiciones base ($3000)
-const ADICIONES_BASE = [
-    { nombre: "Arequipe de coco", precio: 3000 },
-    { nombre: "Arequipe", precio: 3000 },
-    { nombre: "Natas", precio: 3000 },
-    { nombre: "Un durazno", precio: 3000 },
-    { nombre: "Una breva", precio: 3000 },
-    { nombre: "Mielmesabe", precio: 3000 },
-    { nombre: "Papayuela", precio: 3000 },
-    { nombre: "adicion extra", precio: 3000 }
-];
-
-// 3. Convertimos las salsas del merengón en adiciones automáticas ($3000)
-const SALSAS_COMO_ADICIONES = SALSAS_MERENGON.map(sabor => ({ nombre: `Salsa de ${sabor}`, precio: 3000 }));
-
-// 4. Lista final de adiciones para los modales
-const ADICIONES_GENERALES = [...ADICIONES_BASE, ...SALSAS_COMO_ADICIONES];
-
-// 5. Sabores de la Bola de Helado
-const SABORES_HELADO = ["Vainilla","Fresa vainilla","no hay Chocolate","Mora veteado","cookies","No hay Macadamia"];
-
-// 5b. Sabores de Cremitas (Agregado para evitar el error de variable indefinida)
-const SABORES_CREMITAS = ["Oreo", "maracuyá", "mora",'Café', 'Chicle'];
-
-// 6. Paletas con sistema de AGOTADOS
-const SABORES_PALETAS = [
-    { nombre: "Coco", disponible: true },
-    { nombre: "Arequipe", disponible: true },
-    { nombre: "Queso bocadillo", disponible: true },
-    { nombre: "Mora", disponible: true },
-    { nombre: "Guanábana", disponible: true },
-    { nombre: "Fresa", disponible: true },
-    { nombre: "Curuba", disponible: true },
-    { nombre: "Feijoa", disponible: true }, // <-- Cambia a true/false para ocultar o mostrar
-    { nombre: "Chicle", disponible: true },
-    { nombre: "Oreo", disponible: true },
-    { nombre: "Chocolate", disponible: true },
-    { nombre: "Maracuyá", disponible: true },
-    { nombre: "Lulo", disponible: true },
-    { nombre: "Mango", disponible: true } 
-];
-
-const listaProductos = [
-    // POSTRES
-    { id: 1,  categoria: "Postres", nombre: "Cremitas", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ",
-      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_CREMITAS }] } },
-    { id: 2,  categoria: "Postres", nombre: "Gelatina Pequeña con LC", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/1a9Gy3hm-oAUamMZnlKJiHrB1oEX0DsTC" },
-    { id: 3,  categoria: "Postres", nombre: "Gelatina Pequeña sin LC", precio: 3000, imgPostre: "https://lh3.googleusercontent.com/d/1bpMy0TKOgvB7OQGXkE9AEbDJlcl7vNt4" },
-    { id: 4,  categoria: "Postres", nombre: "Arequipe Casero", precio: 5000, imgPostre: "https://statics.basalam.com/public/users/OxKxzw/01-04/8sZij0OXxnKSbfNHds1GNhqv4VbFhmS7h1TBzqmW4HElDG2X8P.jpg_256X256X70.jpg" },
-    { id: 5,  categoria: "Postres", nombre: "Arroz con Leche", precio: 7000, imgPostre: "https://centrolac.wordpress.com/wp-content/uploads/2014/02/post19-12.png?w=256&h=256" },
-    { id: 6,  categoria: "Postres", nombre: "Natilla", precio: 8000, imgPostre: "https://colmaiz.co/wp-content/uploads/2019/03/Producto-Preparacion-Natilla-1024x1024-1.png" },
-    { id: 7,  categoria: "Postres", nombre: "Gelatina Grande", precio: 8500, imgPostre: "https://lh3.googleusercontent.com/d/1rqIPaJrFMb1vIkPKRMWcEDkCoXNpJYAR" },
-    { id: 8,  categoria: "Postres", nombre: "Napoleón de Coco", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R" },
-    {
-    "id": 70,
-    "nombre": "Gelatina Tricolor",
-    "categoria": "Postres",
-    "precio": 10000,
-    "descripcion": "Postre tricolor que hace alusión al fútbol y al mundial con los colores de la bandera de Colombia.",
-    "imgPostre": "https://lh3.googleusercontent.com/d/1iLU0kOYGpMwiilLDJ7ib5aRBIZKKUuUS",
-  },
-    { id: 9,  categoria: "Postres", nombre: "Fresas con crema", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ"},
-    { id: 10, categoria: "Postres", nombre: "Fresas Achocolatadas", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv"},
-    { id: 11, categoria: "Postres", nombre: "Leche asada", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n" },
-    { id: 12, categoria: "Postres", nombre: "Mousse", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr" },
-    { id: 13, categoria: "Postres", nombre: "Cheesecakes", precio: 9500, imgPostre: "https://img.freepik.com/psd-premium/deliciosa-rebanada-pastel-queso-fresa-aislada-sobre-fondo-transparente_1290427-9886.jpg",
-      opciones: { grupos: [{ label: "Sabor del Cheesecake", tipo: "unico", requerido: true, opciones: ["Frutos Rojos", "Maracuyá", "Oreo", "Limón", 'arequipe'] }] } },
-    { id: 14, categoria: "Postres", nombre: "Pie de limón", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf" },
-    { id: 15, categoria: "Postres", nombre: "Tiramisú", precio: 9500, imgPostre: "https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh" },
-    { id: 16, categoria: "Postres", nombre: "Torta tres leches", precio: 9500, imgPostre: "https://i.etsystatic.com/64503388/r/il/9d0573/7804607087/il_300x300.7804607087_kb0z.jpg" },
-    { id: 17, categoria: "Postres", nombre: "Cuajada", precio: 9800, imgPostre: "https://lh3.googleusercontent.com/d/1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq" },
-    { id: 18, categoria: "Postres", nombre: "Merengón Coguano", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn",
-      opciones: {
-        grupos: [{ label: "Salsa (elige hasta 3)", tipo: "multiple", requerido: true, max: 3, opciones: SALSAS_MERENGON }],
-        adiciones: ADICIONES_BASE
-      }
-    },
-    { id: 19, categoria: "Postres", nombre: "Merengón Especial", precio: 15000, imgPostre: "https://corporativo.heladospopsy.com/wp-content/uploads/2023/07/Miniaturas-17.png",
-      opciones: {
-        grupos: [
-          { label: "Salsa (elige hasta 3)", tipo: "multiple", requerido: true, max: 3, opciones: SALSAS_MERENGON },
-          { label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }
-        ],
-        adiciones: ADICIONES_BASE
-      }
-    },
-    { id: 20, categoria: "Postres", nombre: "Combo milhoja + Americano", precio: 15000, imgPostre: "https://thumbs.dreamstime.com/b/trozos-de-delicioso-pastel-kiev-servido-con-caf%C3%A9-sobre-una-mesa-madera-un-trozo-torta-vibrante-dos-ruedas-claro-color-amarillo-y-393125447.jpg" },
-    
-    // DULCES
-    { id: 21, categoria: "Dulces", nombre: "Duraznos", precio: 8000, imgPostre: "https://www.shutterstock.com/image-photo/sliced-peaches-syrup-served-bowl-260nw-2681012909.jpg" },
-    { id: 22, categoria: "Dulces", nombre: "Brevas en almíbar", precio: 8000, imgPostre: "https://media.anmar.com.co/5145-home_default/brevas-en-almibar.jpg" },
-    { id: 23, categoria: "Dulces", nombre: "Brevas + arequipe", precio: 9000, imgPostre: "https://elrinconcolombiano.com/wp-content/uploads/2024/03/Brevas-con-arequipe-receta-500x500.jpg" },
-    { id: 24, categoria: "Dulces", nombre: "Mielmesabe", precio: 8000, imgPostre: "https://i.ytimg.com/vi/eoX2ZbKLLwU/sddefault.jpg" },
-    { id: 25, categoria: "Dulces", nombre: "Arequipe coco", precio: 9000, imgPostre: "https://www.recetasnestle.com.do/sites/default/files/srh_recipes/e52d42c50cefea31742607f58bb80381.png" },
-    { id: 26, categoria: "Dulces", nombre: "Natas", precio: 9000, imgPostre: "https://2.bp.blogspot.com/-SYAqJ7jyq8I/VVj1pGdgYDI/AAAAAAAACPo/kYUyWfT7vdw/s1600/Postre%2BNatas%2BSySPMS.jpg" },
-    { id: 27, categoria: "Dulces", nombre: "Papayuela", precio: 9000, imgPostre: "https://imagenes2.eltiempo.com/files/image_600_455/uploads/2023/05/27/64727c8bd05a9.jpeg" },
-    
-    // HELADOS
-    { id: 28, categoria: "Helados", nombre: "Chocofresa con helado", precio: 14000, imgPostre: "https://images.rappi.com/restaurants_logo/choco-logo-1-1622671201005.png",
-      opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
-    { id: 29, categoria: "Helados", nombre: "Cono 1 bolita", precio: 4200, imgPostre: "https://lamaletadecarla.com/wp-content/uploads/2020/02/helado-de-1-bola.png",
-      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
-    { id: 30, categoria: "Helados", nombre: "Cono 2 bolitas", precio: 6500, imgPostre: "https://lamaletadecarla.com/wp-content/uploads/2020/02/helado-de-2-bolas.png",
-      opciones: { grupos: [{ label: "Sabores (elige 2)", tipo: "multiple", requerido: true, max: 2, opciones: SABORES_HELADO }] } },
-    { id: 31, categoria: "Helados", nombre: "Casero (paleta)", precio: 5000, imgPostre: "https://images.vexels.com/media/users/3/200095/isolated/preview/26e6fae69e46a51d8b7b752df613d0fc-icono-de-trazo-de-paleta-de-helado.png",
-      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_PALETAS.filter(s => s.disponible).map(s => s.nombre) }] } },
-    { id: 32, categoria: "Helados", nombre: "Torta de Helado", precio: 8800, imgPostre: "https://www.laneveria.com.sv/wp-content/uploads/2021/07/2-porcion-helado.jpg",
-      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
-    
-    // PASABOCAS
-    { id: 33, categoria: "Pasabocas", nombre: "Fresa con chocolate", precio: 1200, imgPostre: "https://images.stockcake.com/public/7/5/f/75f513a5-78ba-45bf-b429-7731fb0944b8_medium/chocolate-dipped-pixel-stockcake.jpg" },
-    { id: 34, categoria: "Pasabocas", nombre: "Algodón pequeño", precio: 4200, imgPostre: "https://img.magnific.com/vector-gratis/composicion-realista-algodon-azucar-caramelo-realista-imagen-realista-muneca-humana-ilustracion-vector-palo-dulce_1284-30555.jpg" },
-    { id: 35, categoria: "Pasabocas", nombre: "Algodón grande", precio: 5200, imgPostre: "https://us.123rf.com/450wm/warat42/warat421712/warat42171200258/92574838-cotton-candy-in-plastic-cup-isolated-on-white-background-clipping-path.jpg" },
-    { id: 36, categoria: "Pasabocas", nombre: "Obleas", precio: 4500, imgPostre: "https://png.pngtree.com/png-vector/20240705/ourmid/pngtree-delicious-wafer-treats-a-guide-to-flavors-and-varieties-png-image_12952792.png" },
-    { id: 37, categoria: "Pasabocas", nombre: "Obleas Especial", precio: 5500, imgPostre: "https://www.shutterstock.com/image-photo/wafer-oblea-arequipe-blackberry-sauce-260nw-2030844932.jpg" },
-    { id: 38, categoria: "Pasabocas", nombre: "Pan de yuca", precio: 5000, imgPostre: "https://st4.depositphotos.com/7622586/22524/i/450/depositphotos_225243534-stock-photo-baked-colombian-cassava-bread-pandeyuca.jpg" },
-    { id: 39, categoria: "Pasabocas", nombre: "Merenguitos", precio: 6000, imgPostre: "https://kudocook.com/wp-content/uploads/2024/09/627cc40a1aef0.jpg" },
-    { id: 40, categoria: "Pasabocas", nombre: "Rollitos Cream Chantilly", precio: 6500, imgPostre: "https://media.mdzol.com/p/061bc71dbd5d09a232566965768c8623/adjuntos/373/imagenes/001/604/0001604192/760x0/smart/si-lo-deseas-puedes-jugar-los-rellenos-y-la-decoracion-los-canoncitos.jpg" },
-    { id: 41, categoria: "Pasabocas", nombre: "Rollitos Arequipe", precio: 7500, imgPostre: "https://media.mdzol.com/p/57810ebd0ac5b1cb41597f1e382090f7/adjuntos/373/imagenes/001/913/0001913445/760x0/smart/receta-canoncitos-dulce-leche.png" },
-    { id: 42, categoria: "Pasabocas", nombre: "Torta Amapola", precio: 8000, imgPostre: "https://recetasjudias.com/wp-content/uploads/2018/11/Bizcocho-con-Semillas-de-Amapola2.jpg" },
-    { id: 142,categoria: "Pasabocas", nombre: "Torta Chocolate", precio: 8000, imgPostre: "https://www.shutterstock.com/image-photo/piece-chocolate-cake-on-white-260nw-2632078161.jpg" },
-    { id: 43, categoria: "Pasabocas", nombre: "Milhoja", precio: 12000, imgPostre: "https://lh3.googleusercontent.com/d/1TyDC2l6wmKUMP7qXpiovnDFw9tTgALEZ=w469-ra?authuser=0" },
-    { id: 44, categoria: "Pasabocas", nombre: "Chicharrón Cuajada", precio: 13000, imgPostre: "https://static.wixstatic.com/media/5419d5_afbe98bf0e744f5c92cf6f9f33ef19fe~mv2.jpg" },
-    { id: 45, categoria: "Pasabocas", nombre: "Corazones hojaldre", precio: 13000, imgPostre: "https://www.shutterstock.com/image-vector/sugar-palmier-illustration-isolated-on-260nw-2232529437.jpg" },
-    { id: 46, categoria: "Pasabocas", nombre: "Panelitas de leche", precio: 13000, imgPostre: "https://www.shutterstock.com/image-photo/handcrafted-blocks-milk-panelita-cut-600w-2662257409.jpg" },
-    { id: 47, categoria: "Pasabocas", nombre: "Repollas (unidad)", precio: 8500, imgPostre: "https://static.wixstatic.com/media/b808f3_7dc8c85bb0c34953b2f6c78aabd5aa40~mv2.jpg" },
-    { id: 48, categoria: "Pasabocas", nombre: "Eclair", precio: 8500, imgPostre: "https://png.pngtree.com/png-vector/20241101/ourmid/pngtree-chocolate-eclair-pastry-filled-with-creamy-custard-png-image_14224677.png" },
-    { id: 49, categoria: "Pasabocas", nombre: "Tortas con Helado", precio: 12500, imgPostre: "https://i.pinimg.com/originals/9d/60/92/9d609240b92a21e8d2d3e6bc73dcab94.png",
-      opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
-    
-    // BEBIDAS FRÍAS
-    { id: 50, categoria: "Bebidas Frías", nombre: "Agua Pequeña", precio: 2000, imgPostre: "https://licoresmedellin.com/cdn/shop/files/agua-cristal-personal-300mlagua-cristal-personal-300mlcristallicores-medellin-2467011.jpg?width=1214" },
-    { id: 51, categoria: "Bebidas Frías", nombre: "Agua Grande", precio: 3000, imgPostre: "https://tomatelavida.com.co/wp-content/uploads/2023/03/Agua-Cristal-2023-P.png" },
-    { id: 52, categoria: "Bebidas Frías", nombre: "Agua con Gas", precio: 2000, imgPostre: "https://api.lalicorera.com/storage/productos/licores/83601997-agua-cristal-con-gas.webp" },
-    { id: 53, categoria: "Bebidas Frías", nombre: "Coca Cola", precio: 3000, imgPostre: "https://www.coca-cola.com/content/dam/onexp/hn/es/brands/coca-cola/ccso_botella500ml.png" },
-    { id: 54, categoria: "Bebidas Frías", nombre: "Jugo de Caja", precio: 2500, imgPostre: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpuCEz0-E8m0UWNWiuP2lOewiURiw1iAewsg&s" },
-    { id: 55, categoria: "Bebidas Frías", nombre: "Jugo Natural en Agua", precio: 7000, imgPostre: "https://w7.pngwing.com/pngs/928/391/png-transparent-three-assorted-flavor-shakes-orange-juice-smoothie-cocktail-milkshake-strawberry-milkshake-material-png-material-food-strawberries.png",
-      opciones: { grupos: [{ label: "Fruta", tipo: "unico", requerido: true, opciones: ["Mora","Maracuyá","Lulo","Guanábana","Mango","Fresa","Guayaba","Mezcla"] }] } },
-    { id: 56, categoria: "Bebidas Frías", nombre: "Jugo Natural en Leche", precio: 8000, imgPostre: "https://w7.pngwing.com/pngs/938/40/png-transparent-smoothie-milkshake-orange-juice-fruit-juice-food-recipe-nutrition-thumbnail.png",
-      opciones: { grupos: [{ label: "Fruta", tipo: "unico", requerido: true, opciones: ["Mora","Maracuyá","Lulo","Guanábana","Mango","Fresa","Guayaba","Mezcla"] }] } },
-    { id: 57, categoria: "Bebidas Frías", nombre: "Malteadas", precio: 9500, imgPostre: "https://static.vecteezy.com/system/resources/thumbnails/053/349/437/small/colorful-drink-trio-in-glassware-png.png",
-      opciones: { grupos: [{ label: "Sabor", tipo: "unico", requerido: true, opciones: ["Vainilla","Fresa","Chocolate","Mora","Oreo","Arequipe"] }] } },
-    { id: 58, categoria: "Bebidas Frías", nombre: "Hatsu", precio: 12000, imgPostre: "https://mercasur.com.co/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6ODQ4NjUsInB1ciI6ImJsb2JfaWQifX0=--67f1e5358012f66bde25b9d79f558106d38bed99/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJqcGciLCJyZXNpemVfdG9fZml0IjpbNjAwLDYwMF19LCJwdXIiOiJ2YXJpYXRpb24ifX0=--121ebfcd4293f99df590ac1a60ec2d53d6f75b42/7702090048643" },
-    { id: 59, categoria: "Bebidas Frías", nombre: "Coca Cola Zero", precio: 3500, imgPostre: "https://nocomasmasmentiras.org/wp-content/uploads/2023/10/Coca-cola-sin-azucar-540x510-c-default.jpg" },
-    { id: 72, categoria: "Bebidas Frías", nombre: "Hatsu cajita ", precio: 2500, imgPostre: "https://hatsu.co/wp-content/uploads/2023/11/PRODUCTOS-SITIO-WEB_24.png" },
-   { id: 75, categoria: "Bebidas Frias", nombre: "Milo frio", precio: 8000, imgPostre: "https://www.freepnglogos.com/uploads/logo-milo-png/logo-milo-long-john-silver-10.png" },
-   // BEBIDAS CALIENTES
-    { id: 60, categoria: "Bebidas Calientes", nombre: "Aromática", precio: 4800, imgPostre: "https://w7.pngwing.com/pngs/1007/585/png-transparent-green-tea-fizzy-drinks-ginger-tea-lemon-juice-tea-tea-cocktail-non-alcoholic-beverage-thumbnail.png" },
-    { id: 61, categoria: "Bebidas Calientes", nombre: "Americano", precio: 4500, imgPostre: "https://static.vecteezy.com/system/resources/thumbnails/069/564/525/small/hot-coffee-cup-with-saucer-and-coffee-beans-steam-rising-isolated-png.png" },
-    { id: 62, categoria: "Bebidas Calientes", nombre: "Espresso", precio: 4500, imgPostre: "https://www.shutterstock.com/image-photo/glass-espresso-coffee-splash-drop-600nw-2727091059.jpg" },
-    { id: 63, categoria: "Bebidas Calientes", nombre: "Milo", precio: 4800, imgPostre: "https://www.freepnglogos.com/uploads/logo-milo-png/logo-milo-long-john-silver-10.png" },
-    { id: 64, categoria: "Bebidas Calientes", nombre: "Cappuccino", precio: 4800, imgPostre: "https://photoshop-kopona.com/uploads/posts/2018-09/1537260549_im2.jpg" },
-    { id: 65, categoria: "Bebidas Calientes", nombre: "Latte", precio: 4800, imgPostre: "https://png.pngtree.com/png-vector/20250327/ourmid/pngtree-assorted-coffee-cups-including-cappuccino-cup-with-heart-png-image_15878581.png" },
-    { id: 66, categoria: "Bebidas Calientes", nombre: "Moka", precio: 4800, imgPostre: "https://img.magnific.com/psd-gratis/disfrute-lujosa-experiencia-chocolate-caliente-rico-crema-rematado-virutas-chocolate_191095-83178.jpg" },
-    { id: 67, categoria: "Bebidas Calientes", nombre: "Campesino", precio: 5500, imgPostre: "https://static.vecteezy.com/system/resources/previews/048/112/478/non_2x/cup-of-coffee-without-background-transparent-free-png.png" },
-    { id: 68, categoria: "Bebidas Calientes", nombre: "Affogato", precio: 8500, imgPostre: "https://thumbs.dreamstime.com/b/caf%C3%A9-affogato-crema-de-hielo-con-fondo-transparente-384065281.jpg",
-      opciones: { grupos: [{ label: "Sabor del helado", tipo: "unico", requerido: true, opciones: SABORES_HELADO }] } },
-    { id: 69, categoria: "Adiciones", nombre: "Adicion extra", precio: 3000, imgPostre: "https://cdn-icons-png.flaticon.com/512/1046/1046874.png",
-      opciones: { grupos: [{ label: "adicion", tipo: "unico", requerido: true, opciones: ADICIONES_BASE.map(a => a.nombre) }] } },
-  
-  {
-    "id": 71,
-    "nombre": "Bolsa de Café ",
-    "categoria": "Café",
-    "precio": 35000,
-    "descripcion": "Bolsa de café especial de 500g.",
-    "imgPostre": "https://cdn-icons-png.flaticon.com/128/9954/9954764.png",
-    "opciones": {
-      "grupos": [
-        {
-          "label": "Sabor / Perfil",
-          "tipo": "unico",
-          "requerido": true,
-          "opciones": ["Láctico", "otro", "miel"]
-        }
-      ],
-      "adiciones": []
-    }
-  }, 
-];
+// ── estado.js ──
 // ═══════════════════════════════════════════════════════════
 //  ESTADO
 // ═══════════════════════════════════════════════════════════
@@ -1074,6 +907,9 @@ let modalSelecciones = {}; // { grupoIndex: [opciones elegidas] }
 let modalAdiciones = [];   // [{ nombre, precio }]
 let modalNotaItem = "";
 
+
+
+// ── utilidades.js ──
 // ═══════════════════════════════════════════════════════════
 //  UTILIDADES
 // ═══════════════════════════════════════════════════════════
@@ -1112,6 +948,36 @@ function generarUUID() {
         return v.toString(16);
     });
 }
+
+
+// ── catalogo.js ──
+// ═══════════════════════════════════════════════════════════
+//  CATÁLOGO — el menú ahora vive en la hoja "menu" del backend,
+//  no en este archivo. Se descarga al abrir la app y queda
+//  guardado en caché para seguir funcionando sin internet.
+// ═══════════════════════════════════════════════════════════
+let listaProductos = [];
+
+async function cargarMenu() {
+    try {
+        const res = await fetch(`${API_URL}?accion=obtenerMenu`);
+        const data = await res.json();
+        if (data.ok && data.productos.length > 0) {
+            listaProductos = data.productos;
+            localStorage.setItem('menu_cache', JSON.stringify(listaProductos));
+            localStorage.setItem('menu_cache_ts', String(Date.now()));
+            return;
+        }
+    } catch { /* sin internet: usamos la caché de abajo */ }
+
+    const cache = localStorage.getItem('menu_cache');
+    if (cache) {
+        listaProductos = JSON.parse(cache);
+    } else {
+        showToast('⚠️ No se pudo cargar el menú. Revisa tu conexión.');
+    }
+}
+
 // ═══════════════════════════════════════════════════════════
 //  CATÁLOGO
 // ═══════════════════════════════════════════════════════════
@@ -1319,6 +1185,9 @@ function cerrarModalBtn() {
     modalProducto = null;
 }
 
+
+
+// ── comanda.js ──
 function calcularEventosDeEdicion(itemsBaseline, itemsActuales, autor) {
     const eventos = [];
     const baselinePorId = new Map(itemsBaseline.map(it => [it.lineId, it]));
@@ -1342,7 +1211,6 @@ function calcularEventosDeEdicion(itemsBaseline, itemsActuales, autor) {
 
     return eventos;
 }
-
 // ═══════════════════════════════════════════════════════════
 //  COMANDA
 // ═══════════════════════════════════════════════════════════
@@ -1498,7 +1366,7 @@ async function procesarOrden() {
 
     const payload = {
         local: miLocal,
-        codigo: miCodigo, 
+        codigo: miCodigo,
         accion: "nuevoPedido",
         id: nuevoPedido.id,
         mesa, mesero, total,
@@ -1513,7 +1381,7 @@ async function procesarOrden() {
         if (data.ok) {
     nuevoPedido.sincronizado = "SI";
     nuevoPedido.numeroPedido = data.numeroPedido;
-    nuevoPedido.eventos = data.eventos; // ← agregar esta línea
+    nuevoPedido.eventos = data.eventos;
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
     showToast(`✅ Mesa ${mesa} en la nube.`);
     renderHistorial();
@@ -1536,14 +1404,12 @@ async function sincronizarEventosPendientes() {
         try {
             const res = await fetch(API_URL, {
                 method: "POST", redirect: "follow",
-                body: JSON.stringify({
-                    accion: "registrarEventos", id: pedido.id, autor: pedido.mesero,
-                    codigo: miCodigo, local: pedido.local,
-                    eventos: pedido.eventosPendientes
-                })
+                body: JSON.stringify({ accion: "registrarEventos", id: pedido.id, autor: pedido.mesero, codigo: miCodigo, local: pedido.local, eventos: pedido.eventosPendientes })
             });
             const data = await res.json();
             if (data.ok) {
+                // El servidor manda: puede traer también eventos de otro
+                // dispositivo que llegaron mientras tanto — se fusionan solos.
                 pedido.itemsRaw = data.itemsRaw;
                 pedido.items = data.items;
                 pedido.total = data.total;
@@ -1574,6 +1440,9 @@ async function toggleItemListo(pedidoId, lineId, listo) {
 }
 
 
+
+
+// ── cocina.js ──
 // ═══════════════════════════════════════════════════════════
 //  MONITOR
 // ═══════════════════════════════════════════════════════════
@@ -1624,7 +1493,7 @@ function formatearHora(ref) {
     return fecha.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
 }
 
-function siguienteNumeroPedido() {
+function siguienteNumeroPedidoLocal() {
     ultimoNumeroPedido += 1;
     localStorage.setItem('ultimoNumeroPedido', String(ultimoNumeroPedido));
     return ultimoNumeroPedido;
@@ -1639,12 +1508,6 @@ function reconstruirInicioDesdeFechaHora(pedido) {
     if (!fechaObj || Number.isNaN(fechaObj.getTime())) return null;
     if (!horaObj  || Number.isNaN(horaObj.getTime()))  return null;
 
-    // Usamos los componentes UTC (no los locales) porque tanto "fecha" como
-    // "hora" llegan desde Sheets como strings ISO que ya representan la hora
-    // de Bogotá "disfrazada" de UTC. Si usáramos getHours()/getDate() (que
-    // dependen del reloj del dispositivo/tablet), el resultado cambia según
-    // cómo esté configurada la zona horaria de cada aparato — eso era
-    // exactamente lo que estaba pasando.
     return Date.UTC(
         fechaObj.getUTCFullYear(), fechaObj.getUTCMonth(), fechaObj.getUTCDate(),
         horaObj.getUTCHours(), horaObj.getUTCMinutes(), horaObj.getUTCSeconds()
@@ -1868,6 +1731,15 @@ async function sincronizarEstado(id, estado) {
     } catch { /* offline: sincronizarEstadosPendientes() reintentará */ }
 }
 
+async function sincronizarEstadosPendientes() {
+    const pendientes = historialPedidos.filter(p =>
+        p.estadoSincronizado !== 'SI' && p.sincronizado === 'SI' && !p.enviando
+    );
+    for (const pedido of pendientes) {
+        await sincronizarEstado(pedido.id, pedido.estado);
+    }
+}
+
 // Archivar
 async function archivarPedido(id) {
     if (!confirm("¿Archivar este pedido? Desaparecerá del monitor (queda en Sheets).")) return;
@@ -1945,6 +1817,9 @@ function construirVistaItems(pedido) {
     // Fallback para pedidos muy antiguos, sin historial de eventos aún.
     return pedido.items.split(', ').filter(Boolean).map(it => ({ html: it, estilo: '', eliminado: false, lineId: null, listo: false }));
 }
+
+
+// ── sync.js ──
 // ═══════════════════════════════════════════════════════════
 //  SINCRONIZACIÓN CON SHEETS
 // ═══════════════════════════════════════════════════════════
@@ -1959,11 +1834,11 @@ async function sincronizarPendientes() {
                     accion: "nuevoPedido",
                     id: pedido.id,
                     codigo: miCodigo,
-                    local: pedido.local,
                     mesa: pedido.mesa, mesero: pedido.mesero,
                     total: pedido.total, items: pedido.items,
                     itemsRaw: JSON.stringify(pedido.itemsRaw || []),
-                    notas: pedido.notas, metodoPago: pedido.metodoPago
+                    notas: pedido.notas, metodoPago: pedido.metodoPago,
+                    local: pedido.local
                 })
             });
             const data = await res.json();
@@ -1977,15 +1852,6 @@ async function sincronizarPendientes() {
             break;
         }
         pedido.enviando = false;
-    }
-}
-
-async function sincronizarEstadosPendientes() {
-    const pendientes = historialPedidos.filter(p =>
-        p.estadoSincronizado !== 'SI' && p.sincronizado === 'SI' && !p.enviando
-    );
-    for (const pedido of pendientes) {
-        await sincronizarEstado(pedido.id, pedido.estado);
     }
 }
 
@@ -2056,9 +1922,6 @@ async function cargarPedidos() {
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-//  POLLING AUTOMÁTICO
-// ═══════════════════════════════════════════════════════════
 function iniciarPolling() {
     if (pollingTimer) clearInterval(pollingTimer);
     pollingTimer = setInterval(() => {
@@ -2066,6 +1929,8 @@ function iniciarPolling() {
     }, POLLING_MS);
 }
 
+
+// ── admin.js ──
 function obtenerResumenDia() {
     const pagados = historialPedidos.filter(p => p.estado === 'Pagado');
     const pendientes = historialPedidos.filter(p => p.estado !== 'Pagado');
@@ -2189,11 +2054,15 @@ function cerrarResumenDia(event) {
 function cerrarResumenDiaBtn() {
     document.getElementById('summary-overlay').classList.remove('open');
 }
+
+
+// ── init.js ──
 // ═══════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════
-function iniciarApp() {
+async function iniciarApp() {
     aplicarTemaLocal(miLocal);
+    await cargarMenu();
     initCategorias();
     renderGrid();
     guardarYRender();
@@ -2214,121 +2083,7 @@ if (miCodigo && miLocal) {
         iniciarApp();
     });
 }
+
 </script>
-    <!-- ================= SCRIPT DE PRUEBA: ALERTAS DE NUEVOS PEDIDOS ================= -->
-<script>
-(function() {
-    // Registro interno para no repetir alertas de pedidos ya procesados
-    let pedidosConocidos = new Set();
-    let esPrimeraCarga = true;
-
-    // 1. Vibración nativa
-    function vibrar() {
-        if (navigator.vibrate) {
-            navigator.vibrate([300, 100, 300]);
-        }
-    }
-
-    // 2. Alarma de audio (Beep digital dinámico)
-    function reproducirAlarma() {
-        try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Nota 1
-            const osc1 = audioCtx.createOscillator();
-            const gain1 = audioCtx.createGain();
-            osc1.connect(gain1);
-            gain1.connect(audioCtx.destination);
-            osc1.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Re5
-            gain1.gain.setValueAtTime(0.08, audioCtx.currentTime);
-            osc1.start();
-            osc1.stop(audioCtx.currentTime + 0.15);
-
-            // Nota 2 (más aguda, suena un poco después)
-            setTimeout(() => {
-                const osc2 = audioCtx.createOscillator();
-                const gain2 = audioCtx.createGain();
-                osc2.connect(gain2);
-                gain2.connect(audioCtx.destination);
-                osc2.frequency.setValueAtTime(880, audioCtx.currentTime); // La5
-                gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                osc2.start();
-                osc2.stop(audioCtx.currentTime + 0.25);
-            }, 180);
-        } catch (e) {
-            console.warn("Audio bloqueado. Haz un clic en cualquier parte de la pantalla para activarlo.");
-        }
-    }
-
-    // 3. Sintetizador de voz (Text-to-Speech)
-    function notificarPorVoz(mesero, mesa) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Cancela lecturas anteriores en cola
-
-            const nombreMesero = (mesero && mesero !== '—' && mesero.trim() !== '') ? mesero : '';
-            const numeroMesa = mesa ? mesa : '';
-            
-            let frase = "Nuevo pedido. ";
-            if (nombreMesero && numeroMesa) {
-                frase += `Del mesero ${nombreMesero} en la ${numeroMesa}.`;
-            } else if (numeroMesa) {
-                frase += `Para la ${numeroMesa}.`;
-            } else if (nombreMesero) {
-                frase += `Del mesero ${nombreMesero}.`;
-            }
-
-            const locucion = new SpeechSynthesisUtterance(frase);
-            locucion.lang = 'es-ES';
-            locucion.rate = 1.0; 
-            window.speechSynthesis.speak(locucion);
-        }
-    }
-
-    // 4. Interceptor "invisible" de peticiones de red
-    const originalFetch = window.fetch;
-    window.fetch = async function(...args) {
-        const respuesta = await originalFetch.apply(this, args);
-        const url = args[0] ? args[0].toString() : '';
-
-        // Si la petición es para cargar pedidos, la analizamos en segundo plano
-        if (url.includes('cargarPedidos') || url.includes('pedidos')) {
-            try {
-                const clon = respuesta.clone();
-                const data = await clon.json();
-
-                if (data && Array.isArray(data.pedidos)) {
-                    let hayNuevos = false;
-                    let ultimoPedidoNuevo = null;
-
-                    data.pedidos.forEach(p => {
-                        if (!pedidosConocidos.has(p.id)) {
-                            pedidosConocidos.add(p.id);
-                            if (!esPrimeraCarga) {
-                                hayNuevos = true;
-                                ultimoPedidoNuevo = p;
-                            }
-                        }
-                    });
-
-                    if (esPrimeraCarga) {
-                        esPrimeraCarga = false;
-                        console.log("🔔 Interceptor de alarmas listo y vigilando nuevos pedidos...");
-                    }
-
-                    if (hayNuevos && ultimoPedidoNuevo) {
-                        vibrar();
-                        reproducirAlarma();
-                        notificarPorVoz(ultimoPedidoNuevo.mesero, ultimoPedidoNuevo.mesa);
-                    }
-                }
-            } catch (err) {
-                // Falla silenciosa para evitar romper la app si la respuesta no es JSON
-            }
-        }
-        return respuesta;
-    };
-})();
-</script>
-<!-- ================= FIN SCRIPT DE PRUEBA ================= -->
 </body>
 </html>

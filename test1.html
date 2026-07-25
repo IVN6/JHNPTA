@@ -781,7 +781,11 @@
 //  CONFIG
 // ═══════════════════════════════════════════════════════════
 const API_URL = "https://script.google.com/macros/s/AKfycbyTgsY2YYD5IZCmDXC_QjDTdFntpTG11VQrQbukrb19xSPjIx9F3JT1B5JOqO7jtU0x/exec";
-const POLLING_MS = 25000; // actualización automática del monitor cada 25s
+// 12s en vez de 25s: se siente mucho más ágil sin acercarse a la cuota
+// diaria de llamadas de Apps Script. El verdadero "tiempo real" (sin
+// sondeo, empuje instantáneo) solo es posible migrando a algo como
+// Supabase Realtime — esto es lo mejor que da esta plataforma por ahora.
+const POLLING_MS = 12000;
 let metodoPagoActual = "Por cobrar";
 let pollingTimer = null;
  
@@ -878,6 +882,7 @@ function mostrarPromptCodigo(callback) {
     const intentar = async () => {
         const val = input.value.trim().toLowerCase();
         if (!val) return;
+        desbloquearAudio();
         const btn = document.getElementById('codigo-btn');
         btn.disabled = true;
         const resultado = await intentarLogin(val);
@@ -978,6 +983,11 @@ let modalNotaItem = "";
 // en vez de a la comanda nueva.
 let edicionEnCurso = null; // { pedidoId, version, mesa, mesero, notas, baseline, items }
 let destinoActivo = null;
+ 
+// Evita que sonemos la alarma de cocina para pedidos que YA existían
+// cuando la app apenas está cargando — solo suena para pedidos que
+// llegan DESPUÉS de la primera carga.
+let primerCargaCompleta = false;
  
  
  
@@ -1117,12 +1127,12 @@ function tocaProducto(id) {
 function agregarItemSimple(prod) {
     const enEdicion = destinoActivo === 'edicion' && edicionEnCurso;
     const destino = enEdicion ? edicionEnCurso.items : comandaActiva;
-    const existente = destino.find(i => i.id === prod.id && !i.specs && !i.notaItem);
-    if (existente) {
-        existente.cantidad++;
-    } else {
-        destino.push({ ...prod, lineId: generarUUID(), cantidad: 1, specs: '', adicionesSelec: [], notaItem: '', precioFinal: prod.precio });
-    }
+    // Cada toque es su propia línea (no se fusiona con una igual que ya
+    // esté en la lista) — así cada unidad puede llevar su propia nota,
+    // igual que en una comanda de papel real. Si de verdad son idénticas
+    // y no hace falta diferenciarlas, el mesero puede usar el botón "+"
+    // de esa línea para subir la cantidad en vez de tocar el producto otra vez.
+    destino.push({ ...prod, lineId: generarUUID(), cantidad: 1, specs: '', adicionesSelec: [], notaItem: '', precioFinal: prod.precio });
     if (enEdicion) { renderBarraEdicion(); } else { guardarYRender(); }
     showToast(`✅ ${prod.nombre} agregado`);
 }
@@ -1302,6 +1312,18 @@ function modificarCantidad(idx, cambio) {
     if (comandaActiva[idx].cantidad <= 0) comandaActiva.splice(idx, 1);
     guardarYRender();
 }
+function toggleNotaLinea(idx) {
+    const caja = document.getElementById('nota-caja-' + idx);
+    if (!caja) return;
+    const abierta = caja.style.display !== 'none';
+    caja.style.display = abierta ? 'none' : 'block';
+    if (!abierta) caja.querySelector('input')?.focus();
+}
+function actualizarNotaItemComanda(idx, valor) {
+    if (!comandaActiva[idx]) return;
+    comandaActiva[idx].notaItem = valor;
+    localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
+}
 function eliminarItem(idx) {
     comandaActiva.splice(idx, 1);
     guardarYRender();
@@ -1342,7 +1364,13 @@ function guardarYRender() {
                 <button onclick="modificarCantidad(${idx}, -1)">−</button>
                 <span class="item-cantidad">${item.cantidad}</span>
                 <button onclick="modificarCantidad(${idx}, 1)">+</button>
+                <button onclick="toggleNotaLinea(${idx})" title="Agregar nota">📝</button>
                 <button class="btn-eliminar-item" onclick="eliminarItem(${idx})">🗑️</button>
+            </div>
+            <div class="item-nota-caja" id="nota-caja-${idx}" style="display:none; margin-top:8px;">
+                <input type="text" value="${(item.notaItem || '').replace(/"/g, '&quot;')}" placeholder="Nota para esta unidad..."
+                    class="campo-nota-orden" style="margin-top:0;"
+                    oninput="actualizarNotaItemComanda(${idx}, this.value)" onblur="guardarYRender()">
             </div>
         </div>`;
     }).join('');
@@ -1563,7 +1591,13 @@ function abrirPanelEdicion() {
                     <button onclick="modificarCantidadEdicion(${idx}, -1)">−</button>
                     <span class="item-cantidad">${item.cantidad}</span>
                     <button onclick="modificarCantidadEdicion(${idx}, 1)">+</button>
+                    <button onclick="toggleNotaLineaEdicion(${idx})" title="Agregar nota">📝</button>
                     <button class="btn-eliminar-item" onclick="eliminarItemEdicion(${idx})">🗑️</button>
+                </div>
+                <div class="item-nota-caja" id="nota-caja-edicion-${idx}" style="display:none; margin-top:8px;">
+                    <input type="text" value="${(item.notaItem || '').replace(/"/g, '&quot;')}" placeholder="Nota para esta unidad..."
+                        class="campo-nota-orden" style="margin-top:0;"
+                        oninput="actualizarNotaItemEdicion(${idx}, this.value)" onblur="abrirPanelEdicion()">
                 </div>
             </div>`;
         }).join('');
@@ -1592,6 +1626,17 @@ function eliminarItemEdicion(idx) {
  
 function actualizarNotaEdicion(valor) {
     if (edicionEnCurso) edicionEnCurso.notas = valor;
+}
+function toggleNotaLineaEdicion(idx) {
+    const caja = document.getElementById('nota-caja-edicion-' + idx);
+    if (!caja) return;
+    const abierta = caja.style.display !== 'none';
+    caja.style.display = abierta ? 'none' : 'block';
+    if (!abierta) caja.querySelector('input')?.focus();
+}
+function actualizarNotaItemEdicion(idx, valor) {
+    if (!edicionEnCurso || !edicionEnCurso.items[idx]) return;
+    edicionEnCurso.items[idx].notaItem = valor;
 }
 function actualizarMesaEdicion(valor) {
     if (edicionEnCurso) { edicionEnCurso.mesa = valor; renderBarraEdicion(); }
@@ -1650,10 +1695,8 @@ async function guardarEdicionPedido() {
  
 function cancelarEdicionPedido() {
     if (!edicionEnCurso) return;
-    const huboCambios = JSON.stringify(edicionEnCurso.items) !== JSON.stringify(edicionEnCurso.baseline);
-    if (huboCambios && !confirm('¿Descartar los cambios de esta edición?')) return;
     finalizarEdicion();
-    showToast('Edición cancelada.');
+    showToast('Edición cancelada. No se guardó nada.');
 }
  
  
@@ -1849,6 +1892,7 @@ function avanzarEstado(id) {
             return;
         }
         pedido.estado = siguiente;
+        detenerAlarmaPedido(id);
  
         if (siguiente === 'Listo') {
             pedido.horaFin = Date.now();
@@ -1999,6 +2043,71 @@ function construirVistaItems(pedido) {
     return pedido.items.split(', ').filter(Boolean).map(it => ({ html: it, estilo: '', eliminado: false, lineId: null, listo: false }));
 }
  
+// ═══════════════════════════════════════════════════════════
+//  ALARMA DE COCINA — suena/vibra/anuncia cuando llega un pedido
+//  nuevo, y no para hasta que alguien le da "Preparar". Todo esto
+//  vive solo en el frontend, no depende de nada del backend.
+// ═══════════════════════════════════════════════════════════
+let pedidosSonando = new Set();
+let audioCtx = null;
+let alarmaIntervalo = null;
+ 
+// Los navegadores bloquean sonido/voz hasta que hay un gesto real del
+// usuario (un tap). Se llama una vez, en el botón "Entrar" del login.
+function desbloquearAudio() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) { /* navegador sin soporte: la app sigue funcionando igual, solo sin sonido */ }
+}
+ 
+function reproducirBeep() {
+    try {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.28, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+    } catch (e) { /* nunca debe romper la app por un problema de audio */ }
+}
+ 
+function anunciarPedidoNuevo(pedido) {
+    try {
+        if (!('speechSynthesis' in window)) return;
+        const quien = pedido.mesero && pedido.mesero !== '—' ? pedido.mesero : 'un mesero';
+        const utter = new SpeechSynthesisUtterance(`Nuevo pedido de ${quien}, ${pedido.mesa}`);
+        utter.lang = 'es-CO';
+        speechSynthesis.speak(utter);
+    } catch (e) { /* si no hay voz disponible, el beep y la vibración siguen sonando igual */ }
+}
+ 
+function iniciarAlarmaPedido(pedido) {
+    pedidosSonando.add(pedido.id);
+    anunciarPedidoNuevo(pedido);
+    if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+    reproducirBeep();
+    if (!alarmaIntervalo) {
+        alarmaIntervalo = setInterval(() => {
+            if (pedidosSonando.size === 0) {
+                clearInterval(alarmaIntervalo);
+                alarmaIntervalo = null;
+                return;
+            }
+            reproducirBeep();
+            if (navigator.vibrate) navigator.vibrate(300);
+        }, 4000);
+    }
+}
+ 
+function detenerAlarmaPedido(id) {
+    pedidosSonando.delete(id);
+}
+ 
  
 // ── sync.js ──
 // ═══════════════════════════════════════════════════════════
@@ -2055,6 +2164,7 @@ async function cargarPedidos() {
  
             deLaNube.forEach(p => {
                 const localMatch = historialPedidos.find(lp => String(lp.id) === String(p.id));
+                const esNuevoParaEsteDispositivo = !localMatch;
  
                 if (!p.horaLocal && p.hora) p.horaLocal = p.hora;
                 p.sincronizado = "SI";
@@ -2089,11 +2199,16 @@ async function cargarPedidos() {
  
                 p.estadoSincronizado = localPendiente ? localMatch.estadoSincronizado : 'SI';
                 p.itemsSincronizado = itemsPendientes ? 'NO' : 'SI';
+ 
+                if (primerCargaCompleta && esNuevoParaEsteDispositivo && p.estado === 'Pendiente') {
+                    iniciarAlarmaPedido(p);
+                }
             });
  
             historialPedidos = [...noSync, ...deLaNube].sort((a, b) => (a.creadoEn || 0) - (b.creadoEn || 0));
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             renderHistorial();
+            primerCargaCompleta = true;
         }
     } catch (error) {
         console.error("Error cargando pedidos, usando modo offline:", error);

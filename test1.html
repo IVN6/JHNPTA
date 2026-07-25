@@ -2018,29 +2018,112 @@ function construirVistaItems(pedido) {
         const porLinea = {};
         [...pedido.eventos].sort((a, b) => a.ts - b.ts).forEach(ev => {
             if (ev.tipo === 'item_agregado' && ev.item?.lineId) {
-                porLinea[ev.item.lineId] = { item: { ...ev.item }, eliminado: false, agregadoTs: ev.ts };
+                // Si viene una nota anterior, la guardamos en el historial de notas
+                const historial = ev.item.notaItem ? [{ nota: ev.item.notaItem, activa: true }] : [];
+                porLinea[ev.item.lineId] = { 
+                    item: { ...ev.item, historialNotas: historial }, 
+                    eliminado: false, 
+                    agregadoTs: ev.ts 
+                };
             } else if (ev.tipo === 'item_modificado' && ev.item?.lineId && porLinea[ev.item.lineId]) {
-                porLinea[ev.item.lineId].item = { ...ev.item };
+                const itemPrevio = porLinea[ev.item.lineId].item;
+                let historial = itemPrevio.historialNotas || [];
+
+                // Si la nota cambió al editar, desactivamos la nota anterior (queda tachada)
+                if (ev.item.notaItem && ev.item.notaItem !== itemPrevio.notaItem) {
+                    historial = historial.map(n => ({ ...n, activa: false }));
+                    historial.push({ nota: ev.item.notaItem, activa: true });
+                }
+
+                porLinea[ev.item.lineId].item = { ...ev.item, historialNotas: historial };
             } else if (ev.tipo === 'item_eliminado' && ev.lineId && porLinea[ev.lineId]) {
                 porLinea[ev.lineId].eliminado = true;
             } else if (ev.tipo === 'item_listo' && ev.lineId && porLinea[ev.lineId]) {
                 porLinea[ev.lineId].item.listo = !!ev.listo;
             }
         });
+
         return Object.values(porLinea).map(x => {
             const esNuevo = x.agregadoTs > (pedido.creadoEn || 0) + 2000;
             let estilo = '';
             if (x.eliminado) estilo = 'text-decoration:line-through; opacity:0.45;';
             else if (esNuevo) estilo = 'color:var(--primary); font-weight:700;';
+
             const it = x.item;
-            let linea = `${it.cantidad}x ${it.nombre}`;
-            if (it.specs) linea += ` [${it.specs}]`;
-            if (it.notaItem) linea += ` (${it.notaItem})`;
+            let linea = `<strong>${it.cantidad}x</strong> ${it.nombre}`;
+            if (it.specs) linea += ` <span style="font-size:0.8rem; opacity:0.8;">[${it.specs}]</span>`;
+
+            // Renglón separado para las notas
+            let htmlNotas = '';
+            
+            // Si el ítem tiene un historial de ediciones de notas
+            if (it.historialNotas && it.historialNotas.length > 0) {
+                it.historialNotas.forEach(n => {
+                    if (n.activa && !x.eliminado) {
+                        htmlNotas += `<div style="color: #dc2626; font-weight: 700; font-size: 0.82rem; margin-top: 2px;">📌 Nota: ${n.nota}</div>`;
+                    } else {
+                        // Nota anterior o eliminada (Historial humano)
+                        htmlNotas += `<div style="color: #9ca3af; text-decoration: line-through; font-size: 0.78rem; margin-top: 1px;">❌ Nota anterior: ${n.nota}</div>`;
+                    }
+                });
+            } else if (it.notaItem) {
+                // Caso simple sin historial
+                const colorNota = x.eliminado ? '#9ca3af' : '#dc2626';
+                const estiloTachado = x.eliminado ? 'text-decoration: line-through;' : '';
+                htmlNotas = `<div style="color: ${colorNota}; font-weight: 700; font-size: 0.82rem; margin-top: 2px; ${estiloTachado}">📌 Nota: ${it.notaItem}</div>`;
+            }
+
+            linea += htmlNotas;
+
             return { html: linea, estilo, eliminado: x.eliminado, lineId: it.lineId, listo: !!it.listo };
         });
     }
-    // Fallback para pedidos muy antiguos, sin historial de eventos aún.
+
+    // Fallback para pedidos antiguos
     return pedido.items.split(', ').filter(Boolean).map(it => ({ html: it, estilo: '', eliminado: false, lineId: null, listo: false }));
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANUNCIAR EN VOZ ALTA (Mesa + Ítems + Notas)
+// ═══════════════════════════════════════════════════════════
+function anunciarPedidoNuevo(pedido) {
+    try {
+        if (!('speechSynthesis' in window)) return;
+        
+        const quien = pedido.mesero && pedido.mesero !== '—' ? pedido.mesero : 'un mesero';
+        let textoVoz = `Nuevo pedido de ${quien}, ${pedido.mesa}. `;
+
+        // Si tenemos los ítems en eventos o en el pedido, los leemos con sus notas
+        const vistaItems = construirVistaItems(pedido);
+        const itemsParaLeer = vistaItems.filter(i => !i.eliminado);
+
+        if (itemsParaLeer.length > 0) {
+            textoVoz += `Contiene: `;
+            
+            // Extraemos texto limpio para la voz (sin tags HTML)
+            itemsParaLeer.forEach(i => {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = i.html;
+                
+                // Limpiamos emojis y el prefijo "Nota:" para que suene más natural
+                let textoLimpio = tempDiv.innerText || tempDiv.textContent || '';
+                textoLimpio = textoLimpio.replace(/📌|❌/g, '').replace('Nota:', 'con nota:');
+                
+                textoVoz += `${textoLimpio}. `;
+            });
+        }
+
+        if (pedido.notas) {
+            textoVoz += `Nota general del pedido: ${pedido.notas}.`;
+        }
+
+        const utter = new SpeechSynthesisUtterance(textoVoz);
+        utter.lang = 'es-CO';
+        utter.rate = 0.95; // Velocidad ligeramente pausada para que en cocina se entienda claro
+        speechSynthesis.speak(utter);
+    } catch (e) { 
+        /* Si falla el sintetizador, los beeps de alerta siguen funcionando */
+    }
 }
  
 // ═══════════════════════════════════════════════════════════
@@ -2076,16 +2159,119 @@ function reproducirBeep() {
     } catch (e) { /* nunca debe romper la app por un problema de audio */ }
 }
  
+function construirVistaItems(pedido) {
+    if (Array.isArray(pedido.eventos) && pedido.eventos.length > 0) {
+        const porLinea = {};
+        [...pedido.eventos].sort((a, b) => a.ts - b.ts).forEach(ev => {
+            if (ev.tipo === 'item_agregado' && ev.item?.lineId) {
+                // Si viene una nota anterior, la guardamos en el historial de notas
+                const historial = ev.item.notaItem ? [{ nota: ev.item.notaItem, activa: true }] : [];
+                porLinea[ev.item.lineId] = { 
+                    item: { ...ev.item, historialNotas: historial }, 
+                    eliminado: false, 
+                    agregadoTs: ev.ts 
+                };
+            } else if (ev.tipo === 'item_modificado' && ev.item?.lineId && porLinea[ev.item.lineId]) {
+                const itemPrevio = porLinea[ev.item.lineId].item;
+                let historial = itemPrevio.historialNotas || [];
+
+                // Si la nota cambió al editar, desactivamos la nota anterior (queda tachada)
+                if (ev.item.notaItem && ev.item.notaItem !== itemPrevio.notaItem) {
+                    historial = historial.map(n => ({ ...n, activa: false }));
+                    historial.push({ nota: ev.item.notaItem, activa: true });
+                }
+
+                porLinea[ev.item.lineId].item = { ...ev.item, historialNotas: historial };
+            } else if (ev.tipo === 'item_eliminado' && ev.lineId && porLinea[ev.lineId]) {
+                porLinea[ev.lineId].eliminado = true;
+            } else if (ev.tipo === 'item_listo' && ev.lineId && porLinea[ev.lineId]) {
+                porLinea[ev.lineId].item.listo = !!ev.listo;
+            }
+        });
+
+        return Object.values(porLinea).map(x => {
+            const esNuevo = x.agregadoTs > (pedido.creadoEn || 0) + 2000;
+            let estilo = '';
+            if (x.eliminado) estilo = 'text-decoration:line-through; opacity:0.45;';
+            else if (esNuevo) estilo = 'color:var(--primary); font-weight:700;';
+
+            const it = x.item;
+            let linea = `<strong>${it.cantidad}x</strong> ${it.nombre}`;
+            if (it.specs) linea += ` <span style="font-size:0.8rem; opacity:0.8;">[${it.specs}]</span>`;
+
+            // Renglón separado para las notas
+            let htmlNotas = '';
+            
+            // Si el ítem tiene un historial de ediciones de notas
+            if (it.historialNotas && it.historialNotas.length > 0) {
+                it.historialNotas.forEach(n => {
+                    if (n.activa && !x.eliminado) {
+                        htmlNotas += `<div style="color: #dc2626; font-weight: 700; font-size: 0.82rem; margin-top: 2px;">📌 Nota: ${n.nota}</div>`;
+                    } else {
+                        // Nota anterior o eliminada (Historial humano)
+                        htmlNotas += `<div style="color: #9ca3af; text-decoration: line-through; font-size: 0.78rem; margin-top: 1px;">❌ Nota anterior: ${n.nota}</div>`;
+                    }
+                });
+            } else if (it.notaItem) {
+                // Caso simple sin historial
+                const colorNota = x.eliminado ? '#9ca3af' : '#dc2626';
+                const estiloTachado = x.eliminado ? 'text-decoration: line-through;' : '';
+                htmlNotas = `<div style="color: ${colorNota}; font-weight: 700; font-size: 0.82rem; margin-top: 2px; ${estiloTachado}">📌 Nota: ${it.notaItem}</div>`;
+            }
+
+            linea += htmlNotas;
+
+            return { html: linea, estilo, eliminado: x.eliminado, lineId: it.lineId, listo: !!it.listo };
+        });
+    }
+
+    // Fallback para pedidos antiguos
+    return pedido.items.split(', ').filter(Boolean).map(it => ({ html: it, estilo: '', eliminado: false, lineId: null, listo: false }));
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANUNCIAR EN VOZ ALTA (Mesa + Ítems + Notas)
+// ═══════════════════════════════════════════════════════════
 function anunciarPedidoNuevo(pedido) {
     try {
         if (!('speechSynthesis' in window)) return;
+        
         const quien = pedido.mesero && pedido.mesero !== '—' ? pedido.mesero : 'un mesero';
-        const utter = new SpeechSynthesisUtterance(`Nuevo pedido de ${quien}, ${pedido.mesa}`);
+        let textoVoz = `Nuevo pedido de ${quien}, ${pedido.mesa}. `;
+
+        // Si tenemos los ítems en eventos o en el pedido, los leemos con sus notas
+        const vistaItems = construirVistaItems(pedido);
+        const itemsParaLeer = vistaItems.filter(i => !i.eliminado);
+
+        if (itemsParaLeer.length > 0) {
+            textoVoz += `Contiene: `;
+            
+            // Extraemos texto limpio para la voz (sin tags HTML)
+            itemsParaLeer.forEach(i => {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = i.html;
+                
+                // Limpiamos emojis y el prefijo "Nota:" para que suene más natural
+                let textoLimpio = tempDiv.innerText || tempDiv.textContent || '';
+                textoLimpio = textoLimpio.replace(/📌|❌/g, '').replace('Nota:', 'con nota:');
+                
+                textoVoz += `${textoLimpio}. `;
+            });
+        }
+
+        if (pedido.notas) {
+            textoVoz += `Nota general del pedido: ${pedido.notas}.`;
+        }
+
+        const utter = new SpeechSynthesisUtterance(textoVoz);
         utter.lang = 'es-CO';
+        utter.rate = 0.95; // Velocidad ligeramente pausada para que en cocina se entienda claro
         speechSynthesis.speak(utter);
-    } catch (e) { /* si no hay voz disponible, el beep y la vibración siguen sonando igual */ }
+    } catch (e) { 
+        /* Si falla el sintetizador, los beeps de alerta siguen funcionando */
+    }
 }
- 
+
 function iniciarAlarmaPedido(pedido) {
     pedidosSonando.add(pedido.id);
     anunciarPedidoNuevo(pedido);

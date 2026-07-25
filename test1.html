@@ -31,7 +31,7 @@
             overflow: hidden;
             user-select: none;
         }
-
+ 
         /* ── NAV MÓVIL ── */
         .mobile-nav {
             display: flex;
@@ -64,7 +64,7 @@
             border-radius: 10px; font-weight: 700;
             display: none;
         }
-
+ 
         /* ── LAYOUT ── */
         .app-container {
             display: flex; flex: 1;
@@ -78,7 +78,7 @@
             overflow: hidden;
         }
         .section-view.active { display: flex; }
-
+ 
         .grid-productos-scroll {
             flex: 1; overflow-y: auto;
             padding-top: 30px;
@@ -113,7 +113,7 @@
             font-size: 0.6rem; font-weight: 700;
             padding: 2px 5px; border-radius: 4px;
         }
-
+ 
         /* ── CATEGORÍAS + BUSCADOR (barra fija abajo en móvil) ── */
         .categorias-container {
             background: white;
@@ -171,7 +171,7 @@
         .btn-categoria.active {
             background: var(--primary); color: white; border-color: var(--primary);
         }
-
+ 
         /* ── MODAL PERSONALIZACIÓN ── */
         .modal-overlay {
             position: fixed; inset: 0;
@@ -250,7 +250,7 @@
             font-size: 0.95rem; font-weight: 700;
             cursor: pointer;
         }
-
+ 
         /* ── COMANDA ── */
         .comanda-wrapper {
             display: flex; flex-direction: column; height: 100%;
@@ -357,7 +357,7 @@
             font-size: 0.85rem; font-weight: 600; border-radius: 8px;
             cursor: pointer; margin-top: 8px;
         }
-
+ 
         /* ── MONITOR ── */
         .monitor-wrapper {
             display: flex; flex-direction: column; height: 100%;
@@ -442,7 +442,7 @@
             flex: 1; overflow-y: auto;
             padding-bottom: 80px;
         }
-
+ 
         /* Tickets */
         .pedido-ticket {
             background: white; border-radius: 12px;
@@ -538,7 +538,32 @@
             animation: pulsar 1.5s infinite;
         }
         @keyframes pulsar { 0%,100%{opacity:1} 50%{opacity:0.5} }
-
+ 
+        /* ── BARRA DE EDICIÓN ── */
+        .barra-edicion {
+            display: none;
+            position: fixed;
+            left: 0; right: 0;
+            bottom: var(--nav-height);
+            z-index: 1800;
+            background: var(--dark);
+            color: white;
+            padding: 10px 14px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.15);
+        }
+        .barra-edicion.visible { display: flex; }
+        .barra-edicion span { font-weight: 700; font-size: 0.82rem; flex: 1; min-width: 0; }
+        .barra-edicion button {
+            padding: 8px 12px; border-radius: 7px; font-weight: 700;
+            font-size: 0.78rem; cursor: pointer; flex-shrink: 0;
+        }
+        .btn-edicion-ver { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-edicion-guardar { background: var(--success); color: white; border: none; }
+        .btn-edicion-cancelar { background: none; color: white; border: 1px solid rgba(255,255,255,0.3); }
+ 
         /* ── TOAST ── */
         #toast-container {
             position: fixed; bottom: calc(var(--nav-height) + 80px);
@@ -552,7 +577,7 @@
             white-space: nowrap;
         }
         #toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
+ 
         /* ── DESKTOP ── */
         @media (min-width: 968px) {
             .mobile-nav { display: none; }
@@ -576,14 +601,15 @@
             }
             .grid-productos-scroll { padding-bottom: 60px; }
             .comanda-footer { padding-bottom: 24px; }
+            .barra-edicion { bottom: 0; }
         }
-
+ 
 </style>
 </head>
 <body>
-
+ 
 <div class="app-container">
-
+ 
     <!-- ════════════════════ CATÁLOGO ════════════════════ -->
     <main id="view-catalogo" class="section-view active">
         <div class="grid-productos-scroll">
@@ -600,7 +626,7 @@
             <div class="categorias-bar" id="categorias-bar"></div>
         </div>
     </main>
-
+ 
     <!-- ════════════════════ COMANDA ════════════════════ -->
     <aside id="view-comanda" class="section-view">
         <div class="comanda-wrapper">
@@ -628,14 +654,14 @@
                 </div>
                 <input type="text" id="comentario-orden" class="campo-nota-orden" placeholder="📌 Nota general de la orden...">
             </div>
-
+ 
             <div class="items-lista" id="items-comanda">
                 <div class="vacia-msg">
                     <span class="icon">🛒</span>
                     Toca un producto para agregarlo
                 </div>
             </div>
-
+ 
             <div class="comanda-footer">
                 <div class="totales-row">
                     <span>Total</span>
@@ -646,7 +672,7 @@
             </div>
         </div>
     </aside>
-
+ 
     <!-- ════════════════════ MONITOR ════════════════════ -->
     <section id="view-monitor" class="section-view">
         <div class="monitor-wrapper">
@@ -666,9 +692,9 @@
             <div class="lista-pedidos-scroll" id="lista-historial"></div>
         </div>
     </section>
-
+ 
 </div><!-- fin app-container -->
-
+ 
 <!-- NAV MÓVIL -->
 <nav class="mobile-nav">
     <button class="nav-tab active" id="btn-tab-catalogo" onclick="switchView('view-catalogo', this)">
@@ -682,7 +708,7 @@
         <span class="icon">🖥️</span> Monitor
     </button>
 </nav>
-
+ 
 <!-- MODAL PERSONALIZACIÓN -->
 <div class="modal-overlay" id="modal-overlay" onclick="cerrarModal(event)">
     <div class="modal-box" id="modal-box">
@@ -695,7 +721,7 @@
         </div>
     </div>
 </div>
-
+ 
 <div class="summary-overlay" id="summary-overlay" onclick="cerrarResumenDia(event)">
     <div class="summary-box" id="summary-box">
         <div class="summary-title">📊 Resumen del día</div>
@@ -706,9 +732,49 @@
         </div>
     </div>
 </div>
-
+ 
+<!-- BARRA FLOTANTE DE EDICIÓN — visible solo mientras se edita un pedido existente -->
+<div class="barra-edicion" id="barra-edicion">
+    <span id="barra-edicion-info"></span>
+    <button class="btn-edicion-ver" onclick="abrirPanelEdicion()">Ver</button>
+    <button class="btn-edicion-guardar" onclick="guardarEdicionPedido()">Guardar</button>
+    <button class="btn-edicion-cancelar" onclick="cancelarEdicionPedido()">Cancelar</button>
+</div>
+ 
+<!-- PANEL DE REVISIÓN DE LA EDICIÓN -->
+<div class="modal-overlay" id="modal-edicion-overlay" onclick="if(event.target===this) cerrarPanelEdicion()">
+    <div class="modal-box">
+        <div class="modal-title">✏️ Editando pedido</div>
+        <div class="meta-inputs" style="margin-top:10px;">
+            <select id="select-mesa-edicion" onchange="actualizarMesaEdicion(this.value)">
+                <option value="Mesa 1">🪑 Mesa 1</option>
+                <option value="Mesa 2">🪑 Mesa 2</option>
+                <option value="Mesa 3">🪑 Mesa 3</option>
+                <option value="Mesa 4">🪑 Mesa 4</option>
+                <option value="Mesa 5">🪑 Mesa 5</option>
+                <option value="Mesa 6">🪑 Mesa 6</option>
+                <option value="Mesa 7">🪑 Mesa 7</option>
+                <option value="Mesa 8">🪑 Mesa 8</option>
+                <option value="Mesa 9">🪑 Mesa 9</option>
+                <option value="Mesa 10">🪑 Mesa 10</option>
+                <option value="Mesa 11">🪑 Mesa 11</option>
+                <option value="Mesa 12">🪑 Mesa 12</option>
+                <option value="Para Llevar">🛍️ Para Llevar</option>
+                <option value="Domicilio">🛵 Domicilio</option>
+            </select>
+            <input type="text" id="input-mesero-edicion" placeholder="👤 Mesero" oninput="actualizarMeseroEdicion(this.value)">
+        </div>
+        <div id="panel-edicion-items" style="margin-top:12px; max-height:42vh; overflow-y:auto;"></div>
+        <div class="modal-section-label">Nota general</div>
+        <input type="text" id="input-nota-edicion" class="campo-nota-orden" placeholder="Nota para cocina..." oninput="actualizarNotaEdicion(this.value)" style="margin-top:0;">
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="cerrarPanelEdicion()" style="flex:1;">Cerrar (seguir editando)</button>
+        </div>
+    </div>
+</div>
+ 
 <div id="toast-container"></div>
-
+ 
 <script>
 // ── config.js ──
 // ═══════════════════════════════════════════════════════════
@@ -718,19 +784,19 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyTgsY2YYD5IZCmDXC_QjDT
 const POLLING_MS = 25000; // actualización automática del monitor cada 25s
 let metodoPagoActual = "Por cobrar";
 let pollingTimer = null;
-
-
-
+ 
+ 
+ 
 // ── permisos.js ──
 let miCodigo = sessionStorage.getItem('miCodigo') || null;
 let miLocal = sessionStorage.getItem('miLocal') || null;
 let miNombre = sessionStorage.getItem('miNombre') || null;
 let misCapacidades = JSON.parse(sessionStorage.getItem('misCapacidades') || '[]');
-
+ 
 function tieneCapacidad(cap) {
     return misCapacidades.includes(cap) || misCapacidades.includes('admin');
 }
-
+ 
 function aplicarTemaLocal(local) {
     if (local === '2') {
         document.documentElement.style.setProperty('--primary', '#0d9488');
@@ -740,7 +806,7 @@ function aplicarTemaLocal(local) {
         document.documentElement.style.setProperty('--primary-light', '#fff0f6');
     }
 }
-
+ 
 async function intentarLogin(codigo) {
     try {
         const res = await fetch(API_URL, {
@@ -767,7 +833,7 @@ async function intentarLogin(codigo) {
         return { ok: false, error: 'Sin conexión y este código nunca se validó en este dispositivo.' };
     }
 }
-
+ 
 function mostrarSelectorLocalMultiple(locales, callback) {
     const overlay = document.createElement('div');
     overlay.id = 'multi-local-overlay';
@@ -786,7 +852,7 @@ function mostrarSelectorLocalMultiple(locales, callback) {
         cont.appendChild(btn);
     });
 }
-
+ 
 function mostrarPromptCodigo(callback) {
     const overlay = document.createElement('div');
     overlay.id = 'codigo-overlay';
@@ -798,7 +864,7 @@ function mostrarPromptCodigo(callback) {
         <div id="codigo-error" style="color:#fca5a5;font-size:0.85rem;height:16px;"></div>
     `;
     document.body.appendChild(overlay);
-
+ 
     const input = document.getElementById('codigo-input');
     const finalizar = (resultado) => {
         sessionStorage.setItem('miCodigo', resultado._codigoIngresado);
@@ -838,7 +904,7 @@ function mostrarPromptCodigo(callback) {
     input.addEventListener('keydown', e => { if (e.key === 'Enter') intentar(); });
     setTimeout(() => input.focus(), 50);
 }
-
+ 
 function iniciarChequeoHorario() {
     const horario = JSON.parse(sessionStorage.getItem('miHorario') || 'null');
     const esAdmin = sessionStorage.getItem('miEsAdmin') === 'true';
@@ -854,7 +920,7 @@ function iniciarChequeoHorario() {
         }
     }, 60000);
 }
-
+ 
 function insertarBotonSalir() {
     const contenedor = document.querySelector('.monitor-top div[style]');
     if (!contenedor) return;
@@ -862,7 +928,7 @@ function insertarBotonSalir() {
     info.textContent = miNombre || '';
     info.style.cssText = `background:var(--bg);color:var(--text-muted);padding:6px 10px;border-radius:7px;font-size:0.75rem;font-weight:700;margin-right:8px;`;
     contenedor.prepend(info);
-
+ 
     const btn = document.createElement('button');
     btn.textContent = 'Salir';
     btn.title = 'Cerrar sesión de este dispositivo';
@@ -870,7 +936,7 @@ function insertarBotonSalir() {
     btn.onclick = cerrarSesionLocal;
     contenedor.prepend(btn);
 }
-
+ 
 function cerrarSesionLocal() {
     const localAnterior = miLocal;
     sessionStorage.removeItem('miCodigo');
@@ -888,9 +954,9 @@ function cerrarSesionLocal() {
         location.reload();
     });
 }
-
-
-
+ 
+ 
+ 
 // ── estado.js ──
 // ═══════════════════════════════════════════════════════════
 //  ESTADO
@@ -900,15 +966,21 @@ let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [
 let categoriaActual = "Todos";
 let busquedaActual = "";
 let ultimoNumeroPedido = Number(localStorage.getItem('ultimoNumeroPedido') || 0);
-
+ 
 // Estado del modal
 let modalProducto = null;
 let modalSelecciones = {}; // { grupoIndex: [opciones elegidas] }
 let modalAdiciones = [];   // [{ nombre, precio }]
 let modalNotaItem = "";
-
-
-
+ 
+// Edición de pedidos existentes — separado por completo de comandaActiva.
+// destinoActivo === 'edicion' hace que tocar el catálogo agregue ítems aquí
+// en vez de a la comanda nueva.
+let edicionEnCurso = null; // { pedidoId, version, mesa, mesero, notas, baseline, items }
+let destinoActivo = null;
+ 
+ 
+ 
 // ── utilidades.js ──
 // ═══════════════════════════════════════════════════════════
 //  UTILIDADES
@@ -948,8 +1020,8 @@ function generarUUID() {
         return v.toString(16);
     });
 }
-
-
+ 
+ 
 // ── catalogo.js ──
 // ═══════════════════════════════════════════════════════════
 //  CATÁLOGO — el menú ahora vive en la hoja "menu" del backend,
@@ -957,7 +1029,7 @@ function generarUUID() {
 //  guardado en caché para seguir funcionando sin internet.
 // ═══════════════════════════════════════════════════════════
 let listaProductos = [];
-
+ 
 async function cargarMenu() {
     try {
         const res = await fetch(`${API_URL}?accion=obtenerMenu`);
@@ -969,7 +1041,7 @@ async function cargarMenu() {
             return;
         }
     } catch { /* sin internet: usamos la caché de abajo */ }
-
+ 
     const cache = localStorage.getItem('menu_cache');
     if (cache) {
         listaProductos = JSON.parse(cache);
@@ -977,7 +1049,7 @@ async function cargarMenu() {
         showToast('⚠️ No se pudo cargar el menú. Revisa tu conexión.');
     }
 }
-
+ 
 // ═══════════════════════════════════════════════════════════
 //  CATÁLOGO
 // ═══════════════════════════════════════════════════════════
@@ -1024,14 +1096,14 @@ function renderGrid() {
         </div>`;
     }).join('');
 }
-
+ 
 // ═══════════════════════════════════════════════════════════
 //  MODAL PERSONALIZACIÓN
 // ═══════════════════════════════════════════════════════════
 function tocaProducto(id) {
     const prod = listaProductos.find(p => p.id === id);
     if (!prod) return;
-
+ 
     const tieneOpciones = prod.opciones && (prod.opciones.grupos?.length || prod.opciones.adiciones?.length);
     if (!tieneOpciones) {
         // Sin opciones → agregar directo
@@ -1041,30 +1113,32 @@ function tocaProducto(id) {
     // Con opciones → abrir modal
     abrirModal(prod);
 }
-
+ 
 function agregarItemSimple(prod) {
-    const existente = comandaActiva.find(i => i.id === prod.id && !i.specs && !i.notaItem);
+    const enEdicion = destinoActivo === 'edicion' && edicionEnCurso;
+    const destino = enEdicion ? edicionEnCurso.items : comandaActiva;
+    const existente = destino.find(i => i.id === prod.id && !i.specs && !i.notaItem);
     if (existente) {
         existente.cantidad++;
     } else {
-        comandaActiva.push({ ...prod, lineId: generarUUID(), cantidad: 1, specs: '', adicionesSelec: [], notaItem: '', precioFinal: prod.precio });
+        destino.push({ ...prod, lineId: generarUUID(), cantidad: 1, specs: '', adicionesSelec: [], notaItem: '', precioFinal: prod.precio });
     }
-    guardarYRender();
+    if (enEdicion) { renderBarraEdicion(); } else { guardarYRender(); }
     showToast(`✅ ${prod.nombre} agregado`);
 }
-
+ 
 function abrirModal(prod) {
     modalProducto = prod;
     modalSelecciones = {};
     modalAdiciones = [];
     modalNotaItem = '';
-
+ 
     document.getElementById('modal-titulo').textContent = prod.nombre;
     document.getElementById('modal-precio-base').textContent = formatPeso(prod.precio);
-
+ 
     let html = '';
     const opts = prod.opciones;
-
+ 
     if (opts.grupos) {
         opts.grupos.forEach((grupo, gi) => {
             modalSelecciones[gi] = [];
@@ -1078,7 +1152,7 @@ function abrirModal(prod) {
             html += `</div>`;
         });
     }
-
+ 
     if (opts.adiciones) {
         html += `<div class="modal-section-label">Adiciones (+${formatPeso(3000)} c/u)</div>`;
         opts.adiciones.forEach(ad => {
@@ -1088,18 +1162,18 @@ function abrirModal(prod) {
             </div>`;
         });
     }
-
+ 
     html += `<div class="modal-section-label">Nota para cocina (opcional)</div>
     <textarea class="modal-nota-input" id="modal-nota" rows="2" placeholder="Sin azúcar, sin hielo, término medio..." oninput="modalNotaItem = this.value"></textarea>`;
-
+ 
     document.getElementById('modal-contenido').innerHTML = html;
     document.getElementById('modal-overlay').classList.add('open');
 }
-
+ 
 function toggleOpcion(btn, grupoIdx, opcion, esMultiple, max) {
     const grupo = modalProducto.opciones.grupos[grupoIdx];
     if (!modalSelecciones[grupoIdx]) modalSelecciones[grupoIdx] = [];
-
+ 
     if (esMultiple) {
         const idx = modalSelecciones[grupoIdx].indexOf(opcion);
         if (idx !== -1) {
@@ -1120,7 +1194,7 @@ function toggleOpcion(btn, grupoIdx, opcion, esMultiple, max) {
         btn.classList.add('selected');
     }
 }
-
+ 
 function toggleAdicion(btn, nombre, precio) {
     const idx = modalAdiciones.findIndex(a => a.nombre === nombre);
     if (idx !== -1) {
@@ -1131,11 +1205,11 @@ function toggleAdicion(btn, nombre, precio) {
         btn.classList.add('selected');
     }
 }
-
+ 
 function confirmarModal() {
     const prod = modalProducto;
     const opts = prod.opciones;
-
+ 
     // Validar grupos requeridos
     if (opts.grupos) {
         for (let i = 0; i < opts.grupos.length; i++) {
@@ -1146,7 +1220,7 @@ function confirmarModal() {
             }
         }
     }
-
+ 
     // Construir descripción de specs
     const partes = [];
     if (opts.grupos) {
@@ -1156,27 +1230,35 @@ function confirmarModal() {
     }
     if (modalAdiciones.length) partes.push('+ ' + modalAdiciones.map(a => a.nombre).join(', '));
     const nota = document.getElementById('modal-nota')?.value || '';
-
+ 
     const precioAdiciones = modalAdiciones.reduce((s, a) => s + a.precio, 0);
     const precioFinal = prod.precio + precioAdiciones;
     const specs = partes.join(' | ');
-
+ 
     // Cada item con opciones es único → siempre push (no merge)
-    comandaActiva.push({
-    ...prod,
-    lineId: generarUUID(),
-    cantidad: 1,
-    specs: specs,
-    adicionesSelec: [...modalAdiciones],
-    notaItem: nota,
-    precioFinal: precioFinal
-});
-
-    guardarYRender();
+    const nuevoItem = {
+        ...prod,
+        lineId: generarUUID(),
+        cantidad: 1,
+        specs: specs,
+        adicionesSelec: [...modalAdiciones],
+        notaItem: nota,
+        precioFinal: precioFinal
+    };
+ 
+    const enEdicion = destinoActivo === 'edicion' && edicionEnCurso;
+    if (enEdicion) {
+        edicionEnCurso.items.push(nuevoItem);
+        renderBarraEdicion();
+    } else {
+        comandaActiva.push(nuevoItem);
+        guardarYRender();
+    }
+ 
     cerrarModalBtn();
     showToast(`✅ ${prod.nombre} agregado`);
 }
-
+ 
 function cerrarModal(e) {
     if (e.target === document.getElementById('modal-overlay')) cerrarModalBtn();
 }
@@ -1184,16 +1266,16 @@ function cerrarModalBtn() {
     document.getElementById('modal-overlay').classList.remove('open');
     modalProducto = null;
 }
-
-
-
+ 
+ 
+ 
 // ── comanda.js ──
 function calcularEventosDeEdicion(itemsBaseline, itemsActuales, autor) {
     const eventos = [];
     const baselinePorId = new Map(itemsBaseline.map(it => [it.lineId, it]));
     const actualesPorId = new Map(itemsActuales.map(it => [it.lineId, it]));
     const ts = Date.now();
-
+ 
     actualesPorId.forEach((item, lineId) => {
         const antes = baselinePorId.get(lineId);
         if (!antes) {
@@ -1202,13 +1284,13 @@ function calcularEventosDeEdicion(itemsBaseline, itemsActuales, autor) {
             eventos.push({ eventoId: generarUUID(), tipo: 'item_modificado', ts, autor, item });
         }
     });
-
+ 
     baselinePorId.forEach((item, lineId) => {
         if (!actualesPorId.has(lineId)) {
             eventos.push({ eventoId: generarUUID(), tipo: 'item_eliminado', ts, autor, lineId });
         }
     });
-
+ 
     return eventos;
 }
 // ═══════════════════════════════════════════════════════════
@@ -1230,12 +1312,12 @@ function vaciarComanda() {
     comandaActiva = [];
     guardarYRender();
 }
-
-
+ 
+ 
 function guardarYRender() {
     localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
     const contenedor = document.getElementById('items-comanda');
-
+ 
     if (comandaActiva.length === 0) {
         contenedor.innerHTML = `<div class="vacia-msg"><span class="icon">🛒</span>Toca un producto para agregarlo</div>`;
         document.getElementById('total-comanda').textContent = '$0';
@@ -1243,7 +1325,7 @@ function guardarYRender() {
         badge.style.display = 'none';
         return;
     }
-
+ 
     contenedor.innerHTML = comandaActiva.map((item, idx) => {
         const precio = (item.precioFinal || item.precio) * item.cantidad;
         return `
@@ -1264,16 +1346,16 @@ function guardarYRender() {
             </div>
         </div>`;
     }).join('');
-
+ 
     const total = comandaActiva.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
     document.getElementById('total-comanda').textContent = formatPeso(total);
-
+ 
     const totalItems = comandaActiva.reduce((s, i) => s + i.cantidad, 0);
     const badge = document.getElementById('badge-comanda');
     badge.textContent = totalItems;
     badge.style.display = totalItems > 0 ? 'block' : 'none';
 }
-
+ 
 // ═══════════════════════════════════════════════════════════
 //  PROCESAR ORDEN
 // ═══════════════════════════════════════════════════════════
@@ -1288,60 +1370,27 @@ async function procesarOrden() {
         return;
     }
     window._enviandoOrden = true;
-
+ 
     const mesero = document.getElementById('campo-mesero').value.trim() || "—";
     const notas = document.getElementById('comentario-orden').value.trim();
     const total = comandaActiva.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
     const itemsSnapshot = JSON.parse(JSON.stringify(comandaActiva));
-
+ 
     const textoItems = itemsSnapshot.map(i => {
         let linea = `${i.cantidad}x ${i.nombre}`;
         if (i.specs) linea += ` [${i.specs}]`;
         if (i.notaItem) linea += ` (${i.notaItem})`;
         return linea;
     }).join(', ');
-
-    const esEdicion = !!window._pedidoEditandoId;
-
+ 
     comandaActiva = [];
     localStorage.removeItem('comandaActiva');
     document.getElementById('comentario-orden').value = '';
     document.getElementById('num-mesa').value = '';
     guardarYRender();
-    showToast(esEdicion ? "✏️ Guardando cambios…" : "⚡ Enviando a cocina…");
+    showToast("⚡ Enviando a cocina…");
     if (window.innerWidth < 768) switchView('view-monitor', document.getElementById('btn-tab-monitor'));
-
-    if (esEdicion) {
-    const idPedido = window._pedidoEditandoId;
-    window._pedidoEditandoId = null;
-    window._pedidoEditandoVersion = null;
-
-    const pedido = historialPedidos.find(p => p.id === idPedido);
-    const baseline = (pedido && Array.isArray(pedido.itemsRaw)) ? pedido.itemsRaw : [];
-    const eventosItems = calcularEventosDeEdicion(baseline, itemsSnapshot, mesero);
-    const eventoMeta = { eventoId: generarUUID(), tipo: 'meta_actualizada', ts: Date.now(), autor: mesero, mesa, mesero, notas };
-    const eventosNuevos = [...eventosItems, eventoMeta];
-
-    if (pedido) {
-        // Se aplica ya mismo en pantalla (optimista), y se guarda en cola
-        // por si no hay internet: nunca se pierde, sin importar cuántas
-        // ediciones offline se acumulen antes de reconectar.
-        pedido.itemsRaw = itemsSnapshot;
-        pedido.items = textoItems;
-        pedido.total = total;
-        pedido.mesa = mesa; pedido.mesero = mesero; pedido.notas = notas;
-        pedido.eventosPendientes = [...(pedido.eventosPendientes || []), ...eventosNuevos];
-        pedido.itemsSincronizado = 'NO';
-        localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
-        renderHistorial();
-    }
-
-    showToast("✏️ Cambios guardados. Sincronizando…");
-    window._enviandoOrden = false;
-    await sincronizarEventosPendientes();
-    return;
-}
-
+ 
     const nuevoPedido = {
         
         id: generarUUID(),
@@ -1359,11 +1408,11 @@ async function procesarOrden() {
         sincronizado: "NO",
         enviando: true
     };
-
+ 
     historialPedidos.unshift(nuevoPedido);
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
     renderHistorial();
-
+ 
     const payload = {
         local: miLocal,
         codigo: miCodigo,
@@ -1394,7 +1443,7 @@ async function procesarOrden() {
         window._enviandoOrden = false;
     }
 }
-
+ 
 async function sincronizarEventosPendientes() {
     const pendientes = historialPedidos.filter(p =>
         p.eventosPendientes && p.eventosPendientes.length > 0 && p.sincronizado === 'SI' && !p.enviandoEventos
@@ -1427,7 +1476,7 @@ async function sincronizarEventosPendientes() {
         pedido.enviandoEventos = false;
     }
 }
-
+ 
 async function toggleItemListo(pedidoId, lineId, listo) {
     const pedido = historialPedidos.find(p => p.id === pedidoId);
     if (!pedido) return;
@@ -1438,10 +1487,176 @@ async function toggleItemListo(pedidoId, lineId, listo) {
     renderHistorial();
     await sincronizarEventosPendientes();
 }
-
-
-
-
+ 
+ 
+ 
+ 
+// ── edicion.js ──
+// ═══════════════════════════════════════════════════════════
+//  EDICIÓN DE PEDIDOS — separada por completo de "Nueva Comanda".
+//  Mientras se edita un pedido, tocar el catálogo agrega ítems
+//  aquí (edicionEnCurso), nunca a comandaActiva. Se puede tener
+//  una comanda nueva a medio armar Y estar editando otro pedido
+//  al mismo tiempo, sin que se mezclen.
+// ═══════════════════════════════════════════════════════════
+ 
+function abrirEdicionPedido(id) {
+    if (edicionEnCurso && edicionEnCurso.pedidoId !== id) {
+        if (!confirm('Ya estás editando otro pedido. ¿Descartar esos cambios y editar este?')) return;
+    }
+ 
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido) return;
+ 
+    const items = (Array.isArray(pedido.itemsRaw) && pedido.itemsRaw.length > 0)
+        ? JSON.parse(JSON.stringify(pedido.itemsRaw))
+        : [];
+ 
+    edicionEnCurso = {
+        pedidoId: pedido.id,
+        mesa: pedido.mesa,
+        mesero: pedido.mesero,
+        notas: pedido.notas || '',
+        baseline: JSON.parse(JSON.stringify(items)),
+        items: items
+    };
+    destinoActivo = 'edicion';
+ 
+    document.getElementById('barra-edicion').classList.add('visible');
+    renderBarraEdicion();
+    showToast(`✏️ Editando pedido de ${pedido.mesa}`);
+    switchView('view-catalogo', document.getElementById('btn-tab-catalogo'));
+}
+ 
+function renderBarraEdicion() {
+    if (!edicionEnCurso) return;
+    const total = edicionEnCurso.items.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
+    const cantidad = edicionEnCurso.items.reduce((s, i) => s + i.cantidad, 0);
+    const info = document.getElementById('barra-edicion-info');
+    if (info) info.textContent = `✏️ ${edicionEnCurso.mesa} · ${cantidad} ítems · ${formatPeso(total)}`;
+}
+ 
+function abrirPanelEdicion() {
+    if (!edicionEnCurso) return;
+ 
+    document.getElementById('select-mesa-edicion').value = edicionEnCurso.mesa || '';
+    document.getElementById('input-mesero-edicion').value = edicionEnCurso.mesero || '';
+    document.getElementById('input-nota-edicion').value = edicionEnCurso.notas || '';
+ 
+    const cont = document.getElementById('panel-edicion-items');
+    if (edicionEnCurso.items.length === 0) {
+        cont.innerHTML = `<div class="vacia-msg"><span class="icon">📝</span>Cierra este panel y toca productos del menú para agregarlos</div>`;
+    } else {
+        cont.innerHTML = edicionEnCurso.items.map((item, idx) => {
+            const precio = (item.precioFinal || item.precio) * item.cantidad;
+            return `
+            <div class="item-linea">
+                <div class="item-linea-top">
+                    <div>
+                        <div class="item-nombre">${item.nombre}</div>
+                        ${item.specs ? `<div class="item-specs">📌 ${item.specs}</div>` : ''}
+                        ${item.notaItem ? `<div class="item-specs">✏️ ${item.notaItem}</div>` : ''}
+                    </div>
+                    <div class="item-precio">${formatPeso(precio)}</div>
+                </div>
+                <div class="item-controles">
+                    <button onclick="modificarCantidadEdicion(${idx}, -1)">−</button>
+                    <span class="item-cantidad">${item.cantidad}</span>
+                    <button onclick="modificarCantidadEdicion(${idx}, 1)">+</button>
+                    <button class="btn-eliminar-item" onclick="eliminarItemEdicion(${idx})">🗑️</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+    document.getElementById('modal-edicion-overlay').classList.add('open');
+}
+ 
+function cerrarPanelEdicion() {
+    document.getElementById('modal-edicion-overlay').classList.remove('open');
+}
+ 
+function modificarCantidadEdicion(idx, cambio) {
+    if (!edicionEnCurso || !edicionEnCurso.items[idx]) return;
+    edicionEnCurso.items[idx].cantidad += cambio;
+    if (edicionEnCurso.items[idx].cantidad <= 0) edicionEnCurso.items.splice(idx, 1);
+    renderBarraEdicion();
+    abrirPanelEdicion();
+}
+ 
+function eliminarItemEdicion(idx) {
+    if (!edicionEnCurso) return;
+    edicionEnCurso.items.splice(idx, 1);
+    renderBarraEdicion();
+    abrirPanelEdicion();
+}
+ 
+function actualizarNotaEdicion(valor) {
+    if (edicionEnCurso) edicionEnCurso.notas = valor;
+}
+function actualizarMesaEdicion(valor) {
+    if (edicionEnCurso) { edicionEnCurso.mesa = valor; renderBarraEdicion(); }
+}
+function actualizarMeseroEdicion(valor) {
+    if (edicionEnCurso) edicionEnCurso.mesero = valor;
+}
+ 
+function finalizarEdicion() {
+    document.getElementById('barra-edicion').classList.remove('visible');
+    cerrarPanelEdicion();
+    edicionEnCurso = null;
+    destinoActivo = null;
+}
+ 
+async function guardarEdicionPedido() {
+    if (!edicionEnCurso) return;
+    const pedido = historialPedidos.find(p => p.id === edicionEnCurso.pedidoId);
+    if (!pedido) { finalizarEdicion(); return; }
+ 
+    if (edicionEnCurso.items.length === 0) {
+        if (!confirm('El pedido quedaría sin ítems. ¿De verdad quieres guardarlo así? (si quieres cancelarlo del todo, mejor usa "Archivar" desde el monitor)')) return;
+    }
+ 
+    const eventosItems = calcularEventosDeEdicion(edicionEnCurso.baseline, edicionEnCurso.items, edicionEnCurso.mesero);
+    const eventoMeta = {
+        eventoId: generarUUID(), tipo: 'meta_actualizada', ts: Date.now(), autor: edicionEnCurso.mesero,
+        mesa: edicionEnCurso.mesa, mesero: edicionEnCurso.mesero, notas: edicionEnCurso.notas
+    };
+    const eventosNuevos = [...eventosItems, eventoMeta];
+ 
+    const total = edicionEnCurso.items.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
+    const textoItems = edicionEnCurso.items.map(i => {
+        let linea = `${i.cantidad}x ${i.nombre}`;
+        if (i.specs) linea += ` [${i.specs}]`;
+        if (i.notaItem) linea += ` (${i.notaItem})`;
+        return linea;
+    }).join(', ');
+ 
+    pedido.itemsRaw = edicionEnCurso.items;
+    pedido.items = textoItems;
+    pedido.total = total;
+    pedido.mesa = edicionEnCurso.mesa;
+    pedido.mesero = edicionEnCurso.mesero;
+    pedido.notas = edicionEnCurso.notas;
+    pedido.eventosPendientes = [...(pedido.eventosPendientes || []), ...eventosNuevos];
+    pedido.itemsSincronizado = 'NO';
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+ 
+    finalizarEdicion();
+    renderHistorial();
+    showToast('✏️ Cambios guardados. Sincronizando…');
+    if (window.innerWidth < 768) switchView('view-monitor', document.getElementById('btn-tab-monitor'));
+    await sincronizarEventosPendientes();
+}
+ 
+function cancelarEdicionPedido() {
+    if (!edicionEnCurso) return;
+    const huboCambios = JSON.stringify(edicionEnCurso.items) !== JSON.stringify(edicionEnCurso.baseline);
+    if (huboCambios && !confirm('¿Descartar los cambios de esta edición?')) return;
+    finalizarEdicion();
+    showToast('Edición cancelada.');
+}
+ 
+ 
 // ── cocina.js ──
 // ═══════════════════════════════════════════════════════════
 //  MONITOR
@@ -1486,19 +1701,19 @@ function parsearFechaSegura(ref) {
     }
     return null;
 }
-
+ 
 function formatearHora(ref) {
     const fecha = parsearFechaSegura(ref);
     if (!fecha || Number.isNaN(fecha.getTime())) return '—';
     return fecha.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
 }
-
+ 
 function siguienteNumeroPedidoLocal() {
     ultimoNumeroPedido += 1;
     localStorage.setItem('ultimoNumeroPedido', String(ultimoNumeroPedido));
     return ultimoNumeroPedido;
 }
-
+ 
 // Reconstruye el momento de creación combinando el día de "fecha" con la
 // hora de "hora" — necesario solo para pedidos creados ANTES de que
 // existiera la columna "Creado En (ms)". Los pedidos nuevos no la usan.
@@ -1507,7 +1722,7 @@ function reconstruirInicioDesdeFechaHora(pedido) {
     const horaObj  = parsearFechaSegura(pedido.horaLocal || pedido.hora);
     if (!fechaObj || Number.isNaN(fechaObj.getTime())) return null;
     if (!horaObj  || Number.isNaN(horaObj.getTime()))  return null;
-
+ 
     return Date.UTC(
         fechaObj.getUTCFullYear(), fechaObj.getUTCMonth(), fechaObj.getUTCDate(),
         horaObj.getUTCHours(), horaObj.getUTCMinutes(), horaObj.getUTCSeconds()
@@ -1516,45 +1731,45 @@ function reconstruirInicioDesdeFechaHora(pedido) {
 function calcularMinutosEspera(pedido) {
     const inicioMs = pedido.creadoEn || reconstruirInicioDesdeFechaHora(pedido);
     if (!inicioMs) return 0;
-
+ 
     let finMs = Date.now();
     if ((pedido.estado === 'Listo' || pedido.estado === 'Pagado') && pedido.horaFin) {
         finMs = Number(pedido.horaFin);
     }
-
+ 
     const diffMs = finMs - inicioMs;
     return Math.max(0, Math.floor(diffMs / 60000));
 }
-
+ 
 function obtenerNumeroPedido(pedido) {
     if (pedido?.numeroPedido) return pedido.numeroPedido;
     return '—';
 }
-
+ 
 function renderHistorial() {
     const lista = document.getElementById('lista-historial');
     const balCount = document.getElementById('bal-count');
     if (balCount) balCount.textContent = historialPedidos.length;
-
+ 
     if (historialPedidos.length === 0) {
         lista.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:35px; font-size:0.9rem;">Sin comandas activas.</div>`;
         return;
     }
-
+ 
     const ordenados = [...historialPedidos].sort((a, b) => {
         if (a.estado !== 'Pagado' && b.estado === 'Pagado') return -1;
         if (a.estado === 'Pagado' && b.estado !== 'Pagado') return 1;
         return (a.creadoEn || 0) - (b.creadoEn || 0);
     });
-
+ 
     lista.innerHTML = ordenados.map(p => {
         const minutos = calcularMinutosEspera(p);
         const horaLabel = formatearHora(p.horaLocal || p.hora);
-
+ 
         const esFinal = p.estado === 'Listo' || p.estado === 'Pagado';
         const textoTiempo = esFinal ? `Tomó ${minutos} min` : (minutos <= 0 ? 'Recién' : `${minutos} min`);
         const tiempoLabel = `${horaLabel} · ${textoTiempo}`;
-
+ 
         let alertaTiempo = '';
         let estiloTarjetaAlerta = '';
         if (!esFinal && minutos >= 15) {
@@ -1565,7 +1780,7 @@ function renderHistorial() {
         } else if (!esFinal && minutos >= 20) {
             alertaTiempo = `<span class="ticket-alerta-tiempo">⚠️ ${minutos} min</span>`;
         }
-
+ 
         const claseTk = p.estado === 'Pagado' ? 'pagado'
             : p.estado === 'Listo' ? 'listo'
             : p.estado === 'Preparando' ? 'preparando' : '';
@@ -1577,14 +1792,14 @@ function renderHistorial() {
             'Pendiente': '⏳ Pendiente', 'Preparando': '👨‍🍳 Preparando',
             'Listo': '✅ Listo', 'Pagado': '💰 Pagado'
         };
-
+ 
         const flujo = ['Pendiente', 'Preparando', 'Listo', 'Pagado'];
         const idxActual = flujo.indexOf(p.estado);
         const siguienteEstado = idxActual < flujo.length - 1 ? flujo[idxActual + 1] : null;
         const btnCambio = siguienteEstado
             ? `<button class="btn-estado-ticket" onclick="avanzarEstado('${p.id}')">${siguienteEstado === 'Preparando' ? '👨‍🍳 Preparar' : siguienteEstado === 'Listo' ? '✅ Listo' : '💵 Cobrar'}</button>`
             : `<button class="btn-estado-ticket" style="color:var(--text-muted);" onclick="regresarEstado('${p.id}')">↩ Reabrir</button>`;
-
+ 
             const vistaItems = construirVistaItems(p);
 const itemsHtml = vistaItems.map(v => {
     const checkbox = (v.lineId && !v.eliminado)
@@ -1592,7 +1807,7 @@ const itemsHtml = vistaItems.map(v => {
         : '';
     return `<div class="ticket-item-linea" style="${v.estilo}">${checkbox}<span>${v.html}</span></div>`;
 }).join('');
-
+ 
         return `
         <div class="pedido-ticket ${claseTk}" style="${estiloTarjetaAlerta}">
             <div class="ticket-head">
@@ -1614,13 +1829,13 @@ ${(p.sincronizado === 'NO' || p.itemsSincronizado === 'NO' || (p.estadoSincroniz
                 <span class="ticket-hora">🕒 ${tiempoLabel}</span>
                 ${alertaTiempo}
                 ${btnCambio}
-                <button class="btn-editar-ticket" onclick="reabrirParaEditar('${p.id}')">✏️</button>
+                <button class="btn-editar-ticket" onclick="abrirEdicionPedido('${p.id}')">✏️</button>
                 <button class="btn-archivar-ticket" onclick="archivarPedido('${p.id}')">✕</button>
             </div>
         </div>`;
     }).join('');
 }
-
+ 
 // Estados
 function avanzarEstado(id) {
     const flujo = ['Pendiente', 'Preparando', 'Listo', 'Pagado'];
@@ -1634,19 +1849,19 @@ function avanzarEstado(id) {
             return;
         }
         pedido.estado = siguiente;
-
+ 
         if (siguiente === 'Listo') {
             pedido.horaFin = Date.now();
         }
-
+ 
         pedido.estadoSincronizado = 'NO'; // se marca "SI" cuando Sheets confirme
         localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
         renderHistorial();
         sincronizarEstado(id, pedido.estado);
     }
 }
-
-
+ 
+ 
 function elegirMetodoPagoYCobrar(id) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido) return;
@@ -1679,7 +1894,7 @@ function elegirMetodoPagoYCobrar(id) {
     </div>`;
     document.body.appendChild(overlay);
 }
-
+ 
 function confirmarCobro(id, metodoPago, overlay) {
     overlay.remove();
     const pedido = historialPedidos.find(p => p.id === id);
@@ -1687,19 +1902,19 @@ function confirmarCobro(id, metodoPago, overlay) {
     pedido.estado = 'Pagado';
     pedido.metodoPago = metodoPago;
     pedido.detallePago = '';
-
+ 
     if (!pedido.horaFin) {
         pedido.horaFin = Date.now();
     }
-
+ 
     pedido.estadoSincronizado = 'NO'; // se marca "SI" cuando Sheets confirme
     localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
     renderHistorial();
     sincronizarEstado(id, 'Pagado');
     showToast(`✅ Cobrado con ${metodoPago}`);
 }
-
-
+ 
+ 
 function regresarEstado(id) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido) return;
@@ -1709,7 +1924,7 @@ function regresarEstado(id) {
     renderHistorial();
     sincronizarEstado(id, 'Pendiente');
 }
-
+ 
 async function sincronizarEstado(id, estado) {
     const pedido = historialPedidos.find(p => p.id === id);
     if (!pedido || pedido.sincronizado === 'NO') return;
@@ -1717,7 +1932,7 @@ async function sincronizarEstado(id, estado) {
         const payload = { accion: "cambiarEstado", id: pedido.id, estado, codigo: miCodigo, local: pedido.local };
         if (pedido.metodoPago) payload.metodoPago = pedido.metodoPago;
         if (pedido.horaFin)    payload.horaFin    = pedido.horaFin;
-
+ 
         const res = await fetch(API_URL, { method: "POST", redirect: "follow",
             body: JSON.stringify(payload) });
         const data = await res.json();
@@ -1730,7 +1945,7 @@ async function sincronizarEstado(id, estado) {
         }
     } catch { /* offline: sincronizarEstadosPendientes() reintentará */ }
 }
-
+ 
 async function sincronizarEstadosPendientes() {
     const pendientes = historialPedidos.filter(p =>
         p.estadoSincronizado !== 'SI' && p.sincronizado === 'SI' && !p.enviando
@@ -1739,7 +1954,7 @@ async function sincronizarEstadosPendientes() {
         await sincronizarEstado(pedido.id, pedido.estado);
     }
 }
-
+ 
 // Archivar
 async function archivarPedido(id) {
     if (!confirm("¿Archivar este pedido? Desaparecerá del monitor (queda en Sheets).")) return;
@@ -1753,41 +1968,7 @@ async function archivarPedido(id) {
             body: JSON.stringify({ accion: "archivarPedido", id, codigo: miCodigo, local: localPedido }) });
     } catch { /* offline OK */ }
 }
-
-// Reabrir para editar
-function reabrirParaEditar(id) {
-    const pedido = historialPedidos.find(p => p.id === id);
-    if (!pedido) return;
-    if (comandaActiva.length > 0 && !confirm("Tienes ítems en la comanda actual. ¿Unificar?")) return;
-
-    if (Array.isArray(pedido.itemsRaw) && pedido.itemsRaw.length > 0) {
-        comandaActiva = JSON.parse(JSON.stringify(pedido.itemsRaw));
-    } else {
-        // Solo pasa con pedidos muy antiguos, de antes de guardar itemsRaw.
-        comandaActiva = [];
-        pedido.items.split(', ').forEach(parte => {
-            const m = parte.match(/^(\d+)x ([^\[]+)/);
-            if (m) {
-                const cantidad = parseInt(m[1]);
-                const nombre = m[2].trim();
-                const prod = listaProductos.find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
-                if (prod) comandaActiva.push({ ...prod, cantidad, specs:'', notaItem:'', precioFinal: prod.precio });
-            }
-        });
-    }
-
-    document.getElementById('num-mesa').value = pedido.mesa || '';
-    document.getElementById('campo-mesero').value = pedido.mesero || '';
-    document.getElementById('comentario-orden').value = pedido.notas || '';
-
-    window._pedidoEditandoId = pedido.id;
-    window._pedidoEditandoVersion = pedido.version || 1;
-
-    guardarYRender();
-    showToast("✏️ Comanda abierta para editar.");
-    if (window.innerWidth < 768) switchView('view-comanda', document.getElementById('btn-tab-comanda'));
-}
-
+ 
 function construirVistaItems(pedido) {
     if (Array.isArray(pedido.eventos) && pedido.eventos.length > 0) {
         const porLinea = {};
@@ -1817,8 +1998,8 @@ function construirVistaItems(pedido) {
     // Fallback para pedidos muy antiguos, sin historial de eventos aún.
     return pedido.items.split(', ').filter(Boolean).map(it => ({ html: it, estilo: '', eliminado: false, lineId: null, listo: false }));
 }
-
-
+ 
+ 
 // ── sync.js ──
 // ═══════════════════════════════════════════════════════════
 //  SINCRONIZACIÓN CON SHEETS
@@ -1854,7 +2035,7 @@ async function sincronizarPendientes() {
         pedido.enviando = false;
     }
 }
-
+ 
 async function cargarPedidos() {
     if (window._cargandoPedidos) return;
     window._cargandoPedidos = true;
@@ -1862,7 +2043,7 @@ async function cargarPedidos() {
         await sincronizarPendientes();
         await sincronizarEventosPendientes();
         await sincronizarEstadosPendientes();
-
+ 
         const res = await fetch(`${API_URL}?accion=obtenerPedidos&codigo=${encodeURIComponent(miCodigo)}&local=${encodeURIComponent(miLocal)}`);
         const data = await res.json();
         if (data.ok) {
@@ -1871,24 +2052,24 @@ async function cargarPedidos() {
             const deLaNube = data.pedidos.filter(p =>
     !idsLocalesPendientes.has(p.id) && String(p.local || '1') === String(miLocal)
 );
-
+ 
             deLaNube.forEach(p => {
                 const localMatch = historialPedidos.find(lp => String(lp.id) === String(p.id));
-
+ 
                 if (!p.horaLocal && p.hora) p.horaLocal = p.hora;
                 p.sincronizado = "SI";
-
+ 
                 if (typeof p.itemsRaw === 'string' && p.itemsRaw) {
                     try { p.itemsRaw = JSON.parse(p.itemsRaw); } catch { p.itemsRaw = []; }
                 } else if (!Array.isArray(p.itemsRaw)) {
                     p.itemsRaw = [];
                 }
-
+ 
                 p.creadoEn = p.creadoEn || (localMatch && localMatch.creadoEn) || reconstruirInicioDesdeFechaHora(p) || Date.now();
-
+ 
                 const localPendiente = localMatch && localMatch.estadoSincronizado && localMatch.estadoSincronizado !== 'SI';
                 const itemsPendientes = localMatch && localMatch.eventosPendientes && localMatch.eventosPendientes.length > 0;
-
+ 
                 if (localPendiente) {
                     if (localMatch.metodoPago) p.metodoPago = localMatch.metodoPago;
                     if (localMatch.horaFin)    p.horaFin    = localMatch.horaFin;
@@ -1905,11 +2086,11 @@ async function cargarPedidos() {
                     p.eventosPendientes = localMatch.eventosPendientes;
                     p.eventos = localMatch.eventos || p.eventos;
                 }
-
+ 
                 p.estadoSincronizado = localPendiente ? localMatch.estadoSincronizado : 'SI';
                 p.itemsSincronizado = itemsPendientes ? 'NO' : 'SI';
             });
-
+ 
             historialPedidos = [...noSync, ...deLaNube].sort((a, b) => (a.creadoEn || 0) - (b.creadoEn || 0));
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             renderHistorial();
@@ -1921,15 +2102,15 @@ async function cargarPedidos() {
         window._cargandoPedidos = false;
     }
 }
-
+ 
 function iniciarPolling() {
     if (pollingTimer) clearInterval(pollingTimer);
     pollingTimer = setInterval(() => {
         cargarPedidos();
     }, POLLING_MS);
 }
-
-
+ 
+ 
 // ── admin.js ──
 function obtenerResumenDia() {
     const pagados = historialPedidos.filter(p => p.estado === 'Pagado');
@@ -1938,19 +2119,19 @@ function obtenerResumenDia() {
     const totalPendiente = pendientes.reduce((s, p) => s + Number(p.total || 0), 0);
     const porMetodo = {};
     const topItems = {};
-
+ 
     historialPedidos.forEach(pedido => {
         const metodo = pedido.metodoPago || pedido.detallePago || 'Efectivo';
         porMetodo[metodo] = (porMetodo[metodo] || 0) + Number(pedido.total || 0);
-
+ 
         const items = Array.isArray(pedido.itemsRaw) && pedido.itemsRaw.length
             ? pedido.itemsRaw
             : (pedido.items || '').split(',').map(x => x.trim()).filter(Boolean);
-
+ 
         items.forEach(item => {
             let nombre = '';
             let cantidad = 1;
-
+ 
             if (typeof item === 'string') {
                 const match = item.match(/^(\d+)x\s*(.+)$/i);
                 if (match) {
@@ -1963,17 +2144,17 @@ function obtenerResumenDia() {
                 nombre = item.nombre;
                 cantidad = Number(item.cantidad) || 1;
             }
-
+ 
             if (nombre) {
                 topItems[nombre] = (topItems[nombre] || 0) + cantidad;
             }
         });
     });
-
+ 
     const topProductos = Object.entries(topItems)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5);
-
+ 
     return {
         totalComandas: historialPedidos.length,
         pagadas: pagados.length,
@@ -1985,14 +2166,14 @@ function obtenerResumenDia() {
         topProductos
     };
 }
-
+ 
 function verResumenDia() {
     const clave = prompt('Clave de administrador:');
     if (clave !== '1234') {
         showToast('❌ Clave incorrecta.');
         return;
     }
-
+ 
     const resumen = obtenerResumenDia();
     const metodosHtml = resumen.metodos.length
         ? resumen.metodos.map(([metodo, valor]) => `
@@ -2001,7 +2182,7 @@ function verResumenDia() {
                 <span class="muted">${formatPeso(valor)}</span>
             </div>`).join('')
         : '<div class="summary-empty">Sin pagos registrados</div>';
-
+ 
     const topHtml = resumen.topProductos.length
         ? resumen.topProductos.map(([nombre, cantidad]) => `
             <div class="summary-item">
@@ -2009,7 +2190,7 @@ function verResumenDia() {
                 <span class="muted">${cantidad} und</span>
             </div>`).join('')
         : '<div class="summary-empty">Aún no hay productos vendidos</div>';
-
+ 
     document.getElementById('summary-content').innerHTML = `
         <div class="summary-stat-grid">
             <div class="summary-stat-card positive">
@@ -2041,21 +2222,21 @@ function verResumenDia() {
             <div class="summary-section-title">Productos más pedidos</div>
             <div class="summary-list">${topHtml}</div>
         </div>`;
-
+ 
     document.getElementById('summary-overlay').classList.add('open');
 }
-
+ 
 function cerrarResumenDia(event) {
     if (event.target && event.target.id === 'summary-overlay') {
         cerrarResumenDiaBtn();
     }
 }
-
+ 
 function cerrarResumenDiaBtn() {
     document.getElementById('summary-overlay').classList.remove('open');
 }
-
-
+ 
+ 
 // ── init.js ──
 // ═══════════════════════════════════════════════════════════
 //  INIT
@@ -2071,7 +2252,7 @@ async function iniciarApp() {
     iniciarPolling();
     iniciarChequeoHorario();
 }
-
+ 
 if (miCodigo && miLocal) {
     iniciarApp();
 } else {
@@ -2083,7 +2264,8 @@ if (miCodigo && miLocal) {
         iniciarApp();
     });
 }
-
+ 
 </script>
 </body>
 </html>
+ 

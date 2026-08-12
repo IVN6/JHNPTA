@@ -2235,42 +2235,30 @@ function construirVistaItems(pedido) {
 function anunciarPedidoNuevo(pedido) {
     try {
         if (!('speechSynthesis' in window)) return;
-        
         const quien = pedido.mesero && pedido.mesero !== '—' ? pedido.mesero : 'un mesero';
-        let textoVoz = `Nuevo pedido de ${quien}, ${pedido.mesa}. `;
+        let texto = `Nuevo pedido de ${quien}, ${pedido.mesa}.`;
 
-        // Si tenemos los ítems en eventos o en el pedido, los leemos con sus notas
-        const vistaItems = construirVistaItems(pedido);
-        const itemsParaLeer = vistaItems.filter(i => !i.eliminado);
-
-        if (itemsParaLeer.length > 0) {
-            textoVoz += `Contiene: `;
-            
-            // Extraemos texto limpio para la voz (sin tags HTML)
-            itemsParaLeer.forEach(i => {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = i.html;
-                
-                // Limpiamos emojis y el prefijo "Nota:" para que suene más natural
-                let textoLimpio = tempDiv.innerText || tempDiv.textContent || '';
-                textoLimpio = textoLimpio.replace(/📌|❌/g, '').replace('Nota:', 'con nota:');
-                
-                textoVoz += `${textoLimpio}. `;
-            });
+        // Se lee de itemsRaw (datos crudos), NO del HTML ya pintado — si se
+        // lee el texto "1x Cuajada" tal cual, el sintetizador pronuncia la
+        // "x" suelta como la letra "equis". Con espacio en vez de "x" pegada
+        // a la cantidad, se evita ese problema de raíz.
+        const items = Array.isArray(pedido.itemsRaw) ? pedido.itemsRaw : [];
+        if (items.length > 0) {
+            texto += ' ' + items.map(it => {
+                let linea = `${it.cantidad} ${it.nombre}`;
+                if (it.specs) linea += `, ${it.specs}`;
+                if (it.notaItem) linea += `. Con nota: ${it.notaItem}`;
+                return linea;
+            }).join('. ');
         }
+        if (pedido.notas) texto += `. Nota general: ${pedido.notas}`;
 
-        if (pedido.notas) {
-            textoVoz += `Nota general del pedido: ${pedido.notas}.`;
-        }
-
-        const utter = new SpeechSynthesisUtterance(textoVoz);
+        const utter = new SpeechSynthesisUtterance(texto);
         utter.lang = 'es-CO';
-        utter.rate = 0.95; // Velocidad ligeramente pausada para que en cocina se entienda claro
+        utter.rate = 0.95;
         speechSynthesis.speak(utter);
-    } catch (e) { 
-        /* Si falla el sintetizador, los beeps de alerta siguen funcionando */
+    } catch (e) { /* si no hay voz disponible, el beep y la vibración siguen sonando igual */ }
     }
-}
 
 function iniciarAlarmaPedido(pedido) {
     pedidosSonando.add(pedido.id);
@@ -2394,6 +2382,13 @@ async function cargarPedidos() {
             historialPedidos = [...noSync, ...deLaNube].sort((a, b) => (a.creadoEn || 0) - (b.creadoEn || 0));
             localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
             renderHistorial();
+            // Si un pedido que está sonando ya no está "Pendiente" — lo haya
+// cambiado cualquier dispositivo, no solo el tuyo — apaga su alarma.
+pedidosSonando.forEach(id => {
+    const p = historialPedidos.find(x => x.id === id);
+    if (!p || p.estado !== 'Pendiente') detenerAlarmaPedido(id);
+});
+            
             primerCargaCompleta = true;
         }
     } catch (error) {

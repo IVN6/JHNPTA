@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo Interactivo Premium</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --success: #10b981;
+      --accent: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); padding-bottom: 3rem; }
+
+    /* Header Fijo Moderno */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 1rem;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .header-top h1 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #4f46e5, #9333ea);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    /* Buscador */
+    .search-box {
+      width: 100%;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: #f9fafb;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      background: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    /* Categorías Chips */
+    .categories-bar {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.2rem;
+      scrollbar-width: none;
+    }
+    .categories-bar::-webkit-scrollbar { display: none; }
+
+    .chip {
+      padding: 0.4rem 0.9rem;
+      border-radius: 99px;
+      background: #eef2ff;
+      color: var(--primary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip.active, .chip:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* Botones generales */
+    .btn {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+    .btn:hover { background-color: var(--primary-hover); }
+    .btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #e5e7eb; }
+    .btn-full { width: 100%; }
+
+    /* Grid del Catálogo */
+    .container {
+      max-width: 1200px;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* Tarjeta de Producto */
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    /* Contenedor Adaptado para Imagen Completa */
+    .img-container {
+      width: 100%;
+      height: 280px; /* Tamaño amplio ideal para móviles */
+      background: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem;
+    }
+
+    .img-container img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain; /* Muestra la imagen COMPLETA sin recortar nada */
+      border-radius: 8px;
+    }
+
+    .category-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(4px);
+      color: var(--primary);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.3rem 0.7rem;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+    }
+
+    .card-body {
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      flex-grow: 1;
+    }
+
+    /* Campos Editables */
+    .editable {
+      border: 1px dashed transparent;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: border 0.2s;
+    }
+    .editable:hover, .editable:focus {
+      border-color: var(--primary);
+      outline: none;
+      background-color: #f0fdf4;
+    }
+
+    .title { font-weight: 700; font-size: 1.1rem; line-height: 1.3; }
+    .price { font-size: 1.3rem; font-weight: 800; color: #15803d; }
+    .description { font-size: 0.88rem; color: var(--text-muted); line-height: 1.4; min-height: 40px; }
+
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: auto;
+      padding-top: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .modal-content {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 16px;
+      max-width: 550px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    textarea { width: 100%; height: 260px; font-family: monospace; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border); }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+      grid-column: 1 / -1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Menu Fijo Superior -->
+  <header>
+    <div class="header-content">
+      <div class="header-top">
+        <h1>Catálogo de Productos</h1>
+        <div class="header-actions">
+          <button class="btn btn-secondary" onclick="exportJSON()">JSON</button>
+          <button class="btn btn-secondary" onclick="resetData()">Restaurar</button>
+        </div>
+      </div>
+
+      <!-- Buscador -->
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre, categoría o descripción..." oninput="handleSearch()">
+      </div>
+
+      <!-- Filtros Rápidos por Categoría -->
+      <div class="categories-bar" id="categoryChips"></div>
+    </div>
+  </header>
+
+  <!-- Grilla de Productos -->
+  <div class="container">
+    <div class="grid" id="productGrid"></div>
+  </div>
+
+  <!-- Modal para exportar JSON -->
+  <div class="modal" id="jsonModal">
+    <div class="modal-content">
+      <h3 style="margin-bottom:0.8rem;">Estructura JSON Actualizada</h3>
+      <textarea id="jsonOutput" readonly></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
+        <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
+        <button class="btn" onclick="copyJSON()">Copiar JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Datos Base con Categorías agregadas
+    const defaultProducts = [
+      {"id":"1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn","title":"Postre Tradicional de la Casa","category":"Postres","price":25000,"description":"Deliciosa preparación artesanal con ingredientes frescos y textura suave.","imgUrl":"https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn"},
+      {"id":"1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ","title":"Torta Especial Marquise","category":"Reposteria","price":45000,"description":"Capas de chocolate premium decoradas con frutos rojos de temporada.","imgUrl":"https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ"},
+      {"id":"1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv","title":"Bebida Refrescante Frutal","category":"Bebidas","price":12000,"description":"Combinación natural sin azúcares añadidos. Ideal para acompañar tus comidas.","imgUrl":"https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv"},
+      {"id":"1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq","title":"Combo Snacking Dulce","category":"Snacks","price":18000,"description":"Mezcla de sabores pensada para tus pausas del día.","imgUrl":"https://lh3.googleusercontent.com/d/1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq"},
+      {"id":"1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf","title":"Postre de Tres Leches","category":"Postres","price":22000,"description":"El clásico sabor de casa humedecido a la perfección.","imgUrl":"https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf"},
+      {"id":"1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh","title":"Galletas Artesanales x 6","category":"Reposteria","price":15000,"description":"Horneadas a diario, crujientes por fuera y suaves por dentro.","imgUrl":"https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh"},
+      {"id":"1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n","title":"Caja Regalo Especial","category":"Especiales","price":65000,"description":"Presentación de lujo que incluye selección variada de la casa.","imgUrl":"https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n"},
+      {"id":"155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R","title":"Mousse de Maracuyá","category":"Postres","price":20000,"description":"Equilibrio perfecto entre acidez y dulzura natural.","imgUrl":"https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R"},
+      {"id":"1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr","title":"Pie de Limón Cítrico","category":"Postres","price":24000,"description":"Masa crocante con relleno cremoso y merengue tostado.","imgUrl":"https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr"},
+      {"id":"122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ","title":"Café Frío de la Casa","category":"Bebidas","price":11000,"description":"Infusión en frío con un toque de crema y caramelo.","imgUrl":"https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ"},
+      {"id":"1rqIPaJrFMb1vIkPKRMWcEDkCoXNpJYAR","title":"Brownie Supremo de Chocolate","category":"Reposteria","price":16000,"description":"Textura fudgy cargada de trozos de chocolate real.","imgUrl":"https://lh3.googleusercontent.com/d/1rqIPaJrFMb1vIkPKRMWcEDkCoXNpJYAR"},
+      {"id":"1tG21zNYr0n4aFl-5bgFCLj2DfXPq8sFb","title":"Tartaleta de Frutas","category":"Reposteria","price":23000,"description":"Crema pastelera suave cubierta de fruta fresca.","imgUrl":"https://lh3.googleusercontent.com/d/1tG21zNYr0n4aFl-5bgFCLj2DfXPq8sFb"},
+      {"id":"1d8NNXpBgxVezyisyxAmfwv-cUDORFxrm","title":"Cupcake Decorado","category":"Reposteria","price":9000,"description":"Bizcocho esponjoso con cobertura cremosa.","imgUrl":"https://lh3.googleusercontent.com/d/1d8NNXpBgxVezyisyxAmfwv-cUDORFxrm"},
+      {"id":"1bpMy0TKOgvB7OQGXkE9AEbDJlcl7vNt4","title":"Smoothie Tropical","category":"Bebidas","price":14000,"description":"Mezcla congelada de mango, piña y fruta de la pasión.","imgUrl":"https://lh3.googleusercontent.com/d/1bpMy0TKOgvB7OQGXkE9AEbDJlcl7vNt4"},
+      {"id":"1a9Gy3hm-oAUamMZnlKJiHrB1oEX0DsTC","title":"Cheesecake de Frutilla","category":"Postres","price":28000,"description":"Base de galleta crujiente con suave crema de queso.","imgUrl":"https://lh3.googleusercontent.com/d/1a9Gy3hm-oAUamMZnlKJiHrB1oEX0DsTC"},
+      {"id":"1iLU0kOYGpMwiilLDJ7ib5aRBIZKKUuUS","title":"Alfajor Artesanal","category":"Snacks","price":8000,"description":"Relleno generoso de dulce de leche cubierto con coco.","imgUrl":"https://lh3.googleusercontent.com/d/1iLU0kOYGpMwiilLDJ7ib5aRBIZKKUuUS"},
+      {"id":"1oxw4WSusRM4KWNaOoewYjRWJLTNc7bkg","title":"Té Helado Cítrico","category":"Bebidas","price":10000,"description":"Bebida natural aromatizada con hierbas frescas.","imgUrl":"https://lh3.googleusercontent.com/d/1oxw4WSusRM4KWNaOoewYjRWJLTNc7bkg"},
+      {"id":"1SYwguzVGkGXqw3m6qyIv_AGIVu2GKMP4","title":"Macarons x 4","category":"Reposteria","price":21000,"description":"Finos bocadillos franceses con rellenos variados.","imgUrl":"https://lh3.googleusercontent.com/d/1SYwguzVGkGXqw3m6qyIv_AGIVu2GKMP4"},
+      {"id":"1RxTxJu_m1bzr6-PQefY65z41aa345ncD","title":"Waffle con Toppings","category":"Postres","price":19000,"description":"Caliente y crujiente, servido con miel y fruta.","imgUrl":"https://lh3.googleusercontent.com/d/1RxTxJu_m1bzr6-PQefY65z41aa345ncD"},
+      {"id":"1_25dzF_2mByqqXAxffc_U4eQ1V_byo48","title":"Milkshake de Vainilla","category":"Bebidas","price":16000,"description":"Cremosa malteada preparada con helado artesanal.","imgUrl":"https://lh3.googleusercontent.com/d/1_25dzF_2mByqqXAxffc_U4eQ1V_byo48"},
+      {"id":"1hZgUmsDZbRG8esqbzXaRBymcpfYwMohs","title":"Caja Desayuno Sorpresa","category":"Especiales","price":75000,"description":"Incluye bebida, postre, panadería y tarjeta personalizada.","imgUrl":"https://lh3.googleusercontent.com/d/1hZgUmsDZbRG8esqbzXaRBymcpfYwMohs"},
+      {"id":"1DVqIunI-P6-O2NctWanChC8hPYgTL7Nm","title":"Tiramisú Tradicional","category":"Postres","price":26000,"description":"Receta italiana con café espresso y queso mascarpone.","imgUrl":"https://lh3.googleusercontent.com/d/1DVqIunI-P6-O2NctWanChC8hPYgTL7Nm"},
+      {"id":"1J1ThJcEPYlj0BwD_Ke8qwA6yPJMg33qk","title":"Pan de Bono Recién Horneado x 5","category":"Snacks","price":12000,"description":"Tradicional bocado con queso fresco.","imgUrl":"https://lh3.googleusercontent.com/d/1J1ThJcEPYlj0BwD_Ke8qwA6yPJMg33qk"},
+      {"id":"1Jy7_T_2L1VU1rJppCOxKzGxw4O0wndhV","title":"Crepe Dulce","category":"Postres","price":18000,"description":"Relleno de Nutella y banano en rodajas.","imgUrl":"https://lh3.googleusercontent.com/d/1Jy7_T_2L1VU1rJppCOxKzGxw4O0wndhV"},
+      {"id":"1o3l6MbXHFZsAd-ISDz5OGTuRXH8RZp3B","title":"Torta Red Velvet","category":"Reposteria","price":48000,"description":"Bizcocho aterciopelado con frosting de queso crema.","imgUrl":"https://lh3.googleusercontent.com/d/1o3l6MbXHFZsAd-ISDz5OGTuRXH8RZp3B"},
+      {"id":"1ktYGNDaI-IQCw_7FFwVFyLUnAmAUGORF","title":"Donas Rellenas x 3","category":"Snacks","price":13000,"description":"Surtidas con manjar, arequipe o chocolate.","imgUrl":"https://lh3.googleusercontent.com/d/1ktYGNDaI-IQCw_7FFwVFyLUnAmAUGORF"},
+      {"id":"1zed-Ekghmw92ncQn-wSkXUDko0VTlYZO","title":"Muffin de Arándanos","category":"Snacks","price":9500,"description":"Bizcocho esponjoso repleto de fruta natural.","imgUrl":"https://lh3.googleusercontent.com/d/1zed-Ekghmw92ncQn-wSkXUDko0VTlYZO"},
+      {"id":"1MbF9hHf0KfaGjzK5F99ZOK248l31fMPA","title":"Combo Cumpleaños","category":"Especiales","price":89000,"description":"Torta pequeña, globos y empaque especial listo para festejar.","imgUrl":"https://lh3.googleusercontent.com/d/1MbF9hHf0KfaGjzK5F99ZOK248l31fMPA"}
+    ];
+
+    let products = JSON.parse(localStorage.getItem('my_catalog_data_v2')) || defaultProducts;
+    let selectedCategory = 'Todas';
+
+    function renderCategoryChips() {
+      const categories = ['Todas', ...new Set(products.map(p => p.category || 'General'))];
+      const container = document.getElementById('categoryChips');
+      container.innerHTML = categories.map(cat => `
+        <button class="chip ${cat === selectedCategory ? 'active' : ''}" onclick="filterByCategory('${cat}')">${cat}</button>
+      `).join('');
+    }
+
+    function filterByCategory(cat) {
+      selectedCategory = cat;
+      renderCategoryChips();
+      handleSearch();
+    }
+
+    function renderCatalog(itemsToRender) {
+      const container = document.getElementById('productGrid');
+      
+      if(itemsToRender.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No se encontraron resultados</h3>
+            <p>Intenta buscando con otra palabra o categoría.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = itemsToRender.map(prod => {
+        const index = products.findIndex(p => p.id === prod.id);
+        const formattedPrice = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(prod.price);
+        
+        return `
+          <div class="card">
+            <div class="img-container">
+              <span class="category-badge editable" contenteditable="true" onblur="updateProduct(${index}, 'category', this.innerText)">${prod.category || 'General'}</span>
+              <img src="${prod.imgUrl}" alt="${prod.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x280?text=Imagen+No+Disponible'">
+            </div>
+            <div class="card-body">
+              <div class="title editable" contenteditable="true" onblur="updateProduct(${index}, 'title', this.innerText)">${prod.title}</div>
+              <div class="price editable" contenteditable="true" onblur="updateProductPrice(${index}, this.innerText)">${formattedPrice}</div>
+              <div class="description editable" contenteditable="true" onblur="updateProduct(${index}, 'description', this.innerText)">${prod.description}</div>
+              
+              <div class="card-actions">
+                <button class="btn btn-secondary" onclick="copyCardInfo(${index}, this)">📋 Copiar</button>
+                <a href="${prod.imgUrl}" target="_blank" download="foto_${prod.id}.jpg" class="btn" style="text-decoration:none;">📥 Descargar</a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleSearch() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      
+      const filtered = products.filter(p => {
+        const matchesCategory = selectedCategory === 'Todas' || (p.category || 'General') === selectedCategory;
+        const matchesQuery = 
+          p.title.toLowerCase().includes(query) ||
+          (p.category && p.category.toLowerCase().includes(query)) ||
+          p.description.toLowerCase().includes(query);
+          
+        return matchesCategory && matchesQuery;
+      });
+
+      renderCatalog(filtered);
+    }
+
+    function updateProduct(index, field, value) {
+      products[index][field] = value.trim();
+      saveToStorage();
+      renderCategoryChips();
+    }
+
+    function updateProductPrice(index, value) {
+      const numericVal = parseInt(value.replace(/[^0-9]/g, '')) || 0;
+      products[index].price = numericVal;
+      saveToStorage();
+      handleSearch();
+    }
+
+    function saveToStorage() {
+      localStorage.setItem('my_catalog_data_v2', JSON.stringify(products));
+    }
+
+    function copyCardInfo(index, btn) {
+      const p = products[index];
+      const formattedPrice = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(p.price);
+      const textToCopy = `✨ *${p.title}*\n🏷️ Categoría: ${p.category || 'General'}\n💰 Precio: ${formattedPrice} COP\n📝 ${p.description}\n🖼️ Ver Foto: ${p.imgUrl}`;
+      
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = '✅ ¡Listo!';
+        btn.style.backgroundColor = 'var(--success)';
+        btn.style.color = 'white';
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.backgroundColor = '';
+          btn.style.color = '';
+        }, 1800);
+      });
+    }
+
+    function exportJSON() {
+      document.getElementById('jsonOutput').value = JSON.stringify(products, null, 2);
+      document.getElementById('jsonModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('jsonModal').style.display = 'none';
+    }
+
+    function copyJSON() {
+      const copyText = document.getElementById("jsonOutput");
+      copyText.select();
+      navigator.clipboard.writeText(copyText.value);
+      alert("JSON copiado al portapapeles.");
+    }
+
+    function resetData() {
+      if (confirm("¿Deseas restaurar los valores originales? Se borrarán tus cambios.")) {
+        localStorage.removeItem('my_catalog_data_v2');
+        products = JSON.parse(JSON.stringify(defaultProducts));
+        selectedCategory = 'Todas';
+        renderCategoryChips();
+        handleSearch();
+      }
+    }
+
+    // Inicialización
+    renderCategoryChips();
+    renderCatalog(products);
+  </script>
+</body>
+</html>

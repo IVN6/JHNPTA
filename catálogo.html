@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de Productos - Vista Previa</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --border: #e2e8f0;
+      --success: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 2rem 1rem; }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto 2rem auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    h1 { font-size: 1.8rem; font-weight: 700; }
+
+    .btn {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn:hover { background-color: var(--primary-hover); }
+    .btn-secondary { background-color: #64748b; }
+    .btn-secondary:hover { background-color: #475569; }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.875rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .img-container {
+      width: 100%;
+      height: 220px;
+      background-color: #f1f5f9;
+      position: relative;
+    }
+
+    .img-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      flex-grow: 1;
+    }
+
+    .editable {
+      border: 1px dashed transparent;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: border 0.2s;
+    }
+    .editable:hover, .editable:focus {
+      border-color: var(--primary);
+      outline: none;
+      background-color: #f0fdf4;
+    }
+
+    .title { font-weight: 700; font-size: 1.1rem; }
+    .price { font-size: 1.25rem; font-weight: 800; color: #166534; }
+    .description { font-size: 0.9rem; color: #475569; min-height: 50px; }
+
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .modal-content {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    textarea { width: 100%; height: 300px; font-family: monospace; padding: 1rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>Catálogo de Productos</h1>
+      <p style="font-size: 0.85rem; color: #64748b;">Haz clic sobre el título, precio o descripción para editar. Se guarda en tu navegador.</p>
+    </div>
+    <div>
+      <button class="btn btn-secondary" onclick="exportJSON()">Copiar JSON</button>
+      <button class="btn" onclick="resetData()">Restablecer Datos</button>
+    </div>
+  </header>
+
+  <div class="grid" id="productGrid"></div>
+
+  <!-- Modal para ver el JSON -->
+  <div class="modal" id="jsonModal">
+    <div class="modal-content">
+      <h3>Estructura JSON de Productos</h3>
+      <br>
+      <textarea id="jsonOutput" readonly></textarea>
+      <br><br>
+      <button class="btn btn-sm" onclick="closeModal()">Cerrar</button>
+      <button class="btn btn-sm" onclick="copyJSON()">Copiar JSON</button>
+    </div>
+  </div>
+
+  <script>
+    const defaultProducts = [
+      {"id":"1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn","title":"Producto 1","price":45000,"description":"Excelente calidad y diseño exclusivo. Ideal para uso diario o regalo.","imgUrl":"https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn"},
+      {"id":"1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ","title":"Producto 2","price":55000,"description":"Materiales de alta durabilidad con acabado premium. ¡Edición limitada!","imgUrl":"https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ"},
+      {"id":"1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv","title":"Producto 3","price":38000,"description":"Práctico, moderno y cómodo. Perfecto para complementar tu estilo.","imgUrl":"https://lh3.googleusercontent.com/d/1g96syyHlt2JX4INY6fHBEQIHwXJAGbqv"},
+      {"id":"1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq","title":"Producto 4","price":62000,"description":"Novedoso diseño ergonómico. Alta demanda este mes.","imgUrl":"https://lh3.googleusercontent.com/d/1PQ6yiXWj9M0kYW_iIoSaYTYR3xN_euiq"},
+      {"id":"1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf","title":"Producto 5","price":49000,"description":"El balance perfecto entre elegancia y funcionalidad.","imgUrl":"https://lh3.googleusercontent.com/d/1hkjgg0Spb0gZO2kPx8ctHPOqShme0Dpf"},
+      {"id":"1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh","title":"Producto 6","price":35000,"description":"Súper ligero y fácil de transportar. Garantía de satisfacción.","imgUrl":"https://lh3.googleusercontent.com/d/1ljViXqac8P9N5SX3t5qYFCAVJjW2YMyh"},
+      {"id":"1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n","title":"Producto 7","price":75000,"description":"Calidad superior garantizada. Incluye envío promocional.","imgUrl":"https://lh3.googleusercontent.com/d/1Kb3xMQ7xyvnVLsLV5MHO-fZFs1Deob9n"},
+      {"id":"155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R","title":"Producto 8","price":42000,"description":"Resistente y con estilo vanguardista. ¡El más vendido!","imgUrl":"https://lh3.googleusercontent.com/d/155w_DyItHHbb9IAB-ZuyoCiPMIrsJM2R"},
+      {"id":"1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr","title":"Producto 9","price":58000,"description":"Detalles únicos pensados para brindarte la mejor experiencia.","imgUrl":"https://lh3.googleusercontent.com/d/1iB3XAQhqLq8FHsJlxj3E1oK0626wTvXr"},
+      {"id":"122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ","title":"Producto 10","price":29000,"description":"Opción económica sin sacrificar calidad ni diseño.","imgUrl":"https://lh3.googleusercontent.com/d/122KbLwNJXKJig_dQsK3P76d5ZKB5rExQ"},
+      {"id":"1rqIPaJrFMb1vIkPKRMWcEDkCoXNpJYAR","title":"Producto 11","price":68000,"description":"Elegante opción premium disponible para entrega inmediata.","imgUrl":"https://lh3.googleusercontent.com/d/1rqIPaJrFMb1vIkPKRMWcEDkCoXNpJYAR"},
+      {"id":"1tG21zNYr0n4aFl-5bgFCLj2DfXPq8sFb","title":"Producto 12","price":50000,"description":"Un clásico renovado con las mejores características.","imgUrl":"https://lh3.googleusercontent.com/d/1tG21zNYr0n4aFl-5bgFCLj2DfXPq8sFb"},
+      {"id":"1d8NNXpBgxVezyisyxAmfwv-cUDORFxrm","title":"Producto 13","price":47000,"description":"Ideal para cualquier ocasión. Material duradero.","imgUrl":"https://lh3.googleusercontent.com/d/1d8NNXpBgxVezyisyxAmfwv-cUDORFxrm"},
+      {"id":"1bpMy0TKOgvB7OQGXkE9AEbDJlcl7vNt4","title":"Producto 14","price":39000,"description":"Estilo versátil y cómodo. Disponible en varios colores.","imgUrl":"https://lh3.googleusercontent.com/d/1bpMy0TKOgvB7OQGXkE9AEbDJlcl7vNt4"},
+      {"id":"1a9Gy3hm-oAUamMZnlKJiHrB1oEX0DsTC","title":"Producto 15","price":82000,"description":"Línea alta gama con acabados de primera calidad.","imgUrl":"https://lh3.googleusercontent.com/d/1a9Gy3hm-oAUamMZnlKJiHrB1oEX0DsTC"},
+      {"id":"1iLU0kOYGpMwiilLDJ7ib5aRBIZKKUuUS","title":"Producto 16","price":44000,"description":"Compacto, funcional y muy práctico.","imgUrl":"https://lh3.googleusercontent.com/d/1iLU0kOYGpMwiilLDJ7ib5aRBIZKKUuUS"},
+      {"id":"1oxw4WSusRM4KWNaOoewYjRWJLTNc7bkg","title":"Producto 17","price":51000,"description":"Diseño moderno adaptado a tus necesidades diarias.","imgUrl":"https://lh3.googleusercontent.com/d/1oxw4WSusRM4KWNaOoewYjRWJLTNc7bkg"},
+      {"id":"1SYwguzVGkGXqw3m6qyIv_AGIVu2GKMP4","title":"Producto 18","price":63000,"description":"Excelente relación precio-calidad. ¡Haz tu pedido ya!","imgUrl":"https://lh3.googleusercontent.com/d/1SYwguzVGkGXqw3m6qyIv_AGIVu2GKMP4"},
+      {"id":"1RxTxJu_m1bzr6-PQefY65z41aa345ncD","title":"Producto 19","price":36000,"description":"Liviano, suave y cómodo. Una compra garantizada.","imgUrl":"https://lh3.googleusercontent.com/d/1RxTxJu_m1bzr6-PQefY65z41aa345ncD"},
+      {"id":"1_25dzF_2mByqqXAxffc_U4eQ1V_byo48","title":"Producto 20","price":48000,"description":"Tecnología/diseño de punta al mejor precio del mercado.","imgUrl":"https://lh3.googleusercontent.com/d/1_25dzF_2mByqqXAxffc_U4eQ1V_byo48"},
+      {"id":"1hZgUmsDZbRG8esqbzXaRBymcpfYwMohs","title":"Producto 21","price":59000,"description":"Perfecto para llevar contigo a todos lados.","imgUrl":"https://lh3.googleusercontent.com/d/1hZgUmsDZbRG8esqbzXaRBymcpfYwMohs"},
+      {"id":"1DVqIunI-P6-O2NctWanChC8hPYgTL7Nm","title":"Producto 22","price":71000,"description":"Calidad garantizada. Uno de los favoritos de nuestros clientes.","imgUrl":"https://lh3.googleusercontent.com/d/1DVqIunI-P6-O2NctWanChC8hPYgTL7Nm"},
+      {"id":"1J1ThJcEPYlj0BwD_Ke8qwA6yPJMg33qk","title":"Producto 23","price":43000,"description":"Suave, resistente y duradero. Súper recomendado.","imgUrl":"https://lh3.googleusercontent.com/d/1J1ThJcEPYlj0BwD_Ke8qwA6yPJMg33qk"},
+      {"id":"1Jy7_T_2L1VU1rJppCOxKzGxw4O0wndhV","title":"Producto 24","price":53000,"description":"Añade un toque único a tu rutina diaria.","imgUrl":"https://lh3.googleusercontent.com/d/1Jy7_T_2L1VU1rJppCOxKzGxw4O0wndhV"},
+      {"id":"1o3l6MbXHFZsAd-ISDz5OGTuRXH8RZp3B","title":"Producto 25","price":67000,"description":"Fabricación nacional con estándares de exportación.","imgUrl":"https://lh3.googleusercontent.com/d/1o3l6MbXHFZsAd-ISDz5OGTuRXH8RZp3B"},
+      {"id":"1ktYGNDaI-IQCw_7FFwVFyLUnAmAUGORF","title":"Producto 26","price":37000,"description":"Simple pero sofisticado. Una opción ganadora.","imgUrl":"https://lh3.googleusercontent.com/d/1ktYGNDaI-IQCw_7FFwVFyLUnAmAUGORF"},
+      {"id":"1zed-Ekghmw92ncQn-wSkXUDko0VTlYZO","title":"Producto 27","price":46000,"description":"Versatilidad y practicidad en un solo producto.","imgUrl":"https://lh3.googleusercontent.com/d/1zed-Ekghmw92ncQn-wSkXUDko0VTlYZO"},
+      {"id":"1MbF9hHf0KfaGjzK5F99ZOK248l31fMPA","title":"Producto 28","price":89000,"description":"Edición especial premium. Pocas unidades disponibles.","imgUrl":"https://lh3.googleusercontent.com/d/1MbF9hHf0KfaGjzK5F99ZOK248l31fMPA"}
+    ];
+
+    let products = JSON.parse(localStorage.getItem('my_catalog_data')) || defaultProducts;
+
+    function renderCatalog() {
+      const container = document.getElementById('productGrid');
+      container.innerHTML = '';
+
+      products.forEach((prod, index) => {
+        const formattedPrice = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(prod.price);
+        
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="img-container">
+            <img src="${prod.imgUrl}" alt="${prod.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x220?text=Imagen+No+Disponible'">
+          </div>
+          <div class="card-body">
+            <div class="title editable" contenteditable="true" onblur="updateProduct(${index}, 'title', this.innerText)">${prod.title}</div>
+            <div class="price editable" contenteditable="true" onblur="updateProductPrice(${index}, this.innerText)">${formattedPrice}</div>
+            <div class="description editable" contenteditable="true" onblur="updateProduct(${index}, 'description', this.innerText)">${prod.description}</div>
+            
+            <div class="card-actions">
+              <button class="btn btn-sm" onclick="copyCardInfo(${index}, this)">📋 Copiar Texto</button>
+              <a href="${prod.imgUrl}" target="_blank" download="imagen_${prod.id}.jpg" class="btn btn-sm btn-secondary" style="text-decoration:none;">📥 Imagen</a>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function updateProduct(index, field, value) {
+      products[index][field] = value.trim();
+      saveToStorage();
+    }
+
+    function updateProductPrice(index, value) {
+      const numericVal = parseInt(value.replace(/[^0-9]/g, '')) || 0;
+      products[index].price = numericVal;
+      saveToStorage();
+      renderCatalog();
+    }
+
+    function saveToStorage() {
+      localStorage.setItem('my_catalog_data', JSON.stringify(products));
+    }
+
+    function copyCardInfo(index, btn) {
+      const p = products[index];
+      const formattedPrice = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(p.price);
+      const textToCopy = `✨ *${p.title}*\n💰 Precio: ${formattedPrice} COP\n📝 ${p.description}\n🖼️ Ver Foto: ${p.imgUrl}`;
+      
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = '✅ ¡Copiado!';
+        btn.style.backgroundColor = 'var(--success)';
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.backgroundColor = '';
+        }, 1800);
+      });
+    }
+
+    function exportJSON() {
+      document.getElementById('jsonOutput').value = JSON.stringify(products, null, 2);
+      document.getElementById('jsonModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('jsonModal').style.display = 'none';
+    }
+
+    function copyJSON() {
+      const copyText = document.getElementById("jsonOutput");
+      copyText.select();
+      navigator.clipboard.writeText(copyText.value);
+      alert("JSON copiado al portapapeles.");
+    }
+
+    function resetData() {
+      if (confirm("¿Deseas restaurar los valores originales? Se perderán las ediciones.")) {
+        localStorage.removeItem('my_catalog_data');
+        products = [...defaultProducts];
+        renderCatalog();
+      }
+    }
+
+    renderCatalog();
+  </script>
+</body>
+</html>

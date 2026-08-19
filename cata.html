@@ -14,7 +14,6 @@
       --text-muted: #6b7280;
       --border: #e5e7eb;
       --success: #10b981;
-      --accent: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -125,7 +124,7 @@
       background-color: var(--primary);
       color: white;
       border: none;
-      padding: 0.5rem 0.9rem;
+      padding: 0.52rem 0.9rem;
       border-radius: 8px;
       cursor: pointer;
       font-weight: 600;
@@ -139,9 +138,8 @@
     .btn:hover { background-color: var(--primary-hover); }
     .btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid var(--border); }
     .btn-secondary:hover { background: #e5e7eb; }
-    .btn-full { width: 100%; }
 
-    /* Grid del Catálogo */
+    /* Grilla del Catálogo */
     .container {
       max-width: 1200px;
       margin: 1.5rem auto;
@@ -171,38 +169,35 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.08);
     }
 
-    /* Contenedor Adaptado para Imagen Completa */
+    /* Imagen Ocupando el 100% del Ancho */
     .img-container {
       width: 100%;
-      height: 280px; /* Tamaño amplio ideal para móviles */
-      background: #f8fafc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      height: 320px; /* Tamaño destacado en pantallas móviles */
+      background: #e2e8f0;
       position: relative;
-      border-bottom: 1px solid var(--border);
-      padding: 0.5rem;
+      overflow: hidden;
     }
 
     .img-container img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain; /* Muestra la imagen COMPLETA sin recortar nada */
-      border-radius: 8px;
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Ocupa el 100% de ancho y alto sin deformarse */
+      object-position: center;
+      display: block;
     }
 
     .category-badge {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(4px);
+      top: 12px;
+      left: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(6px);
       color: var(--primary);
-      font-size: 0.72rem;
+      font-size: 0.75rem;
       font-weight: 700;
-      padding: 0.3rem 0.7rem;
+      padding: 0.35rem 0.8rem;
       border-radius: 99px;
-      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     }
 
     .card-body {
@@ -226,9 +221,9 @@
       background-color: #f0fdf4;
     }
 
-    .title { font-weight: 700; font-size: 1.1rem; line-height: 1.3; }
-    .price { font-size: 1.3rem; font-weight: 800; color: #15803d; }
-    .description { font-size: 0.88rem; color: var(--text-muted); line-height: 1.4; min-height: 40px; }
+    .title { font-weight: 700; font-size: 1.15rem; line-height: 1.3; }
+    .price { font-size: 1.35rem; font-weight: 800; color: #15803d; }
+    .description { font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; min-height: 40px; }
 
     .card-actions {
       display: grid;
@@ -271,7 +266,7 @@
 </head>
 <body>
 
-  <!-- Menu Fijo Superior -->
+  <!-- Menú Fijo Superior -->
   <header>
     <div class="header-content">
       <div class="header-top">
@@ -288,7 +283,7 @@
         <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre, categoría o descripción..." oninput="handleSearch()">
       </div>
 
-      <!-- Filtros Rápidos por Categoría -->
+      <!-- Filtros por Categoría -->
       <div class="categories-bar" id="categoryChips"></div>
     </div>
   </header>
@@ -311,7 +306,6 @@
   </div>
 
   <script>
-    // Datos Base con Categorías agregadas
     const defaultProducts = [
       {"id":"1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn","title":"Postre Tradicional de la Casa","category":"Postres","price":25000,"description":"Deliciosa preparación artesanal con ingredientes frescos y textura suave.","imgUrl":"https://lh3.googleusercontent.com/d/1TyPAYyw8BSFdCYosp9UXTGiOxvh9x2Xn"},
       {"id":"1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ","title":"Torta Especial Marquise","category":"Reposteria","price":45000,"description":"Capas de chocolate premium decoradas con frutos rojos de temporada.","imgUrl":"https://lh3.googleusercontent.com/d/1jeiay_K1Ip1ZIfSZMPCmmggk7zigLlWJ"},
@@ -343,7 +337,7 @@
       {"id":"1MbF9hHf0KfaGjzK5F99ZOK248l31fMPA","title":"Combo Cumpleaños","category":"Especiales","price":89000,"description":"Torta pequeña, globos y empaque especial listo para festejar.","imgUrl":"https://lh3.googleusercontent.com/d/1MbF9hHf0KfaGjzK5F99ZOK248l31fMPA"}
     ];
 
-    let products = JSON.parse(localStorage.getItem('my_catalog_data_v2')) || defaultProducts;
+    let products = JSON.parse(localStorage.getItem('my_catalog_data_v3')) || defaultProducts;
     let selectedCategory = 'Todas';
 
     function renderCategoryChips() {
@@ -381,7 +375,7 @@
           <div class="card">
             <div class="img-container">
               <span class="category-badge editable" contenteditable="true" onblur="updateProduct(${index}, 'category', this.innerText)">${prod.category || 'General'}</span>
-              <img src="${prod.imgUrl}" alt="${prod.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x280?text=Imagen+No+Disponible'">
+              <img src="${prod.imgUrl}" alt="${prod.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x320?text=Imagen+No+Disponible'">
             </div>
             <div class="card-body">
               <div class="title editable" contenteditable="true" onblur="updateProduct(${index}, 'title', this.innerText)">${prod.title}</div>
@@ -428,7 +422,7 @@
     }
 
     function saveToStorage() {
-      localStorage.setItem('my_catalog_data_v2', JSON.stringify(products));
+      localStorage.setItem('my_catalog_data_v3', JSON.stringify(products));
     }
 
     function copyCardInfo(index, btn) {
@@ -467,7 +461,7 @@
 
     function resetData() {
       if (confirm("¿Deseas restaurar los valores originales? Se borrarán tus cambios.")) {
-        localStorage.removeItem('my_catalog_data_v2');
+        localStorage.removeItem('my_catalog_data_v3');
         products = JSON.parse(JSON.stringify(defaultProducts));
         selectedCategory = 'Todas';
         renderCategoryChips();

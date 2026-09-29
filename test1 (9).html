@@ -1,0 +1,2567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Comanda Pro</title>
+    <style>
+:root {
+            --primary: #d63384;
+            --primary-light: #fff0f6;
+            --success: #25D366;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #1a1a2e;
+            --bg: #f4f4f8;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text-muted: #64748b;
+            --nav-height: 65px;
+            --cat-height: 94px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+ 
+        /* ── NAV MÓVIL ── */
+        .mobile-nav {
+            display: flex;
+            background: white;
+            border-top: 1px solid var(--border);
+            height: var(--nav-height);
+            position: fixed;
+            bottom: 0; width: 100%;
+            z-index: 2000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+        }
+        .nav-tab {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-size: 0.78rem; font-weight: 600;
+            color: #94a3b8; background: none; border: none;
+            cursor: pointer; position: relative; gap: 3px;
+            transition: color 0.15s;
+        }
+        .nav-tab .icon { font-size: 1.3rem; }
+        .nav-tab.active { color: var(--primary); }
+        .nav-tab.active::after {
+            content: ''; position: absolute; top: 0; left: 20%; right: 20%;
+            height: 3px; background: var(--primary); border-radius: 0 0 4px 4px;
+        }
+        .badge {
+            position: absolute; top: 6px; right: 22%;
+            background: var(--primary); color: white;
+            font-size: 0.7rem; padding: 1px 6px;
+            border-radius: 10px; font-weight: 700;
+            display: none;
+        }
+ 
+        /* ── LAYOUT ── */
+        .app-container {
+            display: flex; flex: 1;
+            height: calc(100vh - var(--nav-height));
+            overflow: hidden;
+        }
+        .section-view {
+            display: none; flex-direction: column;
+            width: 100%; height: 100%;
+            padding: 12px 12px calc(var(--nav-height) + 8px);
+            overflow: hidden;
+        }
+        .section-view.active { display: flex; }
+ 
+        .grid-productos-scroll {
+            flex: 1; overflow-y: auto;
+            padding-top: 30px;
+            padding-bottom: calc(var(--cat-height) + var(--nav-height) + 20px);
+        }
+        .grid-productos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        .producto-celda {
+            background: white; border: 1.5px solid var(--border);
+            border-radius: 12px; padding: 10px 8px;
+            text-align: center; cursor: pointer;
+            display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center;
+            min-height: 148px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: transform 0.1s, border-color 0.1s;
+            position: relative;
+        }
+        .producto-celda:active { transform: scale(0.96); background: var(--primary-light); border-color: var(--primary); }
+        .producto-celda img {
+            width: 68px; height: 68px; object-fit: cover;
+            border-radius: 8px; margin-bottom: 6px; pointer-events: none;
+        }
+        .prod-nombre { font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
+        .prod-precio { font-size: 0.85rem; color: var(--primary); font-weight: 700; }
+        .prod-tiene-opciones {
+            position: absolute; top: 6px; right: 6px;
+            background: var(--warning); color: white;
+            font-size: 0.6rem; font-weight: 700;
+            padding: 2px 5px; border-radius: 4px;
+        }
+ 
+        /* ── CATEGORÍAS + BUSCADOR (barra fija abajo en móvil) ── */
+        .categorias-container {
+            background: white;
+            border-top: 1px solid var(--border);
+            position: fixed; bottom: var(--nav-height);
+            left: 0; width: 100%; height: var(--cat-height);
+            z-index: 1500;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.07);
+            display: flex; flex-direction: column;
+            padding: 7px 10px 6px; gap: 6px;
+        }
+        /* fila superior: buscador colapsable */
+        .cat-search-row {
+            display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+        }
+        .btn-lupa {
+            width: 34px; height: 34px; border-radius: 8px;
+            border: 1.5px solid var(--border); background: var(--bg);
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 1rem; flex-shrink: 0;
+            transition: border-color 0.15s;
+        }
+        .btn-lupa.activo { border-color: var(--primary); background: var(--primary-light); }
+        .search-expandible {
+            flex: 1; display: flex; align-items: center; gap: 6px;
+            background: var(--bg); border: 1.5px solid var(--border);
+            border-radius: 8px; padding: 0 10px; height: 34px;
+            overflow: hidden; max-width: 400px; opacity: 1;
+            pointer-events: all; border-color: var(--primary);
+        }
+        .search-expandible input {
+            flex: 1; border: none; outline: none; background: transparent;
+            font-size: 0.9rem; color: var(--dark); font-family: inherit;
+            min-width: 0;
+        }
+        .search-expandible button {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-muted); font-size: 0.85rem; padding: 0; flex-shrink: 0;
+        }
+        /* fila inferior: chips de categoría */
+        .categorias-bar {
+            display: flex; gap: 8px;
+            overflow-x: auto; flex: 1;
+            align-items: center; scrollbar-width: none;
+        }
+        .categorias-bar::-webkit-scrollbar { display: none; }
+        .btn-categoria {
+            padding: 7px 16px; border: 1.5px solid var(--border);
+            background: var(--bg); border-radius: 20px;
+            cursor: pointer; font-weight: 600;
+            white-space: nowrap; font-size: 0.82rem;
+            color: var(--text-muted); flex-shrink: 0;
+            transition: all 0.15s;
+        }
+        .btn-categoria.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+        }
+ 
+        /* ── MODAL PERSONALIZACIÓN ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55); z-index: 9000;
+            display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: white; border-radius: 20px 20px 0 0;
+            padding: 20px; width: 100%; max-width: 480px;
+            max-height: 80vh; overflow-y: auto;
+            transform: translateY(30px); transition: transform 0.25s ease;
+        }
+        .modal-overlay.open .modal-box { transform: translateY(0); }
+        .modal-title {
+            font-size: 1.1rem; font-weight: 700;
+            color: var(--dark); margin-bottom: 4px;
+        }
+        .modal-precio {
+            color: var(--primary); font-weight: 700;
+            font-size: 1rem; margin-bottom: 16px;
+        }
+        .modal-section-label {
+            font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em;
+            text-transform: uppercase; color: var(--text-muted);
+            margin: 14px 0 8px;
+        }
+        .opciones-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px; margin-bottom: 8px;
+        }
+        .opcion-btn {
+            padding: 10px 8px; border: 1.5px solid var(--border);
+            border-radius: 10px; background: var(--bg);
+            cursor: pointer; font-size: 0.85rem; font-weight: 500;
+            text-align: center; transition: all 0.12s; color: var(--dark);
+        }
+        .opcion-btn.selected {
+            border-color: var(--primary); background: var(--primary-light);
+            color: var(--primary); font-weight: 700;
+        }
+        .adicion-btn {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 10px 12px;
+            border: 1.5px solid var(--border); border-radius: 10px;
+            background: var(--bg); cursor: pointer;
+            font-size: 0.85rem; transition: all 0.12s; margin-bottom: 6px;
+        }
+        .adicion-btn.selected {
+            border-color: var(--success); background: #f0fdf4;
+        }
+        .adicion-precio { color: var(--success); font-weight: 700; font-size: 0.82rem; }
+        .modal-nota-input {
+            width: 100%; padding: 10px 12px;
+            border: 1.5px solid var(--border); border-radius: 10px;
+            font-size: 0.9rem; outline: none; resize: none;
+            font-family: inherit; color: var(--dark);
+            background: var(--bg); margin-top: 6px;
+        }
+        .modal-nota-input:focus { border-color: var(--primary); background: white; }
+        .modal-footer {
+            display: flex; gap: 10px; margin-top: 18px;
+        }
+        .btn-modal-cancel {
+            flex: 1; padding: 13px;
+            border: 1.5px solid var(--border);
+            background: white; border-radius: 10px;
+            font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; color: var(--text-muted);
+        }
+        .btn-modal-confirm {
+            flex: 2; padding: 13px;
+            background: var(--primary); color: white;
+            border: none; border-radius: 10px;
+            font-size: 0.95rem; font-weight: 700;
+            cursor: pointer;
+        }
+ 
+        /* ── COMANDA ── */
+        .comanda-wrapper {
+            display: flex; flex-direction: column; height: 100%;
+            background: white; border-radius: 14px;
+            border: 1px solid var(--border); overflow: hidden;
+        }
+        .comanda-header {
+            padding: 14px; border-bottom: 1px solid var(--border);
+            background: white; flex-shrink: 0;
+        }
+        .comanda-header h3 { font-size: 1.05rem; margin-bottom: 10px; }
+        .meta-inputs {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        }
+        .meta-inputs select, .meta-inputs input {
+            padding: 10px; border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 0.9rem;
+            outline: none; background: white; color: var(--dark);
+            font-family: inherit;
+        }
+        .meta-inputs select:focus, .meta-inputs input:focus {
+            border-color: var(--primary);
+        }
+        .campo-mesero {
+            margin-top: 8px;
+            padding: 10px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 0.9rem;
+            width: 100%; outline: none; font-family: inherit;
+        }
+        .campo-mesero:focus { border-color: var(--primary); }
+        .campo-nota-orden {
+            width: 100%; margin-top: 8px; padding: 9px 12px;
+            border: 1.5px solid var(--border); border-radius: 8px;
+            font-size: 0.85rem; outline: none; background: white;
+            font-family: inherit;
+        }
+        .campo-nota-orden:focus { border-color: var(--primary); font-size: 0.98rem; color: var(--danger);}
+        .items-lista {
+            flex: 1; overflow-y: auto; padding: 12px;
+            background: #fafbfc; padding-bottom: 20px;
+        }
+        .vacia-msg {
+            text-align: center; color: var(--text-muted);
+            padding: 30px 20px; font-size: 0.9rem;
+        }
+        .vacia-msg .icon { font-size: 2.5rem; display: block; margin-bottom: 8px; }
+        .item-linea {
+            background: white; border: 1px solid var(--border);
+            border-radius: 10px; padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+        .item-linea-top {
+            display: flex; justify-content: space-between;
+            align-items: flex-start;
+        }
+        .item-nombre { font-weight: 600; font-size: 0.9rem; }
+        .item-specs {
+            font-size: 0.78rem; color: var(--text-muted);
+            margin-top: 3px; line-height: 1.4;
+        }
+        .item-precio { font-weight: 700; color: var(--primary); font-size: 0.9rem; white-space: nowrap; margin-left: 8px; }
+        .item-controles {
+            display: flex; align-items: center;
+            gap: 8px; margin-top: 8px;
+        }
+        .item-controles button {
+            width: 30px; height: 30px;
+            border: 1.5px solid var(--border);
+            background: white; border-radius: 7px;
+            font-weight: 700; cursor: pointer; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.1s;
+        }
+        .item-controles button:active { background: var(--primary-light); }
+        .item-cantidad { font-weight: 700; font-size: 1rem; min-width: 24px; text-align: center; }
+        .btn-eliminar-item {
+            margin-left: auto; background: none !important;
+            border: none !important; color: var(--danger);
+            font-size: 1rem; cursor: pointer; padding: 4px !important;
+            width: auto !important; height: auto !important;
+        }
+        .comanda-footer {
+            padding: 14px 14px 18px; border-top: 2px solid var(--border);
+            background: white; flex-shrink: 0; margin-top: auto;
+        }
+        .totales-row {
+            display: flex; justify-content: space-between;
+            font-size: 1.2rem; font-weight: 700;
+            margin-bottom: 12px; color: var(--dark);
+        }
+        .totales-row span:last-child { color: var(--primary); }
+        .btn-enviar {
+            width: 100%; background: var(--success); color: white;
+            border: none; padding: 14px; font-size: 1rem;
+            font-weight: 700; border-radius: 10px; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37,211,102,0.25);
+            transition: opacity 0.15s;
+        }
+        .btn-enviar:active { opacity: 0.85; }
+        .btn-vaciar {
+            width: 100%; background: none; color: var(--text-muted);
+            border: 1.5px solid var(--border); padding: 10px;
+            font-size: 0.85rem; font-weight: 600; border-radius: 8px;
+            cursor: pointer; margin-top: 8px;
+        }
+ 
+        /* ── MONITOR ── */
+        .monitor-wrapper {
+            display: flex; flex-direction: column; height: 100%;
+        }
+        .monitor-top {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 10px; flex-shrink: 0;
+        }
+        .monitor-top h3 { font-size: 1.05rem; }
+        .btn-refresh {
+            background: var(--success); color: white;
+            border: none; padding: 7px 13px; border-radius: 7px;
+            cursor: pointer; font-weight: 700; font-size: 0.82rem;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .balance-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px; margin-bottom: 10px; flex-shrink: 0;
+        }
+        .balance-card {
+            background: var(--dark); color: white;
+            border-radius: 10px; padding: 10px;
+            text-align: center;
+        }
+        .balance-card .label {
+            font-size: 0.7rem; opacity: 0.7;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .balance-card .valor {
+            font-size: 1rem; font-weight: 700; margin-top: 2px;
+        }
+        .balance-card.pagado { background: #15803d; }
+        .balance-card.pendiente { background: #b45309; }
+        .btn-resumen {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 7px 11px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.78rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .summary-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.72);
+            z-index: 10000;
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        }
+        .summary-overlay.open { opacity: 1; pointer-events: all; }
+        .summary-box {
+            background: white; width: min(560px, 100%);
+            border-radius: 16px; padding: 18px; max-height: 85vh; overflow-y: auto;
+            transform: translateY(10px); transition: transform 0.2s ease;
+        }
+        .summary-overlay.open .summary-box { transform: translateY(0); }
+        .summary-title { font-size: 1.05rem; font-weight: 800; color: var(--dark); margin-bottom: 4px; }
+        .summary-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px; }
+        .summary-stat-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;
+        }
+        .summary-stat-card {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px;
+            text-align: center;
+        }
+        .summary-stat-card.positive { background: #ecfdf3; border-color: #a7f3d0; }
+        .summary-stat-card.warning { background: #fffbeb; border-color: #fde68a; }
+        .summary-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+        .summary-value { font-size: 1rem; font-weight: 800; color: var(--dark); margin-top: 3px; }
+        .summary-section { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+        .summary-section-title { font-size: 0.82rem; font-weight: 800; color: var(--dark); margin-bottom: 8px; }
+        .summary-list { display: flex; flex-direction: column; gap: 6px; }
+        .summary-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--dark); }
+        .summary-item .muted { color: var(--text-muted); font-size: 0.78rem; }
+        .summary-empty { color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 8px 0; }
+        .lista-pedidos-scroll {
+            flex: 1; overflow-y: auto;
+            padding-bottom: 80px;
+        }
+ 
+        /* Tickets */
+        .pedido-ticket {
+            background: white; border-radius: 12px;
+            border-left: 5px solid var(--warning);
+            margin-bottom: 10px; overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .pedido-ticket.preparando { border-left-color: var(--info); }
+        .pedido-ticket.listo { border-left-color: var(--primary); }
+        .pedido-ticket.pagado { border-left-color: var(--success); }
+        .ticket-head {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 10px 12px 6px;
+        }
+        .ticket-head-left {
+            display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+        }
+        .ticket-num {
+            font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em;
+            background: var(--dark); color: white;
+            padding: 2px 7px; border-radius: 6px;
+            display: inline-flex; align-items: center;
+        }
+        .ticket-mesa {
+            font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+        }
+        .ticket-estado-badge {
+            font-size: 0.7rem; font-weight: 700;
+            padding: 3px 9px; border-radius: 10px;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .badge-pendiente { background: #fef3c7; color: #92400e; }
+        .badge-preparando { background: #dbeafe; color: #1e40af; }
+        .badge-listo { background: #fce7f3; color: #9d174d; }
+        .badge-pagado { background: #dcfce7; color: #166534; }
+        .ticket-items {
+            padding: 6px 12px 8px;
+            border-top: 1px dashed var(--border);
+        }
+        .ticket-item-linea {
+            display: flex; align-items: flex-start;
+            gap: 6px; padding: 4px 0;
+            font-size: 0.85rem;
+            border-bottom: 1px dotted #f0f0f0;
+        }
+        .ticket-item-linea:last-child { border-bottom: none; }
+        .tick-qty {
+            font-weight: 700; color: var(--primary);
+            min-width: 22px;
+        }
+        .tick-nombre { flex: 1; }
+        .tick-specs {
+            font-size: 0.75rem; color: var(--text-muted);
+            display: block; margin-top: 1px;
+        }
+        .ticket-nota {
+            padding: 4px 12px 8px;
+            font-size: 0.98rem; color: var(--danger);
+            font-style: italic;
+        }
+        .ticket-foot {
+            display: flex; align-items: center;
+            padding: 8px 12px; border-top: 1px solid var(--border);
+            background: #fafbfc; gap: 6px; flex-wrap: wrap;
+        }
+        .ticket-total { font-weight: 700; font-size: 0.95rem; margin-right: auto; }
+        .ticket-hora { font-size: 0.75rem; color: var(--text-muted); }
+        .ticket-pago-badge {
+            font-size: 0.7rem; padding: 3px 8px;
+            border-radius: 8px; font-weight: 600;
+            background: #f1f5f9; color: var(--text-muted);
+        }
+        .btn-estado-ticket {
+            padding: 6px 11px; border-radius: 7px;
+            border: 1.5px solid var(--border); background: white;
+            font-size: 0.78rem; font-weight: 700; cursor: pointer;
+            transition: all 0.12s;
+        }
+        .btn-estado-ticket:hover { background: var(--bg); }
+        .btn-editar-ticket {
+            padding: 6px 11px; border-radius: 7px;
+            border: 1.5px solid var(--border); background: white;
+            font-size: 0.78rem; font-weight: 700; cursor: pointer;
+        }
+        .btn-archivar-ticket {
+            background: none; border: none; cursor: pointer;
+            color: var(--danger); font-size: 1.1rem; padding: 2px 4px;
+        }
+        .ticket-alerta-tiempo {
+            font-size: 0.72rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 6px;
+            background: #fee2e2; color: #991b1b;
+            animation: pulsar 1.5s infinite;
+        }
+        @keyframes pulsar { 0%,100%{opacity:1} 50%{opacity:0.5} }
+ 
+        /* ── BARRA DE EDICIÓN ── */
+        .barra-edicion {
+            display: none;
+            position: fixed;
+            left: 0; right: 0;
+            bottom: var(--nav-height);
+            z-index: 1800;
+            background: var(--dark);
+            color: white;
+            padding: 10px 14px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.15);
+        }
+        .barra-edicion.visible { display: flex; }
+        .barra-edicion span { font-weight: 700; font-size: 0.82rem; flex: 1; min-width: 0; }
+        .barra-edicion button {
+            padding: 8px 12px; border-radius: 7px; font-weight: 700;
+            font-size: 0.78rem; cursor: pointer; flex-shrink: 0;
+        }
+        .btn-edicion-ver { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-edicion-guardar { background: var(--success); color: white; border: none; }
+        .btn-edicion-cancelar { background: none; color: white; border: 1px solid rgba(255,255,255,0.3); }
+ 
+        /* ── TOAST ── */
+        #toast-container {
+            position: fixed; bottom: calc(var(--nav-height) + 80px);
+            left: 50%; transform: translateX(-50%) translateY(8px);
+            background: rgba(26,26,46,0.95); color: white;
+            padding: 10px 22px; border-radius: 30px;
+            font-size: 0.88rem; z-index: 9999;
+            opacity: 0; transition: all 0.2s ease;
+            pointer-events: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            white-space: nowrap;
+        }
+        #toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+ 
+        /* ── DESKTOP ── */
+        @media (min-width: 968px) {
+            .mobile-nav { display: none; }
+            .app-container {
+                height: 100vh;
+                display: grid;
+                grid-template-columns: 1fr 360px 340px;
+            }
+            .section-view {
+                display: flex !important;
+                border-right: 1px solid var(--border);
+                height: 100vh; padding: 14px;
+            }
+            .section-view:last-child { border-right: none; }
+            .categorias-container {
+                position: static; width: 100%;
+                height: auto; border-top: none;
+                border-bottom: 1px solid var(--border);
+                box-shadow: none; padding: 8px 0 10px;
+                margin-bottom: 10px; flex-direction: column; gap: 6px;
+            }
+            .grid-productos-scroll { padding-bottom: 60px; }
+            .comanda-footer { padding-bottom: 24px; }
+            .barra-edicion { bottom: 0; }
+        }
+ 
+</style>
+</head>
+<body>
+ 
+<div class="app-container">
+ 
+    <!-- ════════════════════ CATÁLOGO ════════════════════ -->
+    <main id="view-catalogo" class="section-view active">
+        <div class="grid-productos-scroll">
+            <div class="grid-productos" id="grid-productos"></div>
+        </div>
+        <div class="categorias-container">
+            <div class="cat-search-row">
+                <button class="btn-lupa" id="btn-lupa" onclick="limpiarBusqueda()" title="Limpiar búsqueda">🔍</button>
+                <div class="search-expandible" id="search-expandible">
+                    <input type="text" id="buscador" placeholder="Buscar producto..." oninput="buscarProducto(this.value)" autocomplete="off">
+                    <button onclick="limpiarBusqueda()" title="Limpiar búsqueda">✕</button>
+                </div>
+            </div>
+            <div class="categorias-bar" id="categorias-bar"></div>
+        </div>
+    </main>
+ 
+    <!-- ════════════════════ COMANDA ════════════════════ -->
+    <aside id="view-comanda" class="section-view">
+        <div class="comanda-wrapper">
+            <div class="comanda-header">
+                <h3>📋 Nueva Comanda</h3>
+                <div class="meta-inputs">
+                    <select id="num-mesa">
+                        <option value="" disabled selected>📍 Mesa / Destino</option>
+                        <option value="Mesa 1">🪑 Mesa 1</option>
+                        <option value="Mesa 2">🪑 Mesa 2</option>
+                        <option value="Mesa 3">🪑 Mesa 3</option>
+                        <option value="Mesa 4">🪑 Mesa 4</option>
+                        <option value="Mesa 5">🪑 Mesa 5</option>
+                        <option value="Mesa 6">🪑 Mesa 6</option>
+                        <option value="Mesa 7">🪑 Mesa 7</option>
+                        <option value="Mesa 8">🪑 Mesa 8</option>
+                        <option value="Mesa 9">🪑 Mesa 9</option>
+                        <option value="Mesa 10">🪑 Mesa 10</option>
+                        <option value="Mesa 11">🪑 Mesa 11</option>
+                        <option value="Mesa 12">🪑 Mesa 12</option>
+                        <option value="Para Llevar">🛍️ Para Llevar</option>
+                        <option value="Domicilio">🛵 Domicilio</option>
+                    </select>
+                    <input type="text" id="campo-mesero" class="campo-mesero" placeholder="👤 Nombre mesero" style="margin-top:0;">
+                </div>
+                <input type="text" id="comentario-orden" class="campo-nota-orden" placeholder="📌 Nota general de la orden...">
+            </div>
+ 
+            <div class="items-lista" id="items-comanda">
+                <div class="vacia-msg">
+                    <span class="icon">🛒</span>
+                    Toca un producto para agregarlo
+                </div>
+            </div>
+ 
+            <div class="comanda-footer">
+                <div class="totales-row">
+                    <span>Total</span>
+                    <span id="total-comanda">$0</span>
+                </div>
+                <button class="btn-enviar" onclick="procesarOrden()">⚡ Enviar a Cocina</button>
+                <button class="btn-vaciar" onclick="vaciarComanda()">🗑️ Limpiar comanda</button>
+            </div>
+        </div>
+    </aside>
+ 
+    <!-- ════════════════════ MONITOR ════════════════════ -->
+    <section id="view-monitor" class="section-view">
+        <div class="monitor-wrapper">
+            <div class="monitor-top">
+                <h3>🖥️ Monitor en Vivo</h3>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-resumen" onclick="verResumenDia()">📊 Resumen</button>
+                    <button class="btn-refresh" onclick="cargarPedidos()">🔄 Actualizar</button>
+                </div>
+            </div>
+            <div class="balance-grid">
+                <div class="balance-card">
+                    <div class="label">Comandas</div>
+                    <div class="valor" id="bal-count">0</div>
+                </div>
+            </div>
+            <div class="lista-pedidos-scroll" id="lista-historial"></div>
+        </div>
+    </section>
+ 
+</div><!-- fin app-container -->
+ 
+<!-- NAV MÓVIL -->
+<nav class="mobile-nav">
+    <button class="nav-tab active" id="btn-tab-catalogo" onclick="switchView('view-catalogo', this)">
+        <span class="icon">📋</span> Menú
+    </button>
+    <button class="nav-tab" id="btn-tab-comanda" onclick="switchView('view-comanda', this)">
+        <span class="icon">🛒</span> Comanda
+        <span class="badge" id="badge-comanda">0</span>
+    </button>
+    <button class="nav-tab" id="btn-tab-monitor" onclick="switchView('view-monitor', this)">
+        <span class="icon">🖥️</span> Monitor
+    </button>
+</nav>
+ 
+<!-- MODAL PERSONALIZACIÓN -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModal(event)">
+    <div class="modal-box" id="modal-box">
+        <div class="modal-title" id="modal-titulo"></div>
+        <div class="modal-precio" id="modal-precio-base"></div>
+        <div id="modal-contenido"></div>
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="cerrarModalBtn()">Cancelar</button>
+            <button class="btn-modal-confirm" id="btn-confirmar-modal" onclick="confirmarModal()">Agregar ✓</button>
+        </div>
+    </div>
+</div>
+ 
+<div class="summary-overlay" id="summary-overlay" onclick="cerrarResumenDia(event)">
+    <div class="summary-box" id="summary-box">
+        <div class="summary-title">📊 Resumen del día</div>
+        <div class="summary-subtitle">Información general solo para administración.</div>
+        <div id="summary-content"></div>
+        <div class="summary-section" style="border-top:none; padding-top:0; margin-top:10px;">
+            <button class="btn-modal-cancel" onclick="cerrarResumenDiaBtn()" style="width:100%;">Cerrar</button>
+        </div>
+    </div>
+</div>
+ 
+<!-- BARRA FLOTANTE DE EDICIÓN — visible solo mientras se edita un pedido existente -->
+<div class="barra-edicion" id="barra-edicion">
+    <span id="barra-edicion-info"></span>
+    <button class="btn-edicion-ver" onclick="abrirPanelEdicion()">Ver</button>
+    <button class="btn-edicion-guardar" onclick="guardarEdicionPedido()">Guardar</button>
+    <button class="btn-edicion-cancelar" onclick="cancelarEdicionPedido()">Cancelar</button>
+</div>
+ 
+<!-- PANEL DE REVISIÓN DE LA EDICIÓN -->
+<div class="modal-overlay" id="modal-edicion-overlay" onclick="if(event.target===this) cerrarPanelEdicion()">
+    <div class="modal-box">
+        <div class="modal-title">✏️ Editando pedido</div>
+        <div class="meta-inputs" style="margin-top:10px;">
+            <select id="select-mesa-edicion" onchange="actualizarMesaEdicion(this.value)">
+                <option value="Mesa 1">🪑 Mesa 1</option>
+                <option value="Mesa 2">🪑 Mesa 2</option>
+                <option value="Mesa 3">🪑 Mesa 3</option>
+                <option value="Mesa 4">🪑 Mesa 4</option>
+                <option value="Mesa 5">🪑 Mesa 5</option>
+                <option value="Mesa 6">🪑 Mesa 6</option>
+                <option value="Mesa 7">🪑 Mesa 7</option>
+                <option value="Mesa 8">🪑 Mesa 8</option>
+                <option value="Mesa 9">🪑 Mesa 9</option>
+                <option value="Mesa 10">🪑 Mesa 10</option>
+                <option value="Mesa 11">🪑 Mesa 11</option>
+                <option value="Mesa 12">🪑 Mesa 12</option>
+                <option value="Para Llevar">🛍️ Para Llevar</option>
+                <option value="Domicilio">🛵 Domicilio</option>
+            </select>
+            <input type="text" id="input-mesero-edicion" placeholder="👤 Mesero" oninput="actualizarMeseroEdicion(this.value)">
+        </div>
+        <div id="panel-edicion-items" style="margin-top:12px; max-height:42vh; overflow-y:auto;"></div>
+        <div class="modal-section-label">Nota general</div>
+        <input type="text" id="input-nota-edicion" class="campo-nota-orden" placeholder="Nota para cocina..." oninput="actualizarNotaEdicion(this.value)" style="margin-top:0;">
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="cerrarPanelEdicion()" style="flex:1;">Cerrar (seguir editando)</button>
+        </div>
+    </div>
+</div>
+ 
+<div id="toast-container"></div>
+ 
+<script>
+// ── config.js ──
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+const API_URL = "https://script.google.com/macros/s/AKfycbyTgsY2YYD5IZCmDXC_QjDTdFntpTG11VQrQbukrb19xSPjIx9F3JT1B5JOqO7jtU0x/exec";
+// 12s en vez de 25s: se siente mucho más ágil sin acercarse a la cuota
+// diaria de llamadas de Apps Script. El verdadero "tiempo real" (sin
+// sondeo, empuje instantáneo) solo es posible migrando a algo como
+// Supabase Realtime — esto es lo mejor que da esta plataforma por ahora.
+const POLLING_MS = 12000;
+let metodoPagoActual = "Por cobrar";
+let pollingTimer = null;
+ 
+ 
+ 
+// ── permisos.js ──
+let miCodigo = sessionStorage.getItem('miCodigo') || null;
+let miLocal = sessionStorage.getItem('miLocal') || null;
+let miNombre = sessionStorage.getItem('miNombre') || null;
+let misCapacidades = JSON.parse(sessionStorage.getItem('misCapacidades') || '[]');
+ 
+function tieneCapacidad(cap) {
+    return misCapacidades.includes(cap) || misCapacidades.includes('admin');
+}
+ 
+function aplicarTemaLocal(local) {
+    if (local === '2') {
+        document.documentElement.style.setProperty('--primary', '#0d9488');
+        document.documentElement.style.setProperty('--primary-light', '#f0fdfa');
+    } else {
+        document.documentElement.style.setProperty('--primary', '#d63384');
+        document.documentElement.style.setProperty('--primary-light', '#fff0f6');
+    }
+}
+ 
+async function intentarLogin(codigo) {
+    try {
+        const res = await fetch(API_URL, {
+            method: "POST", redirect: "follow",
+            body: JSON.stringify({ accion: "validarAcceso", codigo })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            localStorage.setItem('permisos_cache_' + codigo, JSON.stringify({
+                nombre: data.nombre, local: data.local, locales: data.locales, capacidades: data.capacidades,
+                horario: data.horario, esAdmin: data.esAdmin, ts: Date.now()
+            }));
+            return { ok: true, ...data };
+        }
+        return { ok: false, error: data.error || 'Código incorrecto' };
+    } catch {
+        // Sin internet: si este código ya se validó antes en este dispositivo,
+        // deja entrar con esos permisos (para sobrevivir un turno sin conexión).
+        const cache = localStorage.getItem('permisos_cache_' + codigo);
+        if (cache) {
+            const c = JSON.parse(cache);
+            return { ok: true, nombre: c.nombre, local: c.local, locales: c.locales, capacidades: c.capacidades, horario: c.horario, esAdmin: c.esAdmin };
+        }
+        return { ok: false, error: 'Sin conexión y este código nunca se validó en este dispositivo.' };
+    }
+}
+ 
+function mostrarSelectorLocalMultiple(locales, callback) {
+    const overlay = document.createElement('div');
+    overlay.id = 'multi-local-overlay';
+    overlay.style.cssText = `position:fixed;inset:0;background:var(--dark);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;`;
+    overlay.innerHTML = `
+        <div style="color:white;font-size:1rem;font-weight:700;margin-bottom:4px;text-align:center;">¿En cuál local trabajas ahora?</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;" id="multi-local-botones"></div>
+    `;
+    document.body.appendChild(overlay);
+    const cont = overlay.querySelector('#multi-local-botones');
+    locales.forEach(loc => {
+        const btn = document.createElement('button');
+        btn.textContent = `Local ${loc}`;
+        btn.style.cssText = `padding:18px 28px;font-size:1rem;font-weight:800;border:none;border-radius:12px;background:${loc === '2' ? '#0d9488' : '#d63384'};color:white;cursor:pointer;`;
+        btn.onclick = () => { overlay.remove(); callback(loc); };
+        cont.appendChild(btn);
+    });
+}
+ 
+function mostrarPromptCodigo(callback) {
+    const overlay = document.createElement('div');
+    overlay.id = 'codigo-overlay';
+    overlay.style.cssText = `position:fixed;inset:0;background:var(--dark);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;`;
+    overlay.innerHTML = `
+        <input id="codigo-input" type="password" inputmode="text" placeholder="Código de acceso"
+            style="padding:14px 18px;font-size:1.1rem;border-radius:10px;border:none;text-align:center;width:220px;outline:none;">
+        <button id="codigo-btn" style="padding:12px 28px;font-size:1rem;font-weight:700;border:none;border-radius:10px;background:var(--primary);color:white;cursor:pointer;">Entrar</button>
+        <div id="codigo-error" style="color:#fca5a5;font-size:0.85rem;height:16px;"></div>
+    `;
+    document.body.appendChild(overlay);
+ 
+    const input = document.getElementById('codigo-input');
+    const finalizar = (resultado) => {
+        sessionStorage.setItem('miCodigo', resultado._codigoIngresado);
+        sessionStorage.setItem('miLocal', resultado.local);
+        sessionStorage.setItem('miNombre', resultado.nombre);
+        sessionStorage.setItem('misCapacidades', JSON.stringify(resultado.capacidades));
+        sessionStorage.setItem('miHorario', JSON.stringify(resultado.horario || null));
+        sessionStorage.setItem('miEsAdmin', String(!!resultado.esAdmin));
+        callback(resultado);
+    };
+    const intentar = async () => {
+        const val = input.value.trim().toLowerCase();
+        if (!val) return;
+        desbloquearAudio();
+        const btn = document.getElementById('codigo-btn');
+        btn.disabled = true;
+        const resultado = await intentarLogin(val);
+        btn.disabled = false;
+        if (resultado.ok) {
+            resultado._codigoIngresado = val;
+            overlay.remove();
+            const locales = resultado.locales && resultado.locales.length ? resultado.locales : [resultado.local];
+            if (locales.length > 1) {
+                mostrarSelectorLocalMultiple(locales, (localElegido) => {
+                    resultado.local = localElegido;
+                    finalizar(resultado);
+                });
+            } else {
+                finalizar(resultado);
+            }
+        } else {
+            document.getElementById('codigo-error').textContent = resultado.error;
+            input.value = '';
+            input.focus();
+        }
+    };
+    document.getElementById('codigo-btn').onclick = intentar;
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') intentar(); });
+    setTimeout(() => input.focus(), 50);
+}
+ 
+function iniciarChequeoHorario() {
+    const horario = JSON.parse(sessionStorage.getItem('miHorario') || 'null');
+    const esAdmin = sessionStorage.getItem('miEsAdmin') === 'true';
+    if (!horario || !horario.bloqueoActivo || esAdmin) return;
+    setInterval(() => {
+        const ahora = new Date().toTimeString().slice(0, 5);
+        const dentro = horario.apertura <= horario.cierre
+            ? (ahora >= horario.apertura && ahora <= horario.cierre)
+            : (ahora >= horario.apertura || ahora <= horario.cierre);
+        if (!dentro) {
+            showToast('🔒 Fuera de horario. Cerrando sesión…');
+            setTimeout(() => cerrarSesionLocal(), 1500);
+        }
+    }, 60000);
+}
+ 
+function insertarBotonSalir() {
+    const contenedor = document.querySelector('.monitor-top div[style]');
+    if (!contenedor) return;
+    const info = document.createElement('span');
+    info.textContent = miNombre || '';
+    info.style.cssText = `background:var(--bg);color:var(--text-muted);padding:6px 10px;border-radius:7px;font-size:0.75rem;font-weight:700;margin-right:8px;`;
+    contenedor.prepend(info);
+ 
+    const btn = document.createElement('button');
+    btn.textContent = 'Salir';
+    btn.title = 'Cerrar sesión de este dispositivo';
+    btn.style.cssText = `background:var(--primary);color:white;border:none;padding:7px 13px;border-radius:7px;cursor:pointer;font-weight:700;font-size:0.78rem;margin-right:8px;`;
+    btn.onclick = cerrarSesionLocal;
+    contenedor.prepend(btn);
+}
+ 
+function cerrarSesionLocal() {
+    const localAnterior = miLocal;
+    sessionStorage.removeItem('miCodigo');
+    sessionStorage.removeItem('miLocal');
+    sessionStorage.removeItem('miNombre');
+    sessionStorage.removeItem('misCapacidades');
+    sessionStorage.removeItem('miHorario');
+    sessionStorage.removeItem('miEsAdmin');
+    mostrarPromptCodigo((resultado) => {
+        if (resultado.local === localAnterior) {
+            miLocal = resultado.local; miNombre = resultado.nombre; misCapacidades = resultado.capacidades;
+            miCodigo = sessionStorage.getItem('miCodigo');
+            return;
+        }
+        location.reload();
+    });
+}
+ 
+ 
+ 
+// ── estado.js ──
+// ═══════════════════════════════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════════════════════════════
+let comandaActiva = JSON.parse(localStorage.getItem('comandaActiva')) || [];
+let historialPedidos = JSON.parse(localStorage.getItem('historialPedidos')) || [];
+let categoriaActual = "Todos";
+let busquedaActual = "";
+let ultimoNumeroPedido = Number(localStorage.getItem('ultimoNumeroPedido') || 0);
+ 
+// Estado del modal
+let modalProducto = null;
+let modalSelecciones = {}; // { grupoIndex: [opciones elegidas] }
+let modalAdiciones = [];   // [{ nombre, precio }]
+let modalNotaItem = "";
+ 
+// Edición de pedidos existentes — separado por completo de comandaActiva.
+// destinoActivo === 'edicion' hace que tocar el catálogo agregue ítems aquí
+// en vez de a la comanda nueva.
+let edicionEnCurso = null; // { pedidoId, version, mesa, mesero, notas, baseline, items }
+let destinoActivo = null;
+ 
+// Evita que sonemos la alarma de cocina para pedidos que YA existían
+// cuando la app apenas está cargando — solo suena para pedidos que
+// llegan DESPUÉS de la primera carga.
+let primerCargaCompleta = false;
+ 
+ 
+ 
+// ── utilidades.js ──
+// ═══════════════════════════════════════════════════════════
+//  UTILIDADES
+// ═══════════════════════════════════════════════════════════
+function optimizarUrl(url) {
+    if (!url) return fallbackImg();
+    if (url.includes("googleusercontent.com")) return url.split('=')[0] + "=w100";
+    const limpia = url.replace(/^https?:\/\//, '');
+    return `https://i0.wp.com/${limpia}?w=100&strip=all&quality=60`;
+}
+function fallbackImg() {
+    return "https://tse1.mm.bing.net/th/id/OIP.ytBRZogK6OdgfW6mFdLKBgHaHa?dpr=2.8&pid=ImgDetMain&o=7&rm=3";
+}
+function formatPeso(n) { return '$' + Number(n).toLocaleString('es-CO'); }
+function showToast(msg, ms = 2200) {
+    const t = document.getElementById('toast-container');
+    t.innerText = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), ms);
+}
+function switchView(viewId, btn) {
+    if (window.innerWidth < 768) {
+        document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        btn.classList.add('active');
+    }
+}
+function generarUUID() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+ 
+ 
+// ── catalogo.js ──
+// ═══════════════════════════════════════════════════════════
+//  CATÁLOGO — el menú ahora vive en la hoja "menu" del backend,
+//  no en este archivo. Se descarga al abrir la app y queda
+//  guardado en caché para seguir funcionando sin internet.
+// ═══════════════════════════════════════════════════════════
+let listaProductos = [];
+ 
+async function cargarMenu() {
+    try {
+        const res = await fetch(`${API_URL}?accion=obtenerMenu`);
+        const data = await res.json();
+        if (data.ok && data.productos.length > 0) {
+            listaProductos = data.productos;
+            localStorage.setItem('menu_cache', JSON.stringify(listaProductos));
+            localStorage.setItem('menu_cache_ts', String(Date.now()));
+            return;
+        }
+    } catch { /* sin internet: usamos la caché de abajo */ }
+ 
+    const cache = localStorage.getItem('menu_cache');
+    if (cache) {
+        listaProductos = JSON.parse(cache);
+    } else {
+        showToast('⚠️ No se pudo cargar el menú. Revisa tu conexión.');
+    }
+}
+ 
+// ═══════════════════════════════════════════════════════════
+//  CATÁLOGO
+// ═══════════════════════════════════════════════════════════
+function initCategorias() {
+    const bar = document.getElementById('categorias-bar');
+    const cats = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
+    bar.innerHTML = cats.map(c =>
+        `<button class="btn-categoria ${c === categoriaActual ? 'active' : ''}" onclick="cambiarCategoria('${c}', this)">${c}</button>`
+    ).join('');
+}
+function cambiarCategoria(cat, btn) {
+    document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    categoriaActual = cat;
+    renderGrid();
+}
+function buscarProducto(texto) {
+    busquedaActual = texto.toLowerCase().trim();
+    renderGrid();
+}
+function limpiarBusqueda() {
+    document.getElementById('buscador').value = '';
+    busquedaActual = '';
+    renderGrid();
+}
+function renderGrid() {
+    const grid = document.getElementById('grid-productos');
+    let filtrados = listaProductos.filter(p =>
+        (categoriaActual === "Todos" || p.categoria === categoriaActual) &&
+        (busquedaActual === "" || p.nombre.toLowerCase().includes(busquedaActual))
+    );
+    if (filtrados.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:30px; font-size:0.9rem;">No se encontraron productos</div>`;
+        return;
+    }
+    grid.innerHTML = filtrados.map(p => {
+        const tieneOpciones = p.opciones && (p.opciones.grupos?.length || p.opciones.adiciones?.length);
+        return `
+        <div class="producto-celda" onclick="tocaProducto(${p.id})">
+            ${tieneOpciones ? '<span class="prod-tiene-opciones">OPC</span>' : ''}
+            <img src="${optimizarUrl(p.imgPostre)}" onerror="this.src='${fallbackImg()}'">
+            <p class="prod-nombre">${p.nombre}</p>
+            <p class="prod-precio">${formatPeso(p.precio)}</p>
+        </div>`;
+    }).join('');
+}
+ 
+// ═══════════════════════════════════════════════════════════
+//  MODAL PERSONALIZACIÓN
+// ═══════════════════════════════════════════════════════════
+function tocaProducto(id) {
+    const prod = listaProductos.find(p => p.id === id);
+    if (!prod) return;
+ 
+    const tieneOpciones = prod.opciones && (prod.opciones.grupos?.length || prod.opciones.adiciones?.length);
+    if (!tieneOpciones) {
+        // Sin opciones → agregar directo
+        agregarItemSimple(prod);
+        return;
+    }
+    // Con opciones → abrir modal
+    abrirModal(prod);
+}
+ 
+function agregarItemSimple(prod) {
+    const enEdicion = destinoActivo === 'edicion' && edicionEnCurso;
+    const destino = enEdicion ? edicionEnCurso.items : comandaActiva;
+    // Cada toque es su propia línea (no se fusiona con una igual que ya
+    // esté en la lista) — así cada unidad puede llevar su propia nota,
+    // igual que en una comanda de papel real. Si de verdad son idénticas
+    // y no hace falta diferenciarlas, el mesero puede usar el botón "+"
+    // de esa línea para subir la cantidad en vez de tocar el producto otra vez.
+    destino.push({ ...prod, lineId: generarUUID(), cantidad: 1, specs: '', adicionesSelec: [], notaItem: '', precioFinal: prod.precio });
+    if (enEdicion) { renderBarraEdicion(); } else { guardarYRender(); }
+    showToast(`✅ ${prod.nombre} agregado`);
+}
+ 
+function abrirModal(prod) {
+    modalProducto = prod;
+    modalSelecciones = {};
+    modalAdiciones = [];
+    modalNotaItem = '';
+ 
+    document.getElementById('modal-titulo').textContent = prod.nombre;
+    document.getElementById('modal-precio-base').textContent = formatPeso(prod.precio);
+ 
+    let html = '';
+    const opts = prod.opciones;
+ 
+    if (opts.grupos) {
+        opts.grupos.forEach((grupo, gi) => {
+            modalSelecciones[gi] = [];
+            const esMultiple = grupo.tipo === 'multiple';
+            const maxLabel = grupo.max ? ` (máx. ${grupo.max})` : '';
+            html += `<div class="modal-section-label">${grupo.label}${maxLabel}${grupo.requerido ? ' *' : ''}</div>`;
+            html += `<div class="opciones-grid" id="grupo-${gi}">`;
+            grupo.opciones.forEach(op => {
+                html += `<button class="opcion-btn" data-grupo="${gi}" data-opcion="${op}" onclick="toggleOpcion(this, ${gi}, '${op}', ${esMultiple}, ${grupo.max || 99})">${op}</button>`;
+            });
+            html += `</div>`;
+        });
+    }
+ 
+    if (opts.adiciones) {
+        html += `<div class="modal-section-label">Adiciones (+${formatPeso(3000)} c/u)</div>`;
+        opts.adiciones.forEach(ad => {
+            html += `<div class="adicion-btn" id="ad-${ad.nombre.replace(/\s/g,'_')}" onclick="toggleAdicion(this, '${ad.nombre}', ${ad.precio})">
+                <span>${ad.nombre}</span>
+                <span class="adicion-precio">+${formatPeso(ad.precio)}</span>
+            </div>`;
+        });
+    }
+ 
+    html += `<div class="modal-section-label">Nota para cocina (opcional)</div>
+    <textarea class="modal-nota-input" id="modal-nota" rows="2" placeholder="Sin azúcar, sin hielo, término medio..." oninput="modalNotaItem = this.value"></textarea>`;
+ 
+    document.getElementById('modal-contenido').innerHTML = html;
+    document.getElementById('modal-overlay').classList.add('open');
+}
+ 
+function toggleOpcion(btn, grupoIdx, opcion, esMultiple, max) {
+    const grupo = modalProducto.opciones.grupos[grupoIdx];
+    if (!modalSelecciones[grupoIdx]) modalSelecciones[grupoIdx] = [];
+ 
+    if (esMultiple) {
+        const idx = modalSelecciones[grupoIdx].indexOf(opcion);
+        if (idx !== -1) {
+            modalSelecciones[grupoIdx].splice(idx, 1);
+            btn.classList.remove('selected');
+        } else {
+            if (modalSelecciones[grupoIdx].length >= max) {
+                showToast(`⚠️ Solo puedes elegir ${max}`);
+                return;
+            }
+            modalSelecciones[grupoIdx].push(opcion);
+            btn.classList.add('selected');
+        }
+    } else {
+        // Radio: deseleccionar los demás
+        document.querySelectorAll(`[data-grupo="${grupoIdx}"]`).forEach(b => b.classList.remove('selected'));
+        modalSelecciones[grupoIdx] = [opcion];
+        btn.classList.add('selected');
+    }
+}
+ 
+function toggleAdicion(btn, nombre, precio) {
+    const idx = modalAdiciones.findIndex(a => a.nombre === nombre);
+    if (idx !== -1) {
+        modalAdiciones.splice(idx, 1);
+        btn.classList.remove('selected');
+    } else {
+        modalAdiciones.push({ nombre, precio });
+        btn.classList.add('selected');
+    }
+}
+ 
+function confirmarModal() {
+    const prod = modalProducto;
+    const opts = prod.opciones;
+ 
+    // Validar grupos requeridos
+    if (opts.grupos) {
+        for (let i = 0; i < opts.grupos.length; i++) {
+            const g = opts.grupos[i];
+            if (g.requerido && (!modalSelecciones[i] || modalSelecciones[i].length === 0)) {
+                showToast(`⚠️ Debes elegir: ${g.label}`);
+                return;
+            }
+        }
+    }
+ 
+    // Construir descripción de specs
+    const partes = [];
+    if (opts.grupos) {
+        opts.grupos.forEach((g, i) => {
+            if (modalSelecciones[i]?.length) partes.push(modalSelecciones[i].join(' + '));
+        });
+    }
+    if (modalAdiciones.length) partes.push('+ ' + modalAdiciones.map(a => a.nombre).join(', '));
+    const nota = document.getElementById('modal-nota')?.value || '';
+ 
+    const precioAdiciones = modalAdiciones.reduce((s, a) => s + a.precio, 0);
+    const precioFinal = prod.precio + precioAdiciones;
+    const specs = partes.join(' | ');
+ 
+    // Cada item con opciones es único → siempre push (no merge)
+    const nuevoItem = {
+        ...prod,
+        lineId: generarUUID(),
+        cantidad: 1,
+        specs: specs,
+        adicionesSelec: [...modalAdiciones],
+        notaItem: nota,
+        precioFinal: precioFinal
+    };
+ 
+    const enEdicion = destinoActivo === 'edicion' && edicionEnCurso;
+    if (enEdicion) {
+        edicionEnCurso.items.push(nuevoItem);
+        renderBarraEdicion();
+    } else {
+        comandaActiva.push(nuevoItem);
+        guardarYRender();
+    }
+ 
+    cerrarModalBtn();
+    showToast(`✅ ${prod.nombre} agregado`);
+}
+ 
+function cerrarModal(e) {
+    if (e.target === document.getElementById('modal-overlay')) cerrarModalBtn();
+}
+function cerrarModalBtn() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    modalProducto = null;
+}
+ 
+ 
+ 
+// ── comanda.js ──
+function calcularEventosDeEdicion(itemsBaseline, itemsActuales, autor) {
+    const eventos = [];
+    const baselinePorId = new Map(itemsBaseline.map(it => [it.lineId, it]));
+    const actualesPorId = new Map(itemsActuales.map(it => [it.lineId, it]));
+    const ts = Date.now();
+ 
+    actualesPorId.forEach((item, lineId) => {
+        const antes = baselinePorId.get(lineId);
+        if (!antes) {
+            eventos.push({ eventoId: generarUUID(), tipo: 'item_agregado', ts, autor, item });
+        } else if (antes.cantidad !== item.cantidad || antes.specs !== item.specs || antes.notaItem !== item.notaItem) {
+            eventos.push({ eventoId: generarUUID(), tipo: 'item_modificado', ts, autor, item });
+        }
+    });
+ 
+    baselinePorId.forEach((item, lineId) => {
+        if (!actualesPorId.has(lineId)) {
+            eventos.push({ eventoId: generarUUID(), tipo: 'item_eliminado', ts, autor, lineId });
+        }
+    });
+ 
+    return eventos;
+}
+// ═══════════════════════════════════════════════════════════
+//  COMANDA
+// ═══════════════════════════════════════════════════════════
+function modificarCantidad(idx, cambio) {
+    if (!comandaActiva[idx]) return;
+    comandaActiva[idx].cantidad += cambio;
+    if (comandaActiva[idx].cantidad <= 0) comandaActiva.splice(idx, 1);
+    guardarYRender();
+}
+function toggleNotaLinea(idx) {
+    const caja = document.getElementById('nota-caja-' + idx);
+    if (!caja) return;
+    const abierta = caja.style.display !== 'none';
+    caja.style.display = abierta ? 'none' : 'block';
+    if (!abierta) caja.querySelector('input')?.focus();
+}
+function actualizarNotaItemComanda(idx, valor) {
+    if (!comandaActiva[idx]) return;
+    comandaActiva[idx].notaItem = valor;
+    localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
+}
+function eliminarItem(idx) {
+    comandaActiva.splice(idx, 1);
+    guardarYRender();
+}
+function vaciarComanda() {
+    if (comandaActiva.length === 0) return;
+    if (!confirm('¿Limpiar toda la comanda?')) return;
+    comandaActiva = [];
+    guardarYRender();
+}
+ 
+ 
+function guardarYRender() {
+    localStorage.setItem('comandaActiva', JSON.stringify(comandaActiva));
+    const contenedor = document.getElementById('items-comanda');
+ 
+    if (comandaActiva.length === 0) {
+        contenedor.innerHTML = `<div class="vacia-msg"><span class="icon">🛒</span>Toca un producto para agregarlo</div>`;
+        document.getElementById('total-comanda').textContent = '$0';
+        const badge = document.getElementById('badge-comanda');
+        badge.style.display = 'none';
+        return;
+    }
+ 
+    contenedor.innerHTML = comandaActiva.map((item, idx) => {
+        const precio = (item.precioFinal || item.precio) * item.cantidad;
+        return `
+        <div class="item-linea">
+            <div class="item-linea-top">
+                <div>
+                    <div class="item-nombre">${item.nombre}</div>
+                    ${item.specs ? `<div class="item-specs">📌 ${item.specs}</div>` : ''}
+                    ${item.notaItem ? `<div class="item-specs">✏️ ${item.notaItem}</div>` : ''}
+                </div>
+                <div class="item-precio">${formatPeso(precio)}</div>
+            </div>
+            <div class="item-controles">
+                <button onclick="modificarCantidad(${idx}, -1)">−</button>
+                <span class="item-cantidad">${item.cantidad}</span>
+                <button onclick="modificarCantidad(${idx}, 1)">+</button>
+                <button onclick="toggleNotaLinea(${idx})" title="Agregar nota">📝</button>
+                <button class="btn-eliminar-item" onclick="eliminarItem(${idx})">🗑️</button>
+            </div>
+            <div class="item-nota-caja" id="nota-caja-${idx}" style="display:none; margin-top:8px;">
+                <input type="text" value="${(item.notaItem || '').replace(/"/g, '&quot;')}" placeholder="Nota para esta unidad..."
+                    class="campo-nota-orden" style="margin-top:0;"
+                    oninput="actualizarNotaItemComanda(${idx}, this.value)" onblur="guardarYRender()">
+            </div>
+        </div>`;
+    }).join('');
+ 
+    const total = comandaActiva.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
+    document.getElementById('total-comanda').textContent = formatPeso(total);
+ 
+    const totalItems = comandaActiva.reduce((s, i) => s + i.cantidad, 0);
+    const badge = document.getElementById('badge-comanda');
+    badge.textContent = totalItems;
+    badge.style.display = totalItems > 0 ? 'block' : 'none';
+}
+ 
+// ═══════════════════════════════════════════════════════════
+//  PROCESAR ORDEN
+// ═══════════════════════════════════════════════════════════
+async function procesarOrden() {
+    if (window._enviandoOrden) return;
+    if (comandaActiva.length === 0) { showToast("⚠️ La comanda está vacía."); return; }
+    const mesa = document.getElementById('num-mesa').value;
+    if (!mesa) {
+        showToast("⚠️ Selecciona una mesa o destino.");
+        document.getElementById('num-mesa').style.borderColor = 'var(--danger)';
+        setTimeout(() => document.getElementById('num-mesa').style.borderColor = 'var(--border)', 1500);
+        return;
+    }
+    window._enviandoOrden = true;
+ 
+    const mesero = document.getElementById('campo-mesero').value.trim() || "—";
+    const notas = document.getElementById('comentario-orden').value.trim();
+    const total = comandaActiva.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
+    const itemsSnapshot = JSON.parse(JSON.stringify(comandaActiva));
+ 
+    const textoItems = itemsSnapshot.map(i => {
+        let linea = `${i.cantidad}x ${i.nombre}`;
+        if (i.specs) linea += ` [${i.specs}]`;
+        if (i.notaItem) linea += ` (${i.notaItem})`;
+        return linea;
+    }).join(', ');
+ 
+    comandaActiva = [];
+    localStorage.removeItem('comandaActiva');
+    document.getElementById('comentario-orden').value = '';
+    document.getElementById('num-mesa').value = '';
+    guardarYRender();
+    showToast("⚡ Enviando a cocina…");
+    if (window.innerWidth < 768) switchView('view-monitor', document.getElementById('btn-tab-monitor'));
+ 
+    const nuevoPedido = {
+        
+        id: generarUUID(),
+        local: miLocal,
+        creadoEn: Date.now(),
+        numeroPedido: null,
+        mesa, mesero, notas,
+        total, items: textoItems,
+        itemsRaw: itemsSnapshot,
+        metodoPago: "Por cobrar",
+        estado: "Pendiente",
+        estadoSincronizado: "SI",
+        version: 1,
+        horaLocal: new Date().toISOString(),
+        sincronizado: "NO",
+        enviando: true
+    };
+ 
+    historialPedidos.unshift(nuevoPedido);
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    renderHistorial();
+ 
+    const payload = {
+        local: miLocal,
+        codigo: miCodigo,
+        accion: "nuevoPedido",
+        id: nuevoPedido.id,
+        mesa, mesero, total,
+        items: textoItems,
+        itemsRaw: JSON.stringify(itemsSnapshot),
+        notas,
+        metodoPago: nuevoPedido.metodoPago
+    };
+    try {
+        const res = await fetch(API_URL, { method: "POST", redirect: "follow", body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.ok) {
+    nuevoPedido.sincronizado = "SI";
+    nuevoPedido.numeroPedido = data.numeroPedido;
+    nuevoPedido.eventos = data.eventos;
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    showToast(`✅ Mesa ${mesa} en la nube.`);
+    renderHistorial();
+}
+    } catch {
+        showToast("⚠️ Guardado offline. Subirá al recuperar internet.");
+    } finally {
+        nuevoPedido.enviando = false;
+        localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+        window._enviandoOrden = false;
+    }
+}
+ 
+async function sincronizarEventosPendientes() {
+    const pendientes = historialPedidos.filter(p =>
+        p.eventosPendientes && p.eventosPendientes.length > 0 && p.sincronizado === 'SI' && !p.enviandoEventos
+    );
+    for (const pedido of pendientes) {
+        pedido.enviandoEventos = true;
+        try {
+            const res = await fetch(API_URL, {
+                method: "POST", redirect: "follow",
+                body: JSON.stringify({ accion: "registrarEventos", id: pedido.id, autor: pedido.mesero, codigo: miCodigo, local: pedido.local, eventos: pedido.eventosPendientes })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                // El servidor manda: puede traer también eventos de otro
+                // dispositivo que llegaron mientras tanto — se fusionan solos.
+                pedido.itemsRaw = data.itemsRaw;
+                pedido.items = data.items;
+                pedido.total = data.total;
+                pedido.mesa = data.mesa; pedido.mesero = data.mesero; pedido.notas = data.notas;
+                pedido.eventos = data.eventos;
+                pedido.eventosPendientes = [];
+                pedido.itemsSincronizado = 'SI';
+                localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+                renderHistorial();
+            }
+        } catch {
+            pedido.enviandoEventos = false;
+            break;
+        }
+        pedido.enviandoEventos = false;
+    }
+}
+ 
+async function toggleItemListo(pedidoId, lineId, listo) {
+    const pedido = historialPedidos.find(p => p.id === pedidoId);
+    if (!pedido) return;
+    const evento = { eventoId: generarUUID(), tipo: 'item_listo', ts: Date.now(), lineId, listo };
+    pedido.eventosPendientes = [...(pedido.eventosPendientes || []), evento];
+    pedido.itemsSincronizado = 'NO';
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    renderHistorial();
+    await sincronizarEventosPendientes();
+}
+ 
+ 
+ 
+ 
+// ── edicion.js ──
+// ═══════════════════════════════════════════════════════════
+//  EDICIÓN DE PEDIDOS — separada por completo de "Nueva Comanda".
+//  Mientras se edita un pedido, tocar el catálogo agrega ítems
+//  aquí (edicionEnCurso), nunca a comandaActiva. Se puede tener
+//  una comanda nueva a medio armar Y estar editando otro pedido
+//  al mismo tiempo, sin que se mezclen.
+// ═══════════════════════════════════════════════════════════
+ 
+function abrirEdicionPedido(id) {
+    if (edicionEnCurso && edicionEnCurso.pedidoId !== id) {
+        if (!confirm('Ya estás editando otro pedido. ¿Descartar esos cambios y editar este?')) return;
+    }
+ 
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido) return;
+ 
+    const items = (Array.isArray(pedido.itemsRaw) && pedido.itemsRaw.length > 0)
+        ? JSON.parse(JSON.stringify(pedido.itemsRaw))
+        : [];
+ 
+    edicionEnCurso = {
+        pedidoId: pedido.id,
+        mesa: pedido.mesa,
+        mesero: pedido.mesero,
+        notas: pedido.notas || '',
+        baseline: JSON.parse(JSON.stringify(items)),
+        items: items
+    };
+    destinoActivo = 'edicion';
+ 
+    document.getElementById('barra-edicion').classList.add('visible');
+    renderBarraEdicion();
+    showToast(`✏️ Editando pedido de ${pedido.mesa}`);
+    switchView('view-catalogo', document.getElementById('btn-tab-catalogo'));
+}
+ 
+function renderBarraEdicion() {
+    if (!edicionEnCurso) return;
+    const total = edicionEnCurso.items.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
+    const cantidad = edicionEnCurso.items.reduce((s, i) => s + i.cantidad, 0);
+    const info = document.getElementById('barra-edicion-info');
+    if (info) info.textContent = `✏️ ${edicionEnCurso.mesa} · ${cantidad} ítems · ${formatPeso(total)}`;
+}
+ 
+function abrirPanelEdicion() {
+    if (!edicionEnCurso) return;
+ 
+    document.getElementById('select-mesa-edicion').value = edicionEnCurso.mesa || '';
+    document.getElementById('input-mesero-edicion').value = edicionEnCurso.mesero || '';
+    document.getElementById('input-nota-edicion').value = edicionEnCurso.notas || '';
+ 
+    const cont = document.getElementById('panel-edicion-items');
+    if (edicionEnCurso.items.length === 0) {
+        cont.innerHTML = `<div class="vacia-msg"><span class="icon">📝</span>Cierra este panel y toca productos del menú para agregarlos</div>`;
+    } else {
+        cont.innerHTML = edicionEnCurso.items.map((item, idx) => {
+            const precio = (item.precioFinal || item.precio) * item.cantidad;
+            return `
+            <div class="item-linea">
+                <div class="item-linea-top">
+                    <div>
+                        <div class="item-nombre">${item.nombre}</div>
+                        ${item.specs ? `<div class="item-specs">📌 ${item.specs}</div>` : ''}
+                        ${item.notaItem ? `<div class="item-specs">✏️ ${item.notaItem}</div>` : ''}
+                    </div>
+                    <div class="item-precio">${formatPeso(precio)}</div>
+                </div>
+                <div class="item-controles">
+                    <button onclick="modificarCantidadEdicion(${idx}, -1)">−</button>
+                    <span class="item-cantidad">${item.cantidad}</span>
+                    <button onclick="modificarCantidadEdicion(${idx}, 1)">+</button>
+                    <button onclick="toggleNotaLineaEdicion(${idx})" title="Agregar nota">📝</button>
+                    <button class="btn-eliminar-item" onclick="eliminarItemEdicion(${idx})">🗑️</button>
+                </div>
+                <div class="item-nota-caja" id="nota-caja-edicion-${idx}" style="display:none; margin-top:8px;">
+                    <input type="text" value="${(item.notaItem || '').replace(/"/g, '&quot;')}" placeholder="Nota para esta unidad..."
+                        class="campo-nota-orden" style="margin-top:0;"
+                        oninput="actualizarNotaItemEdicion(${idx}, this.value)" onblur="abrirPanelEdicion()">
+                </div>
+            </div>`;
+        }).join('');
+    }
+    document.getElementById('modal-edicion-overlay').classList.add('open');
+}
+ 
+function cerrarPanelEdicion() {
+    document.getElementById('modal-edicion-overlay').classList.remove('open');
+}
+ 
+function modificarCantidadEdicion(idx, cambio) {
+    if (!edicionEnCurso || !edicionEnCurso.items[idx]) return;
+    edicionEnCurso.items[idx].cantidad += cambio;
+    if (edicionEnCurso.items[idx].cantidad <= 0) edicionEnCurso.items.splice(idx, 1);
+    renderBarraEdicion();
+    abrirPanelEdicion();
+}
+ 
+function eliminarItemEdicion(idx) {
+    if (!edicionEnCurso) return;
+    edicionEnCurso.items.splice(idx, 1);
+    renderBarraEdicion();
+    abrirPanelEdicion();
+}
+ 
+function actualizarNotaEdicion(valor) {
+    if (edicionEnCurso) edicionEnCurso.notas = valor;
+}
+function toggleNotaLineaEdicion(idx) {
+    const caja = document.getElementById('nota-caja-edicion-' + idx);
+    if (!caja) return;
+    const abierta = caja.style.display !== 'none';
+    caja.style.display = abierta ? 'none' : 'block';
+    if (!abierta) caja.querySelector('input')?.focus();
+}
+function actualizarNotaItemEdicion(idx, valor) {
+    if (!edicionEnCurso || !edicionEnCurso.items[idx]) return;
+    edicionEnCurso.items[idx].notaItem = valor;
+}
+function actualizarMesaEdicion(valor) {
+    if (edicionEnCurso) { edicionEnCurso.mesa = valor; renderBarraEdicion(); }
+}
+function actualizarMeseroEdicion(valor) {
+    if (edicionEnCurso) edicionEnCurso.mesero = valor;
+}
+ 
+function finalizarEdicion() {
+    document.getElementById('barra-edicion').classList.remove('visible');
+    cerrarPanelEdicion();
+    edicionEnCurso = null;
+    destinoActivo = null;
+}
+ 
+async function guardarEdicionPedido() {
+    if (!edicionEnCurso) return;
+    const pedido = historialPedidos.find(p => p.id === edicionEnCurso.pedidoId);
+    if (!pedido) { finalizarEdicion(); return; }
+ 
+    if (edicionEnCurso.items.length === 0) {
+        if (!confirm('El pedido quedaría sin ítems. ¿De verdad quieres guardarlo así? (si quieres cancelarlo del todo, mejor usa "Archivar" desde el monitor)')) return;
+    }
+ 
+    const eventosItems = calcularEventosDeEdicion(edicionEnCurso.baseline, edicionEnCurso.items, edicionEnCurso.mesero);
+    const eventoMeta = {
+        eventoId: generarUUID(), tipo: 'meta_actualizada', ts: Date.now(), autor: edicionEnCurso.mesero,
+        mesa: edicionEnCurso.mesa, mesero: edicionEnCurso.mesero, notas: edicionEnCurso.notas
+    };
+    const eventosNuevos = [...eventosItems, eventoMeta];
+ 
+    const total = edicionEnCurso.items.reduce((s, i) => s + (i.precioFinal || i.precio) * i.cantidad, 0);
+    const textoItems = edicionEnCurso.items.map(i => {
+        let linea = `${i.cantidad}x ${i.nombre}`;
+        if (i.specs) linea += ` [${i.specs}]`;
+        if (i.notaItem) linea += ` (${i.notaItem})`;
+        return linea;
+    }).join(', ');
+ 
+    pedido.itemsRaw = edicionEnCurso.items;
+    pedido.items = textoItems;
+    pedido.total = total;
+    pedido.mesa = edicionEnCurso.mesa;
+    pedido.mesero = edicionEnCurso.mesero;
+    pedido.notas = edicionEnCurso.notas;
+    pedido.eventosPendientes = [...(pedido.eventosPendientes || []), ...eventosNuevos];
+    pedido.itemsSincronizado = 'NO';
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+ 
+    finalizarEdicion();
+    renderHistorial();
+    showToast('✏️ Cambios guardados. Sincronizando…');
+    if (window.innerWidth < 768) switchView('view-monitor', document.getElementById('btn-tab-monitor'));
+    await sincronizarEventosPendientes();
+}
+ 
+function cancelarEdicionPedido() {
+    if (!edicionEnCurso) return;
+    finalizarEdicion();
+    showToast('Edición cancelada. No se guardó nada.');
+}
+ 
+ 
+// ── cocina.js ──
+// ═══════════════════════════════════════════════════════════
+//  MONITOR
+// ═══════════════════════════════════════════════════════════
+function parsearFechaSegura(ref) {
+    if (!ref) return null;
+    if (ref instanceof Date) return ref;
+    if (typeof ref === 'number') {
+        const valor = ref < 1e12 ? ref * 1000 : ref;
+        return new Date(valor);
+    }
+    if (typeof ref === 'string') {
+        const texto = ref.trim();
+        if (!texto) return null;
+        const num = Number(texto);
+        if (!Number.isNaN(num)) {
+            const abs = Math.abs(num);
+            if (abs < 1e9) return null;
+            const valor = abs < 1e12 ? num * 1000 : num;
+            return new Date(valor);
+        }
+        const textoNormalizado = texto.replace(/\s+/g, ' ').trim();
+        if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(textoNormalizado)) {
+            const [h, m, s = '00'] = textoNormalizado.split(':').map(Number);
+            const fecha = new Date();
+            fecha.setHours(h, m, s, 0);
+            return fecha;
+        }
+        const matchFecha = textoNormalizado.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (matchFecha) {
+            const [, d, m, y, h = '0', mi = '0', s = '0'] = matchFecha;
+            return new Date(Number(y), Number(m) - 1, Number(d), Number(h), Number(mi), Number(s));
+        }
+        const conGuiones = textoNormalizado.replace(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/, '$3-$2-$1').replace(' ', 'T');
+        const fecha = new Date(conGuiones);
+        if (!Number.isNaN(fecha.getTime())) return fecha;
+        const normalizado = textoNormalizado.replace(' ', 'T');
+        const fecha2 = new Date(normalizado);
+        if (!Number.isNaN(fecha2.getTime())) return fecha2;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(textoNormalizado)) return new Date(`${textoNormalizado}T00:00:00`);
+        return new Date(textoNormalizado);
+    }
+    return null;
+}
+ 
+function formatearHora(ref) {
+    const fecha = parsearFechaSegura(ref);
+    if (!fecha || Number.isNaN(fecha.getTime())) return '—';
+    return fecha.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
+}
+ 
+function siguienteNumeroPedidoLocal() {
+    ultimoNumeroPedido += 1;
+    localStorage.setItem('ultimoNumeroPedido', String(ultimoNumeroPedido));
+    return ultimoNumeroPedido;
+}
+ 
+// Reconstruye el momento de creación combinando el día de "fecha" con la
+// hora de "hora" — necesario solo para pedidos creados ANTES de que
+// existiera la columna "Creado En (ms)". Los pedidos nuevos no la usan.
+function reconstruirInicioDesdeFechaHora(pedido) {
+    const fechaObj = parsearFechaSegura(pedido.fecha);
+    const horaObj  = parsearFechaSegura(pedido.horaLocal || pedido.hora);
+    if (!fechaObj || Number.isNaN(fechaObj.getTime())) return null;
+    if (!horaObj  || Number.isNaN(horaObj.getTime()))  return null;
+ 
+    return Date.UTC(
+        fechaObj.getUTCFullYear(), fechaObj.getUTCMonth(), fechaObj.getUTCDate(),
+        horaObj.getUTCHours(), horaObj.getUTCMinutes(), horaObj.getUTCSeconds()
+    );
+}
+function calcularMinutosEspera(pedido) {
+    const inicioMs = pedido.creadoEn || reconstruirInicioDesdeFechaHora(pedido);
+    if (!inicioMs) return 0;
+ 
+    let finMs = Date.now();
+    if ((pedido.estado === 'Listo' || pedido.estado === 'Pagado') && pedido.horaFin) {
+        finMs = Number(pedido.horaFin);
+    }
+ 
+    const diffMs = finMs - inicioMs;
+    return Math.max(0, Math.floor(diffMs / 60000));
+}
+ 
+function obtenerNumeroPedido(pedido) {
+    if (pedido?.numeroPedido) return pedido.numeroPedido;
+    return '—';
+}
+ 
+function renderHistorial() {
+    const lista = document.getElementById('lista-historial');
+    const balCount = document.getElementById('bal-count');
+    if (balCount) balCount.textContent = historialPedidos.length;
+ 
+    if (historialPedidos.length === 0) {
+        lista.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:35px; font-size:0.9rem;">Sin comandas activas.</div>`;
+        return;
+    }
+ 
+    const ordenados = [...historialPedidos].sort((a, b) => {
+        if (a.estado !== 'Pagado' && b.estado === 'Pagado') return -1;
+        if (a.estado === 'Pagado' && b.estado !== 'Pagado') return 1;
+        return (a.creadoEn || 0) - (b.creadoEn || 0);
+    });
+ 
+    lista.innerHTML = ordenados.map(p => {
+        const minutos = calcularMinutosEspera(p);
+        const horaLabel = formatearHora(p.horaLocal || p.hora);
+ 
+        const esFinal = p.estado === 'Listo' || p.estado === 'Pagado';
+        const textoTiempo = esFinal ? `Tomó ${minutos} min` : (minutos <= 0 ? 'Recién' : `${minutos} min`);
+        const tiempoLabel = `${horaLabel} · ${textoTiempo}`;
+ 
+        let alertaTiempo = '';
+        let estiloTarjetaAlerta = '';
+        if (!esFinal && minutos >= 15) {
+            alertaTiempo = `<span class="ticket-alerta-tiempo" style="background:var(--danger); color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem;">🚨 RETRASADO</span>`;
+            estiloTarjetaAlerta = 'border: 2px solid var(--danger);';
+        } else if (!esFinal && minutos >= 10) {
+            alertaTiempo = `<span class="ticket-alerta-tiempo" style="background:var(--warning); color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem;">⏳ Alerta</span>`;
+        } else if (!esFinal && minutos >= 20) {
+            alertaTiempo = `<span class="ticket-alerta-tiempo">⚠️ ${minutos} min</span>`;
+        }
+ 
+        const claseTk = p.estado === 'Pagado' ? 'pagado'
+            : p.estado === 'Listo' ? 'listo'
+            : p.estado === 'Preparando' ? 'preparando' : '';
+        const badgeMap = {
+            'Pendiente': 'badge-pendiente', 'Preparando': 'badge-preparando',
+            'Listo': 'badge-listo', 'Pagado': 'badge-pagado'
+        };
+        const estadoEmoji = {
+            'Pendiente': '⏳ Pendiente', 'Preparando': '👨‍🍳 Preparando',
+            'Listo': '✅ Listo', 'Pagado': '💰 Pagado'
+        };
+ 
+        const flujo = ['Pendiente', 'Preparando', 'Listo', 'Pagado'];
+        const idxActual = flujo.indexOf(p.estado);
+        const siguienteEstado = idxActual < flujo.length - 1 ? flujo[idxActual + 1] : null;
+        const btnCambio = siguienteEstado
+            ? `<button class="btn-estado-ticket" onclick="avanzarEstado('${p.id}')">${siguienteEstado === 'Preparando' ? '👨‍🍳 Preparar' : siguienteEstado === 'Listo' ? '✅ Listo' : '💵 Cobrar'}</button>`
+            : `<button class="btn-estado-ticket" style="color:var(--text-muted);" onclick="regresarEstado('${p.id}')">↩ Reabrir</button>`;
+ 
+            const vistaItems = construirVistaItems(p);
+const itemsHtml = vistaItems.map(v => {
+    const checkbox = (v.lineId && !v.eliminado)
+        ? `<input type="checkbox" ${v.listo ? 'checked' : ''} onclick="toggleItemListo('${p.id}','${v.lineId}',this.checked)" style="margin-right:6px;">`
+        : '';
+    return `<div class="ticket-item-linea" style="${v.estilo}">${checkbox}<span>${v.html}</span></div>`;
+}).join('');
+ 
+        return `
+        <div class="pedido-ticket ${claseTk}" style="${estiloTarjetaAlerta}">
+            <div class="ticket-head">
+                <div class="ticket-head-left">
+                    <span class="ticket-mesa">📍 ${p.mesa} ${p.mesero && p.mesero !== '—' ? `· ${p.mesero}` : ''}</span>
+                    <span class="ticket-num">Orden #${String(obtenerNumeroPedido(p)).slice(-4)}</span>
+${p.version > 1 ? `<span style="font-size:0.65rem;color:var(--primary);font-weight:700;margin-left:4px;">✏️ editado</span>` : ''}
+${(p.sincronizado === 'NO' || p.itemsSincronizado === 'NO' || (p.estadoSincronizado && p.estadoSincronizado !== 'SI'))
+    ? `<span style="font-size:0.65rem;background:#fef3c7;color:#92400e;font-weight:700;padding:2px 7px;border-radius:6px;margin-left:6px;">⚠️ Sin sincronizar</span>`
+    : ''}
+                </div>
+                <span class="ticket-estado-badge ${badgeMap[p.estado] || 'badge-pendiente'}">${estadoEmoji[p.estado] || p.estado}</span>
+            </div>
+            <div class="ticket-items">${itemsHtml}</div>
+            ${p.notas ? `<div class="ticket-nota">📌 ${p.notas}</div>` : ''}
+            <div class="ticket-foot">
+                <span class="ticket-total">${formatPeso(p.total)}</span>
+                <span class="ticket-pago-badge">${p.detallePago || p.metodoPago || 'Efectivo'}</span>
+                <span class="ticket-hora">🕒 ${tiempoLabel}</span>
+                ${alertaTiempo}
+                ${btnCambio}
+                <button class="btn-editar-ticket" onclick="abrirEdicionPedido('${p.id}')">✏️</button>
+                <button class="btn-archivar-ticket" onclick="archivarPedido('${p.id}')">✕</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+ 
+// Estados
+function avanzarEstado(id) {
+    const flujo = ['Pendiente', 'Preparando', 'Listo', 'Pagado'];
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido) return;
+    const idx = flujo.indexOf(pedido.estado);
+    if (idx < flujo.length - 1) {
+        const siguiente = flujo[idx + 1];
+        if (siguiente === 'Pagado') {
+            elegirMetodoPagoYCobrar(id);
+            return;
+        }
+        pedido.estado = siguiente;
+        detenerAlarmaPedido(id);
+ 
+        if (siguiente === 'Listo') {
+            pedido.horaFin = Date.now();
+        }
+ 
+        pedido.estadoSincronizado = 'NO'; // se marca "SI" cuando Sheets confirme
+        localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+        renderHistorial();
+        sincronizarEstado(id, pedido.estado);
+    }
+}
+ 
+ 
+function elegirMetodoPagoYCobrar(id) {
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido) return;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center;`;
+    const metodos = [
+        { k:'Efectivo', e:'💵' }, { k:'Nequi', e:'📱' },
+        { k:'Daviplata', e:'🔵' }, { k:'Tarjeta', e:'💳' },
+        { k:'Transferencia/PSE', e:'🏦' }, { k:'Llave', e:'🔑' }
+    ];
+    overlay.innerHTML = `
+    <div style="background:white;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;">
+        <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">💵 ¿Cómo paga la mesa ${pedido.mesa}?</div>
+        <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">Total: <strong>${formatPeso(pedido.total)}</strong></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+            ${metodos.map(m => `
+            <button onclick="confirmarCobro('${id}','${m.k}',this.parentElement.parentElement.parentElement)"
+                style="padding:12px 6px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);cursor:pointer;font-size:0.85rem;font-weight:600;">
+                ${m.e}<br>${m.k}
+            </button>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input id="otro-pago-input" type="text" placeholder="Otro método..."
+                style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;outline:none;">
+            <button onclick="confirmarCobro('${id}',document.getElementById('otro-pago-input').value||'Otro',this.parentElement.parentElement.parentElement)"
+                style="padding:10px 14px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">OK</button>
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()"
+            style="width:100%;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;color:var(--text-muted);cursor:pointer;font-size:0.9rem;margin-top:10px;">Cancelar</button>
+    </div>`;
+    document.body.appendChild(overlay);
+}
+ 
+function confirmarCobro(id, metodoPago, overlay) {
+    overlay.remove();
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido || !metodoPago.trim()) return;
+    pedido.estado = 'Pagado';
+    pedido.metodoPago = metodoPago;
+    pedido.detallePago = '';
+ 
+    if (!pedido.horaFin) {
+        pedido.horaFin = Date.now();
+    }
+ 
+    pedido.estadoSincronizado = 'NO'; // se marca "SI" cuando Sheets confirme
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    renderHistorial();
+    sincronizarEstado(id, 'Pagado');
+    showToast(`✅ Cobrado con ${metodoPago}`);
+}
+ 
+ 
+function regresarEstado(id) {
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido) return;
+    pedido.estado = 'Pendiente';
+    pedido.estadoSincronizado = 'NO';
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    renderHistorial();
+    sincronizarEstado(id, 'Pendiente');
+}
+ 
+async function sincronizarEstado(id, estado) {
+    const pedido = historialPedidos.find(p => p.id === id);
+    if (!pedido || pedido.sincronizado === 'NO') return;
+    try {
+        const payload = { accion: "cambiarEstado", id: pedido.id, estado, codigo: miCodigo, local: pedido.local };
+        if (pedido.metodoPago) payload.metodoPago = pedido.metodoPago;
+        if (pedido.horaFin)    payload.horaFin    = pedido.horaFin;
+ 
+        const res = await fetch(API_URL, { method: "POST", redirect: "follow",
+            body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.ok) {
+            pedido.estadoSincronizado = 'SI';
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+        } else {
+            console.warn("Estado no actualizado en Sheets:", data.error);
+            showToast(`⚠️ ${data.error || 'No autorizado'}`);
+        }
+    } catch { /* offline: sincronizarEstadosPendientes() reintentará */ }
+}
+ 
+async function sincronizarEstadosPendientes() {
+    const pendientes = historialPedidos.filter(p =>
+        p.estadoSincronizado !== 'SI' && p.sincronizado === 'SI' && !p.enviando
+    );
+    for (const pedido of pendientes) {
+        await sincronizarEstado(pedido.id, pedido.estado);
+    }
+}
+ 
+// Archivar
+async function archivarPedido(id) {
+    if (!confirm("¿Archivar este pedido? Desaparecerá del monitor (queda en Sheets).")) return;
+    const pedido = historialPedidos.find(p => p.id === id);
+    const localPedido = pedido ? pedido.local : miLocal;
+    historialPedidos = historialPedidos.filter(p => p.id !== id);
+    localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+    renderHistorial();
+    try {
+        await fetch(API_URL, { method: "POST", redirect: "follow",
+            body: JSON.stringify({ accion: "archivarPedido", id, codigo: miCodigo, local: localPedido }) });
+    } catch { /* offline OK */ }
+}
+ 
+function construirVistaItems(pedido) {
+    if (Array.isArray(pedido.eventos) && pedido.eventos.length > 0) {
+        const porLinea = {};
+        [...pedido.eventos].sort((a, b) => a.ts - b.ts).forEach(ev => {
+            if (ev.tipo === 'item_agregado' && ev.item?.lineId) {
+                // Si viene una nota anterior, la guardamos en el historial de notas
+                const historial = ev.item.notaItem ? [{ nota: ev.item.notaItem, activa: true }] : [];
+                porLinea[ev.item.lineId] = { 
+                    item: { ...ev.item, historialNotas: historial }, 
+                    eliminado: false, 
+                    agregadoTs: ev.ts 
+                };
+            } else if (ev.tipo === 'item_modificado' && ev.item?.lineId && porLinea[ev.item.lineId]) {
+                const itemPrevio = porLinea[ev.item.lineId].item;
+                let historial = itemPrevio.historialNotas || [];
+
+                // Si la nota cambió al editar, desactivamos la nota anterior (queda tachada)
+                if (ev.item.notaItem && ev.item.notaItem !== itemPrevio.notaItem) {
+                    historial = historial.map(n => ({ ...n, activa: false }));
+                    historial.push({ nota: ev.item.notaItem, activa: true });
+                }
+
+                porLinea[ev.item.lineId].item = { ...ev.item, historialNotas: historial };
+            } else if (ev.tipo === 'item_eliminado' && ev.lineId && porLinea[ev.lineId]) {
+                porLinea[ev.lineId].eliminado = true;
+            } else if (ev.tipo === 'item_listo' && ev.lineId && porLinea[ev.lineId]) {
+                porLinea[ev.lineId].item.listo = !!ev.listo;
+            }
+        });
+
+        return Object.values(porLinea).map(x => {
+            const esNuevo = x.agregadoTs > (pedido.creadoEn || 0) + 2000;
+            let estilo = '';
+            if (x.eliminado) estilo = 'text-decoration:line-through; opacity:0.45;';
+            else if (esNuevo) estilo = 'color:var(--primary); font-weight:700;';
+
+            const it = x.item;
+            let linea = `<strong>${it.cantidad}x</strong> ${it.nombre}`;
+            if (it.specs) linea += ` <span style="font-size:0.8rem; opacity:0.8;">[${it.specs}]</span>`;
+
+            // Renglón separado para las notas
+            let htmlNotas = '';
+            
+            // Si el ítem tiene un historial de ediciones de notas
+            if (it.historialNotas && it.historialNotas.length > 0) {
+                it.historialNotas.forEach(n => {
+                    if (n.activa && !x.eliminado) {
+                        htmlNotas += `<div style="color: #dc2626; font-weight: 700; font-size: 0.82rem; margin-top: 2px;">📌 Nota: ${n.nota}</div>`;
+                    } else {
+                        // Nota anterior o eliminada (Historial humano)
+                        htmlNotas += `<div style="color: #9ca3af; text-decoration: line-through; font-size: 0.78rem; margin-top: 1px;">❌ Nota anterior: ${n.nota}</div>`;
+                    }
+                });
+            } else if (it.notaItem) {
+                // Caso simple sin historial
+                const colorNota = x.eliminado ? '#9ca3af' : '#dc2626';
+                const estiloTachado = x.eliminado ? 'text-decoration: line-through;' : '';
+                htmlNotas = `<div style="color: ${colorNota}; font-weight: 700; font-size: 0.82rem; margin-top: 2px; ${estiloTachado}">📌 Nota: ${it.notaItem}</div>`;
+            }
+
+            linea += htmlNotas;
+
+            return { html: linea, estilo, eliminado: x.eliminado, lineId: it.lineId, listo: !!it.listo };
+        });
+    }
+
+    // Fallback para pedidos antiguos
+    return pedido.items.split(', ').filter(Boolean).map(it => ({ html: it, estilo: '', eliminado: false, lineId: null, listo: false }));
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANUNCIAR EN VOZ ALTA (Mesa + Ítems + Notas)
+// ═══════════════════════════════════════════════════════════
+function anunciarPedidoNuevo(pedido) {
+    try {
+        if (!('speechSynthesis' in window)) return;
+        
+        const quien = pedido.mesero && pedido.mesero !== '—' ? pedido.mesero : 'un mesero';
+        let textoVoz = `Nuevo pedido de ${quien}, ${pedido.mesa}. `;
+
+        // Si tenemos los ítems en eventos o en el pedido, los leemos con sus notas
+        const vistaItems = construirVistaItems(pedido);
+        const itemsParaLeer = vistaItems.filter(i => !i.eliminado);
+
+        if (itemsParaLeer.length > 0) {
+            textoVoz += `Contiene: `;
+            
+            // Extraemos texto limpio para la voz (sin tags HTML)
+            itemsParaLeer.forEach(i => {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = i.html;
+                
+                // Limpiamos emojis y el prefijo "Nota:" para que suene más natural
+                let textoLimpio = tempDiv.innerText || tempDiv.textContent || '';
+                textoLimpio = textoLimpio.replace(/📌|❌/g, '').replace('Nota:', 'con nota:');
+                
+                textoVoz += `${textoLimpio}. `;
+            });
+        }
+
+        if (pedido.notas) {
+            textoVoz += `Nota general del pedido: ${pedido.notas}.`;
+        }
+
+        const utter = new SpeechSynthesisUtterance(textoVoz);
+        utter.lang = 'es-CO';
+        utter.rate = 0.95; // Velocidad ligeramente pausada para que en cocina se entienda claro
+        speechSynthesis.speak(utter);
+    } catch (e) { 
+        /* Si falla el sintetizador, los beeps de alerta siguen funcionando */
+    }
+}
+ 
+// ═══════════════════════════════════════════════════════════
+//  ALARMA DE COCINA — suena/vibra/anuncia cuando llega un pedido
+//  nuevo, y no para hasta que alguien le da "Preparar". Todo esto
+//  vive solo en el frontend, no depende de nada del backend.
+// ═══════════════════════════════════════════════════════════
+let pedidosSonando = new Set();
+let audioCtx = null;
+let alarmaIntervalo = null;
+ 
+// Los navegadores bloquean sonido/voz hasta que hay un gesto real del
+// usuario (un tap). Se llama una vez, en el botón "Entrar" del login.
+function desbloquearAudio() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) { /* navegador sin soporte: la app sigue funcionando igual, solo sin sonido */ }
+}
+ 
+function reproducirBeep() {
+    try {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.28, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+    } catch (e) { /* nunca debe romper la app por un problema de audio */ }
+}
+ 
+function construirVistaItems(pedido) {
+    if (Array.isArray(pedido.eventos) && pedido.eventos.length > 0) {
+        const porLinea = {};
+        [...pedido.eventos].sort((a, b) => a.ts - b.ts).forEach(ev => {
+            if (ev.tipo === 'item_agregado' && ev.item?.lineId) {
+                // Si viene una nota anterior, la guardamos en el historial de notas
+                const historial = ev.item.notaItem ? [{ nota: ev.item.notaItem, activa: true }] : [];
+                porLinea[ev.item.lineId] = { 
+                    item: { ...ev.item, historialNotas: historial }, 
+                    eliminado: false, 
+                    agregadoTs: ev.ts 
+                };
+            } else if (ev.tipo === 'item_modificado' && ev.item?.lineId && porLinea[ev.item.lineId]) {
+                const itemPrevio = porLinea[ev.item.lineId].item;
+                let historial = itemPrevio.historialNotas || [];
+
+                // Si la nota cambió al editar, desactivamos la nota anterior (queda tachada)
+                if (ev.item.notaItem && ev.item.notaItem !== itemPrevio.notaItem) {
+                    historial = historial.map(n => ({ ...n, activa: false }));
+                    historial.push({ nota: ev.item.notaItem, activa: true });
+                }
+
+                porLinea[ev.item.lineId].item = { ...ev.item, historialNotas: historial };
+            } else if (ev.tipo === 'item_eliminado' && ev.lineId && porLinea[ev.lineId]) {
+                porLinea[ev.lineId].eliminado = true;
+            } else if (ev.tipo === 'item_listo' && ev.lineId && porLinea[ev.lineId]) {
+                porLinea[ev.lineId].item.listo = !!ev.listo;
+            }
+        });
+
+        return Object.values(porLinea).map(x => {
+            const esNuevo = x.agregadoTs > (pedido.creadoEn || 0) + 2000;
+            let estilo = '';
+            if (x.eliminado) estilo = 'text-decoration:line-through; opacity:0.45;';
+            else if (esNuevo) estilo = 'color:var(--primary); font-weight:700;';
+
+            const it = x.item;
+            let linea = `<strong>${it.cantidad}x</strong> ${it.nombre}`;
+            if (it.specs) linea += ` <span style="font-size:0.8rem; opacity:0.8;">[${it.specs}]</span>`;
+
+            // Renglón separado para las notas
+            let htmlNotas = '';
+            
+            // Si el ítem tiene un historial de ediciones de notas
+            if (it.historialNotas && it.historialNotas.length > 0) {
+                it.historialNotas.forEach(n => {
+                    if (n.activa && !x.eliminado) {
+                        htmlNotas += `<div style="color: #dc2626; font-weight: 700; font-size: 0.82rem; margin-top: 2px;">📌 Nota: ${n.nota}</div>`;
+                    } else {
+                        // Nota anterior o eliminada (Historial humano)
+                        htmlNotas += `<div style="color: #9ca3af; text-decoration: line-through; font-size: 0.78rem; margin-top: 1px;">❌ Nota anterior: ${n.nota}</div>`;
+                    }
+                });
+            } else if (it.notaItem) {
+                // Caso simple sin historial
+                const colorNota = x.eliminado ? '#9ca3af' : '#dc2626';
+                const estiloTachado = x.eliminado ? 'text-decoration: line-through;' : '';
+                htmlNotas = `<div style="color: ${colorNota}; font-weight: 700; font-size: 0.82rem; margin-top: 2px; ${estiloTachado}">📌 Nota: ${it.notaItem}</div>`;
+            }
+
+            linea += htmlNotas;
+
+            return { html: linea, estilo, eliminado: x.eliminado, lineId: it.lineId, listo: !!it.listo };
+        });
+    }
+
+    // Fallback para pedidos antiguos
+    return pedido.items.split(', ').filter(Boolean).map(it => ({ html: it, estilo: '', eliminado: false, lineId: null, listo: false }));
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANUNCIAR EN VOZ ALTA (Mesa + Ítems + Notas)
+// ═══════════════════════════════════════════════════════════
+function anunciarPedidoNuevo(pedido) {
+    try {
+        if (!('speechSynthesis' in window)) return;
+        const quien = pedido.mesero && pedido.mesero !== '—' ? pedido.mesero : 'un mesero';
+        let texto = `Nuevo pedido de ${quien}, ${pedido.mesa}.`;
+
+        // Se lee de itemsRaw (datos crudos), NO del HTML ya pintado — si se
+        // lee el texto "1x Cuajada" tal cual, el sintetizador pronuncia la
+        // "x" suelta como la letra "equis". Con espacio en vez de "x" pegada
+        // a la cantidad, se evita ese problema de raíz.
+        const items = Array.isArray(pedido.itemsRaw) ? pedido.itemsRaw : [];
+        if (items.length > 0) {
+            texto += ' ' + items.map(it => {
+                let linea = `${it.cantidad} ${it.nombre}`;
+                if (it.specs) linea += `, ${it.specs}`;
+                if (it.notaItem) linea += `. Con nota: ${it.notaItem}`;
+                return linea;
+            }).join('. ');
+        }
+        if (pedido.notas) texto += `. Nota general: ${pedido.notas}`;
+
+        const utter = new SpeechSynthesisUtterance(texto);
+        utter.lang = 'es-CO';
+        utter.rate = 0.95;
+        speechSynthesis.speak(utter);
+    } catch (e) { /* si no hay voz disponible, el beep y la vibración siguen sonando igual */ }
+    }
+
+function iniciarAlarmaPedido(pedido) {
+    pedidosSonando.add(pedido.id);
+    anunciarPedidoNuevo(pedido);
+    if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+    reproducirBeep();
+    if (!alarmaIntervalo) {
+        alarmaIntervalo = setInterval(() => {
+            if (pedidosSonando.size === 0) {
+                clearInterval(alarmaIntervalo);
+                alarmaIntervalo = null;
+                return;
+            }
+            reproducirBeep();
+            if (navigator.vibrate) navigator.vibrate(300);
+        }, 4000);
+    }
+}
+ 
+function detenerAlarmaPedido(id) {
+    pedidosSonando.delete(id);
+}
+ 
+ 
+// ── sync.js ──
+// ═══════════════════════════════════════════════════════════
+//  SINCRONIZACIÓN CON SHEETS
+// ═══════════════════════════════════════════════════════════
+async function sincronizarPendientes() {
+    const pendientes = historialPedidos.filter(p => p.sincronizado === "NO" && !p.enviando);
+    for (const pedido of pendientes) {
+        pedido.enviando = true;
+        try {
+            const res = await fetch(API_URL, {
+                method: "POST", redirect: "follow",
+                body: JSON.stringify({
+                    accion: "nuevoPedido",
+                    id: pedido.id,
+                    codigo: miCodigo,
+                    mesa: pedido.mesa, mesero: pedido.mesero,
+                    total: pedido.total, items: pedido.items,
+                    itemsRaw: JSON.stringify(pedido.itemsRaw || []),
+                    notas: pedido.notas, metodoPago: pedido.metodoPago,
+                    local: pedido.local
+                })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                pedido.sincronizado = "SI";
+                if (data.numeroPedido) pedido.numeroPedido = data.numeroPedido;
+                localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+            }
+        } catch {
+            pedido.enviando = false;
+            break;
+        }
+        pedido.enviando = false;
+    }
+}
+ 
+async function cargarPedidos() {
+    if (window._cargandoPedidos) return;
+    window._cargandoPedidos = true;
+    try {
+        await sincronizarPendientes();
+        await sincronizarEventosPendientes();
+        await sincronizarEstadosPendientes();
+ 
+        const res = await fetch(`${API_URL}?accion=obtenerPedidos&codigo=${encodeURIComponent(miCodigo)}&local=${encodeURIComponent(miLocal)}`);
+        const data = await res.json();
+        if (data.ok) {
+            const noSync = historialPedidos.filter(p => p.sincronizado === "NO");
+            const idsLocalesPendientes = new Set(noSync.map(p => p.id));
+            const deLaNube = data.pedidos.filter(p =>
+    !idsLocalesPendientes.has(p.id) && String(p.local || '1') === String(miLocal)
+);
+ 
+            deLaNube.forEach(p => {
+                const localMatch = historialPedidos.find(lp => String(lp.id) === String(p.id));
+                const esNuevoParaEsteDispositivo = !localMatch;
+ 
+                if (!p.horaLocal && p.hora) p.horaLocal = p.hora;
+                p.sincronizado = "SI";
+ 
+                if (typeof p.itemsRaw === 'string' && p.itemsRaw) {
+                    try { p.itemsRaw = JSON.parse(p.itemsRaw); } catch { p.itemsRaw = []; }
+                } else if (!Array.isArray(p.itemsRaw)) {
+                    p.itemsRaw = [];
+                }
+ 
+                p.creadoEn = p.creadoEn || (localMatch && localMatch.creadoEn) || reconstruirInicioDesdeFechaHora(p) || Date.now();
+ 
+                const localPendiente = localMatch && localMatch.estadoSincronizado && localMatch.estadoSincronizado !== 'SI';
+                const itemsPendientes = localMatch && localMatch.eventosPendientes && localMatch.eventosPendientes.length > 0;
+ 
+                if (localPendiente) {
+                    if (localMatch.metodoPago) p.metodoPago = localMatch.metodoPago;
+                    if (localMatch.horaFin)    p.horaFin    = localMatch.horaFin;
+                    if (localMatch.estado)     p.estado     = localMatch.estado;
+                }
+                if (itemsPendientes) {
+                    // Hay ediciones que el servidor aún no confirma: NUNCA se
+                    // pisan con lo que venga de la nube. Esto es justo lo que
+                    // faltaba y causaba la pérdida de ítems.
+                    p.itemsRaw = localMatch.itemsRaw;
+                    p.items = localMatch.items;
+                    p.total = localMatch.total;
+                    p.mesa = localMatch.mesa; p.mesero = localMatch.mesero; p.notas = localMatch.notas;
+                    p.eventosPendientes = localMatch.eventosPendientes;
+                    p.eventos = localMatch.eventos || p.eventos;
+                }
+ 
+                p.estadoSincronizado = localPendiente ? localMatch.estadoSincronizado : 'SI';
+                p.itemsSincronizado = itemsPendientes ? 'NO' : 'SI';
+ 
+                if (primerCargaCompleta && esNuevoParaEsteDispositivo && p.estado === 'Pendiente') {
+                    iniciarAlarmaPedido(p);
+                }
+            });
+ 
+            historialPedidos = [...noSync, ...deLaNube].sort((a, b) => (a.creadoEn || 0) - (b.creadoEn || 0));
+            localStorage.setItem('historialPedidos', JSON.stringify(historialPedidos));
+            renderHistorial();
+            // Si un pedido que está sonando ya no está "Pendiente" — lo haya
+// cambiado cualquier dispositivo, no solo el tuyo — apaga su alarma.
+pedidosSonando.forEach(id => {
+    const p = historialPedidos.find(x => x.id === id);
+    if (!p || p.estado !== 'Pendiente') detenerAlarmaPedido(id);
+});
+            
+            primerCargaCompleta = true;
+        }
+    } catch (error) {
+        console.error("Error cargando pedidos, usando modo offline:", error);
+        renderHistorial();
+    } finally {
+        window._cargandoPedidos = false;
+    }
+}
+ 
+function iniciarPolling() {
+    if (pollingTimer) clearInterval(pollingTimer);
+    pollingTimer = setInterval(() => {
+        cargarPedidos();
+    }, POLLING_MS);
+}
+ 
+ 
+// ── admin.js ──
+function obtenerResumenDia() {
+    const pagados = historialPedidos.filter(p => p.estado === 'Pagado');
+    const pendientes = historialPedidos.filter(p => p.estado !== 'Pagado');
+    const totalVendido = pagados.reduce((s, p) => s + Number(p.total || 0), 0);
+    const totalPendiente = pendientes.reduce((s, p) => s + Number(p.total || 0), 0);
+    const porMetodo = {};
+    const topItems = {};
+ 
+    historialPedidos.forEach(pedido => {
+        const metodo = pedido.metodoPago || pedido.detallePago || 'Efectivo';
+        porMetodo[metodo] = (porMetodo[metodo] || 0) + Number(pedido.total || 0);
+ 
+        const items = Array.isArray(pedido.itemsRaw) && pedido.itemsRaw.length
+            ? pedido.itemsRaw
+            : (pedido.items || '').split(',').map(x => x.trim()).filter(Boolean);
+ 
+        items.forEach(item => {
+            let nombre = '';
+            let cantidad = 1;
+ 
+            if (typeof item === 'string') {
+                const match = item.match(/^(\d+)x\s*(.+)$/i);
+                if (match) {
+                    cantidad = Number(match[1]) || 1;
+                    nombre = match[2].replace(/\s*\[.*?\]/g, '').replace(/\s*\(.*?\)/g, '').trim();
+                } else {
+                    nombre = item.replace(/\s*\[.*?\]/g, '').replace(/\s*\(.*?\)/g, '').trim();
+                }
+            } else if (item && item.nombre) {
+                nombre = item.nombre;
+                cantidad = Number(item.cantidad) || 1;
+            }
+ 
+            if (nombre) {
+                topItems[nombre] = (topItems[nombre] || 0) + cantidad;
+            }
+        });
+    });
+ 
+    const topProductos = Object.entries(topItems)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+ 
+    return {
+        totalComandas: historialPedidos.length,
+        pagadas: pagados.length,
+        pendientes: pendientes.length,
+        totalVendido,
+        totalPendiente,
+        promedioPorComanda: historialPedidos.length ? Math.round(totalVendido / historialPedidos.length) : 0,
+        metodos: Object.entries(porMetodo).sort((a, b) => b[1] - a[1]),
+        topProductos
+    };
+}
+ 
+function verResumenDia() {
+    const clave = prompt('Clave de administrador:');
+    if (clave !== '1234') {
+        showToast('❌ Clave incorrecta.');
+        return;
+    }
+ 
+    const resumen = obtenerResumenDia();
+    const metodosHtml = resumen.metodos.length
+        ? resumen.metodos.map(([metodo, valor]) => `
+            <div class="summary-item">
+                <span>${metodo}</span>
+                <span class="muted">${formatPeso(valor)}</span>
+            </div>`).join('')
+        : '<div class="summary-empty">Sin pagos registrados</div>';
+ 
+    const topHtml = resumen.topProductos.length
+        ? resumen.topProductos.map(([nombre, cantidad]) => `
+            <div class="summary-item">
+                <span>${nombre}</span>
+                <span class="muted">${cantidad} und</span>
+            </div>`).join('')
+        : '<div class="summary-empty">Aún no hay productos vendidos</div>';
+ 
+    document.getElementById('summary-content').innerHTML = `
+        <div class="summary-stat-grid">
+            <div class="summary-stat-card positive">
+                <div class="summary-label">Comandas</div>
+                <div class="summary-value">${resumen.totalComandas}</div>
+            </div>
+            <div class="summary-stat-card positive">
+                <div class="summary-label">Pagadas</div>
+                <div class="summary-value">${resumen.pagadas}</div>
+            </div>
+            <div class="summary-stat-card warning">
+                <div class="summary-label">Pendientes</div>
+                <div class="summary-value">${resumen.pendientes}</div>
+            </div>
+        </div>
+        <div class="summary-section">
+            <div class="summary-section-title">Totales</div>
+            <div class="summary-list">
+                <div class="summary-item"><span>Venta cerrada</span><span class="muted">${formatPeso(resumen.totalVendido)}</span></div>
+                <div class="summary-item"><span>Pendiente por cobrar</span><span class="muted">${formatPeso(resumen.totalPendiente)}</span></div>
+                <div class="summary-item"><span>Promedio por comanda</span><span class="muted">${formatPeso(resumen.promedioPorComanda)}</span></div>
+            </div>
+        </div>
+        <div class="summary-section">
+            <div class="summary-section-title">Métodos de pago</div>
+            <div class="summary-list">${metodosHtml}</div>
+        </div>
+        <div class="summary-section">
+            <div class="summary-section-title">Productos más pedidos</div>
+            <div class="summary-list">${topHtml}</div>
+        </div>`;
+ 
+    document.getElementById('summary-overlay').classList.add('open');
+}
+ 
+function cerrarResumenDia(event) {
+    if (event.target && event.target.id === 'summary-overlay') {
+        cerrarResumenDiaBtn();
+    }
+}
+ 
+function cerrarResumenDiaBtn() {
+    document.getElementById('summary-overlay').classList.remove('open');
+}
+ 
+ 
+// ── init.js ──
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+async function iniciarApp() {
+    aplicarTemaLocal(miLocal);
+    await cargarMenu();
+    initCategorias();
+    renderGrid();
+    guardarYRender();
+    insertarBotonSalir();
+    cargarPedidos();
+    iniciarPolling();
+    iniciarChequeoHorario();
+}
+ 
+if (miCodigo && miLocal) {
+    iniciarApp();
+} else {
+    mostrarPromptCodigo((resultado) => {
+        miLocal = resultado.local;
+        miNombre = resultado.nombre;
+        misCapacidades = resultado.capacidades;
+        miCodigo = sessionStorage.getItem('miCodigo');
+        iniciarApp();
+    });
+}
+ 
+</script>
+</body>
+</html>
+ 

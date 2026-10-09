@@ -1038,9 +1038,772 @@ function generarUUID() {
 //  no en este archivo. Se descarga al abrir la app y queda
 //  guardado en caché para seguir funcionando sin internet.
 // ═══════════════════════════════════════════════════════════
-let listaProductos = [];
+
+let listaProductos[
+  {
+    "id": 1,
+    "categoria": "del día",
+    "nombre": "pechuga del día",
+    "precio": 18000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "con que",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["sopa 🍵", "Fruta 🍇", "huevo 🥚", "nada ", "otra ?"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 2,
+    "categoria": "del día",
+    "nombre": "Pierna pernil del día",
+    "precio": 20000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "con que",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["sopa 🍵", "Fruta 🍇", "huevo 🥚", "nada ", "otra ?"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 3,
+    "categoria": "del día",
+    "nombre": "Cerdo 🐷 teriyaki del dia",
+    "precio": 20000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "con que",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["sopa 🍵", "Fruta 🍇", "huevo 🥚", "nada ", "otra ?"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 4,
+    "categoria": "del día",
+    "nombre": "Goulash carne del día",
+    "precio": 15000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "con que",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["sopa 🍵", "Fruta 🍇", "huevo 🥚", "nada ", "otra ?"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 5,
+    "categoria": "del día",
+    "nombre": "Carne chimichurri",
+    "precio": 20000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "con que",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["sopa 🍵", "Fruta 🍇", "huevo 🥚", "nada ", "otra ?"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 6,
+    "categoria": "del día",
+    "nombre": "pollo apanado",
+    "precio": 20000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "con que",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["sopa 🍵", "Fruta 🍇", "huevo 🥚", "nada ", "otra ?"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 7,
+    "categoria": "del día",
+    "nombre": "jugo extra",
+    "precio": 4000,
+    "imgPostre": ""
+  },
+  {
+    "id": 211,
+    "categoria": "Menú del Día",
+    "nombre": "Menú Ejecutivo Estándar",
+    "precio": 15000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "Acompañamiento",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["Con Sopa 🍵", "Sin Sopa 🚫", "Con Fruta 🍇"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 2111,
+    "categoria": "Menú del Día",
+    "nombre": "Menú Ejecutivo Especial",
+    "precio": 18000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "Acompañamiento",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["Con Sopa 🍵", "Sin Sopa 🚫", "Con Fruta 🍇"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 333,
+    "categoria": "Menú del Día",
+    "nombre": "Menú Ejecutivo Premium",
+    "precio": 20000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "Acompañamiento",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["Con Sopa 🍵", "Sin Sopa 🚫", "Con Fruta 🍇"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 4444,
+    "categoria": "Bebidas Frías",
+    "nombre": "Media Jarra de Limonada",
+    "precio": 14000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "Sabor",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["Natural", "Hierbabuena", "Mango Hierbabuena", "Coco"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 555,
+    "categoria": "Bebidas Frías",
+    "nombre": "Jarra de Limonada",
+    "precio": 26000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "Sabor",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["Natural", "Hierbabuena", "Mango Hierbabuena", "Coco"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 1242,
+    "categoria": "mixta",
+    "nombre": "mixta",
+    "precio": 46000,
+    "imgPostre": ""
+  },
+  {
+    "id": 1202,
+    "categoria": "fuerte",
+    "nombre": "pechuga especial",
+    "precio": 40000,
+    "imgPostre": ""
+  },
+  {
+    "id": 82,
+    "categoria": "uso del bañó",
+    "nombre": "uso del bañó",
+    "precio": 1000,
+    "imgPostre": ""
+  },
+  {
+    "id": 83,
+    "categoria": "Desayunos",
+    "nombre": "Changua",
+    "precio": 9000,
+    "imgPostre": ""
+  },
+  {
+    "id": 84,
+    "categoria": "Desayunos",
+    "nombre": "Calentado Paisa",
+    "precio": 20000,
+    "imgPostre": ""
+  },
+  {
+    "id": 85,
+    "categoria": "Desayunos",
+    "nombre": "Huevos Pericos",
+    "precio": 8500,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "Acompañamiento",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["Arroz", "Pan"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 86,
+    "categoria": "Desayunos",
+    "nombre": "Huevos Rancheros",
+    "precio": 10500,
+    "imgPostre": ""
+  },
+  {
+    "id": 87,
+    "categoria": "Desayunos",
+    "nombre": "Omelette con Queso, Tocineta, Champiñón y Tomate",
+    "precio": 12000,
+    "imgPostre": ""
+  },
+  {
+    "id": 88,
+    "categoria": "Waffles y Crepes",
+    "nombre": "Crepe de Huevo Frito y Tocineta",
+    "precio": 11000,
+    "imgPostre": ""
+  },
+  {
+    "id": 89,
+    "categoria": "Waffles y Crepes",
+    "nombre": "Crepe de Queso, Tocineta y Huevo Frito",
+    "precio": 12000,
+    "imgPostre": ""
+  },
+  {
+    "id": 90,
+    "categoria": "Waffles y Crepes",
+    "nombre": "Crepe de Queso, Tocineta, Huevo y Champiñón",
+    "precio": 13000,
+    "imgPostre": ""
+  },
+  {
+    "id": 91,
+    "categoria": "Waffles y Crepes",
+    "nombre": "Crepe de Queso con Fresa y Chocolate",
+    "precio": 12000,
+    "imgPostre": ""
+  },
+  {
+    "id": 92,
+    "categoria": "Waffles y Crepes",
+    "nombre": "Waffle de Queso con Fresa y Chocolate",
+    "precio": 12000,
+    "imgPostre": ""
+  },
+  {
+    "id": 93,
+    "categoria": "Waffles y Crepes",
+    "nombre": "Waffle de Huevo Frito y Tocineta",
+    "precio": 12000,
+    "imgPostre": ""
+  },
+  {
+    "id": 94,
+    "categoria": "Bebidas Frías",
+    "nombre": "Jugo de Naranja",
+    "precio": 9500,
+    "imgPostre": ""
+  },
+  {
+    "id": 95,
+    "categoria": "Bebidas Frías",
+    "nombre": "Jugo de Mango",
+    "precio": 6500,
+    "imgPostre": ""
+  },
+  {
+    "id": 96,
+    "categoria": "Bebidas Frías",
+    "nombre": "Jugo / Licuado Kaoba Chino",
+    "precio": 10500,
+    "imgPostre": ""
+  },
+  {
+    "id": 97,
+    "categoria": "Bebidas Calientes",
+    "nombre": "Café Americano",
+    "precio": 4000,
+    "imgPostre": "https://static.vecteezy.com/system/resources/thumbnails/069/564/525/small/hot-coffee-cup-with-saucer-and-coffee-beans-steam-rising-isolated-png.png"
+  },
+  {
+    "id": 98,
+    "categoria": "Bebidas Calientes",
+    "nombre": "Capuccino",
+    "precio": 5000,
+    "imgPostre": "https://photoshop-kopona.com/uploads/posts/2018-09/1537260549_im2.jpg"
+  },
+  {
+    "id": 99,
+    "categoria": "Bebidas Calientes",
+    "nombre": "Chocolate Caliente",
+    "precio": 5000,
+    "imgPostre": ""
+  },
+  {
+    "id": 100,
+    "categoria": "Bebidas Calientes",
+    "nombre": "Aromática Frutal",
+    "precio": 4500,
+    "imgPostre": "https://w7.pngwing.com/pngs/1007/585/png-transparent-green-tea-fizzy-drinks-ginger-tea-lemon-juice-tea-tea-cocktail-non-alcoholic-beverage-thumbnail.png"
+  },
+  {
+    "id": 101,
+    "categoria": "Bebidas Frías",
+    "nombre": "Soda Italiana",
+    "precio": 10000,
+    "imgPostre": "",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "Sabor",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["Frutos rojos", "Maracuyá"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 102,
+    "categoria": "Cócteles",
+    "nombre": "Sangría Kaoba",
+    "precio": 18000,
+    "imgPostre": ""
+  },
+  {
+    "id": 103,
+    "categoria": "Cócteles",
+    "nombre": "Piña Colada",
+    "precio": 18000,
+    "imgPostre": ""
+  },
+  {
+    "id": 104,
+    "categoria": "Bebidas Frías",
+    "nombre": "Kaoba Chino",
+    "precio": 10500,
+    "imgPostre": ""
+  },
+  {
+    "id": 105,
+    "categoria": "Postres",
+    "nombre": "Waffle Kaoba",
+    "precio": 18000,
+    "imgPostre": ""
+  },
+  {
+    "id": 106,
+    "categoria": "Postres",
+    "nombre": "Waffle de Arequipe",
+    "precio": 12000,
+    "imgPostre": ""
+  },
+  {
+    "id": 107,
+    "categoria": "Postres",
+    "nombre": "Waffle de Chocolate",
+    "precio": 12000,
+    "imgPostre": ""
+  },
+  {
+    "id": 108,
+    "categoria": "Postres",
+    "nombre": "Waffle de Frutos Rojos",
+    "precio": 15000,
+    "imgPostre": ""
+  },
+  {
+    "id": 109,
+    "categoria": "Postres",
+    "nombre": "Crepe de Brownie",
+    "precio": 16000,
+    "imgPostre": ""
+  },
+  {
+    "id": 110,
+    "categoria": "Postres",
+    "nombre": "Brownie Caliente",
+    "precio": 9500,
+    "imgPostre": ""
+  },
+  {
+    "id": 111,
+    "categoria": "Bebidas Frías",
+    "nombre": "Malteada de Brownie",
+    "precio": 12500,
+    "imgPostre": ""
+  },
+  {
+    "id": 112,
+    "categoria": "Bebidas Frías",
+    "nombre": "Malteada de Frutos Rojos",
+    "precio": 12500,
+    "imgPostre": ""
+  },
+  {
+    "id": 113,
+    "categoria": "Entradas",
+    "nombre": "Patacones Teriyaki",
+    "precio": 20000,
+    "imgPostre": ""
+  },
+  {
+    "id": 114,
+    "categoria": "Entradas",
+    "nombre": "Alitas a la BBQ",
+    "precio": 25000,
+    "imgPostre": ""
+  },
+  {
+    "id": 115,
+    "categoria": "Entradas",
+    "nombre": "Coctel de Chicharrón",
+    "precio": 25000,
+    "imgPostre": ""
+  },
+  {
+    "id": 116,
+    "categoria": "Entradas",
+    "nombre": "Papas Salvajes",
+    "precio": 20000,
+    "imgPostre": ""
+  },
+  {
+    "id": 117,
+    "categoria": "Menú Infantil",
+    "nombre": "Menú Infantil",
+    "precio": 26000,
+    "imgPostre": ""
+  },
+  {
+    "id": 118,
+    "categoria": "Platos Fuertes",
+    "nombre": "Churrasco a la Parrilla",
+    "precio": 44000,
+    "imgPostre": ""
+  },
+  {
+    "id": 119,
+    "categoria": "Platos Fuertes",
+    "nombre": "Bandeja Paisa",
+    "precio": 39000,
+    "imgPostre": ""
+  },
+  {
+    "id": 120,
+    "categoria": "Platos Fuertes",
+    "nombre": "Pollo Blue",
+    "precio": 38000,
+    "imgPostre": ""
+  },
+  {
+    "id": 121,
+    "categoria": "Platos Fuertes",
+    "nombre": "Ajiaco Santafereño",
+    "precio": 30000,
+    "imgPostre": ""
+  },
+  {
+    "id": 122,
+    "categoria": "Hamburguesas",
+    "nombre": "Hamburguesa Kaoba Salvaje",
+    "precio": 28000,
+    "imgPostre": ""
+  },
+  {
+    "id": 123,
+    "categoria": "Hamburguesas",
+    "nombre": "Hamburguesa Parrilla",
+    "precio": 22000,
+    "imgPostre": ""
+  },
+  {
+    "id": 124,
+    "categoria": "Hamburguesas",
+    "nombre": "Hamburguesa Bacon",
+    "precio": 30000,
+    "imgPostre": ""
+  },
+  {
+    "id": 125,
+    "categoria": "Hamburguesas",
+    "nombre": "Hamburguesa Crispy",
+    "precio": 28000,
+    "imgPostre": ""
+  },
+  {
+    "id": 126,
+    "categoria": "Hamburguesas",
+    "nombre": "Hamburguesa Ranchera",
+    "precio": 28000,
+    "imgPostre": ""
+  },
+  {
+    "id": 127,
+    "categoria": "Pastas",
+    "nombre": "Pasta Bolognesa",
+    "precio": 25000,
+    "imgPostre": ""
+  },
+  {
+    "id": 128,
+    "categoria": "Pastas",
+    "nombre": "Pasta Carbonara",
+    "precio": 27000,
+    "imgPostre": ""
+  },
+  {
+    "id": 129,
+    "categoria": "Pastas",
+    "nombre": "Pasta Brócoli y Queso",
+    "precio": 24000,
+    "imgPostre": ""
+  },
+  {
+    "id": 130,
+    "categoria": "Pastas",
+    "nombre": "Pasta Camarones",
+    "precio": 32000,
+    "imgPostre": ""
+  },
+  {
+    "id": 131,
+    "categoria": "Lasagna",
+    "nombre": "Lasagna Pollo Champiñón",
+    "precio": 25000,
+    "imgPostre": ""
+  },
+  {
+    "id": 132,
+    "categoria": "Lasagna",
+    "nombre": "Lasagna Bolognesa",
+    "precio": 24000,
+    "imgPostre": ""
+  },
+  {
+    "id": 133,
+    "categoria": "Lasagna",
+    "nombre": "Lasagna Mixta",
+    "precio": 27000,
+    "imgPostre": ""
+  },
+  {
+    "id": 134,
+    "categoria": "Crepes Salados",
+    "nombre": "Crepe de Pollo",
+    "precio": 28000,
+    "imgPostre": ""
+  },
+  {
+    "id": 135,
+    "categoria": "Wok",
+    "nombre": "Wok Alitas BBQ",
+    "precio": 27000,
+    "imgPostre": ""
+  },
+  {
+    "id": 136,
+    "categoria": "Wok",
+    "nombre": "Wok Pechuga a la Plancha",
+    "precio": 27000,
+    "imgPostre": ""
+  },
+  {
+    "id": 137,
+    "categoria": "Wok",
+    "nombre": "Wok Carne Asada",
+    "precio": 32000,
+    "imgPostre": ""
+  },
+  {
+    "id": 138,
+    "categoria": "Wok",
+    "nombre": "Wok Camarones",
+    "precio": 32000,
+    "imgPostre": ""
+  },
+  {
+    "id": 139,
+    "categoria": "Bebidas Frías",
+    "nombre": "Limonada de Mango con Hierba Buena",
+    "precio": 9500,
+    "imgPostre": ""
+  },
+  {
+    "id": 140,
+    "categoria": "Bebidas Frías",
+    "nombre": "Limonada Natural",
+    "precio": 7000,
+    "imgPostre": ""
+  },
+  {
+    "id": 141,
+    "categoria": "Bebidas Frías",
+    "nombre": "Limonada de Coco",
+    "precio": 9500,
+    "imgPostre": ""
+  },
+  {
+    "id": 142,
+    "categoria": "Bebidas Frías",
+    "nombre": "Limonada de Hierba Buena",
+    "precio": 8000,
+    "imgPostre": ""
+  },
+  {
+    "id": 143,
+    "categoria": "Bebidas Frías",
+    "nombre": "Jugo Natural en Agua",
+    "precio": 6500,
+    "imgPostre": "https://w7.pngwing.com/pngs/928/391/png-transparent-three-assorted-flavor-shakes-orange-juice-smoothie-cocktail-milkshake-strawberry-milkshake-material-png-material-food-strawberries.png",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "Fruta",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["Mora", "Maracuyá", "Lulo", "Guanábana", "Mango", "Fresa", "Guayaba", "Otro"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 144,
+    "categoria": "Bebidas Frías",
+    "nombre": "Jugo Natural en Leche",
+    "precio": 8000,
+    "imgPostre": "https://w7.pngwing.com/pngs/938/40/png-transparent-smoothie-milkshake-orange-juice-fruit-juice-food-recipe-nutrition-thumbnail.png",
+    "opciones": {
+      "grupos": [
+        {
+          "label": "Fruta",
+          "tipo": "unico",
+          "requerido": true,
+          "opciones": ["Mora", "Maracuyá", "Lulo", "Guanábana", "Mango", "Fresa", "Guayaba", "Otro"]
+        }
+      ]
+    }
+  },
+  {
+    "id": 145,
+    "categoria": "Bebidas Frías",
+    "nombre": "Gaseosa",
+    "precio": 5000,
+    "imgPostre": "https://www.coca-cola.com/content/dam/onexp/hn/es/brands/coca-cola/ccso_botella500ml.png"
+  },
+  {
+    "id": 146,
+    "categoria": "Bebidas Frías",
+    "nombre": "Agua Natural",
+    "precio": 3000,
+    "imgPostre": "https://licoresmedellin.com/cdn/shop/files/agua-cristal-personal-300mlagua-cristal-personal-300mlcristallicores-medellin-2467011.jpg?width=1214"
+  },
+  {
+    "id": 147,
+    "categoria": "Bebidas Frías",
+    "nombre": "Agua con Gas",
+    "precio": 4000,
+    "imgPostre": "https://api.lalicorera.com/storage/productos/licores/83601997-agua-cristal-con-gas.webp"
+  },
+  {
+    "id": 148,
+    "categoria": "Bebidas Frías",
+    "nombre": "Bretaña",
+    "precio": 4500,
+    "imgPostre": ""
+  },
+  {
+    "id": 149,
+    "categoria": "Cervezas y Licores",
+    "nombre": "Cerveza Andina",
+    "precio": 6000,
+    "imgPostre": ""
+  },
+  {
+    "id": 150,
+    "categoria": "Cervezas y Licores",
+    "nombre": "Cerveza 3 Cordilleras",
+    "precio": 8000,
+    "imgPostre": ""
+  },
+  {
+    "id": 151,
+    "categoria": "Cervezas y Licores",
+    "nombre": "Copa de Vino",
+    "precio": 14000,
+    "imgPostre": ""
+  },
+  {
+    "id": 152,
+    "categoria": "Cervezas y Licores",
+    "nombre": "Jarra de Sangría",
+    "precio": 65000,
+    "imgPostre": ""
+  },
+  {
+    "id": 153,
+    "categoria": "Bebidas Calientes",
+    "nombre": "Capuchino",
+    "precio": 6000,
+    "imgPostre": "https://photoshop-kopona.com/uploads/posts/2018-09/1537260549_im2.jpg"
+  },
+  {
+    "id": 154,
+    "categoria": "Bebidas Calientes",
+    "nombre": "Milo Caliente",
+    "precio": 6000,
+    "imgPostre": "https://www.freepnglogos.com/uploads/logo-milo-png/logo-milo-long-john-silver-10.png"
+  }
+]
+     
+    
  
-async function cargarMenu() {
+async function cargammmmrMenu() {
     try {
         const res = await fetch(`${API_URL}?accion=obtenerMenu`);
         const data = await res.json();
@@ -1059,7 +1822,10 @@ async function cargarMenu() {
         showToast('⚠️ No se pudo cargar el menú. Revisa tu conexión.');
     }
 }
- 
+ async function cargarMenu() {
+    // No hace nada síncrono, el menú ya está listo
+    return Promise.resolve();
+ }
 // ═══════════════════════════════════════════════════════════
 //  CATÁLOGO
 // ═══════════════════════════════════════════════════════════

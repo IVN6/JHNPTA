@@ -614,5 +614,19 @@
     "oferta": "",
     "precio_venta": 60000,
     "seo": ""
+  },
+  {
+    "Tipo de producto": "Ropa 👕👖",
+    "Detalles del producto ( opcional )": "",
+    "id": 193181,
+    "link_foto": "https://lh3.googleusercontent.com/d/1qWV85Mm5cjrHwzMSeOaNGiZ-2oIQn4G3=w469-ra?authuser=0",
+    "cantidad": 4,
+    "producto_Nombre": "Jean azul clásico moderno ",
+    "Para Hombre o mujer": "Hombre",
+    "¿Cuál es la talla?": "",
+    "colores": "",
+    "oferta": "",
+    "precio_venta": 60000,
+    "seo": ""
   }
 ]

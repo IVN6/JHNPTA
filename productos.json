@@ -534,7 +534,7 @@
   {
     "Tipo de producto": "Ropa 👕👖",
     "Detalles del producto ( opcional )": "Jeans tiro alto dama ",
-    "id": "",
+    "id": 690591,
     "link_foto": "https://lh3.googleusercontent.com/d/1gdfdlCdYfXEubQzmsDK0D_qpqZN5xepE=w469-ra?authuser=0",
     "cantidad": 3,
     "producto_Nombre": "Jeans tiro alto ",
@@ -544,5 +544,19 @@
     "oferta": "",
     "precio_venta": 66000,
     "seo": "Jean gin yin yines jeans dama mujer tiro alto niña ropa dama regalo diciembre navidad ropita madre mamá día de "
+  },
+  {
+    "Tipo de producto": "Ropa 👕👖",
+    "Detalles del producto ( opcional )": "",
+    "id": 369623,
+    "link_foto": "https://lh3.googleusercontent.com/d/1RL75RYztmdvBHHjpqe1aTtZZ7Kv7x27k=w469-ra?authuser=0",
+    "cantidad": 4,
+    "producto_Nombre": "Jeans tiro alto de 3 botones ",
+    "Para Hombre o mujer": "Mujer",
+    "¿Cuál es la talla?": "",
+    "colores": "",
+    "oferta": "",
+    "precio_venta": 66000,
+    "seo": "Jean yin yines ropa regalo moda navidad dama mujer señora señorita mamá madre tía navidad regalo día de "
   }
 ]

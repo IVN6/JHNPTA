@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Una Sorpresa Especial Para Ti! 🎁</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #151d30;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --text-color: #f8fafc;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Pantalla de Regalo Inicial 🎁 */
+        #giftOverlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0b0f19 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+            text-align: center;
+            padding: 20px;
+            transition: opacity 0.5s ease;
+        }
+        .gift-box {
+            font-size: 100px;
+            animation: arcadeBounce 1s infinite alternate ease-in-out;
+            filter: drop-shadow(0 0 25px #ec4899);
+        }
+        @keyframes arcadeBounce {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-20px) scale(1.1); }
+        }
+
+        /* Contenedor Principal Adaptable */
+        .main-stage {
+            width: 86vw;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Botón discreto de ajustes (Solo para quien crea el regalo) */
+        .settings-btn {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: transparent;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 5px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        .settings-btn:hover { background: #1e293b; color: white; }
+
+        /* Panel de Configuración Ocultable */
+        #settingsPanel {
+            display: none;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 14px;
+            margin-bottom: 15px;
+            border: 1px solid #334155;
+            font-size: 0.85rem;
+        }
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            margin-top: 4px;
+        }
+
+        /* Tarjeta de Mensaje Destacado */
+        #messageCard {
+            width: 100%;
+            background: linear-gradient(90deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border-left: 4px solid var(--accent);
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            text-align: center;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            min-height: 2.8em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: msgPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes msgPop {
+            0% { opacity: 0; transform: translateY(-10px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Lienzo Flexible: 86% Ancho y Max 65vh Alto */
+        .canvas-wrapper {
+            width: 100%;
+            max-height: 65vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .canvas-container {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #overlayImg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 5;
+        }
+
+        /* Paleta de Pintor Arcade / Game Style 🎮 */
+        .arcade-palette {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(21, 29, 48, 0.8);
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            margin-bottom: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .palette-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-right: 4px;
+        }
+        .color-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+        .color-btn:hover {
+            transform: scale(1.25) translateY(-3px);
+            border-color: #ffffff;
+        }
+        .color-btn.active {
+            transform: scale(1.2);
+            border-color: #facc15;
+            box-shadow: 0 0 12px currentColor;
+        }
+
+        /* Barra de Progreso Discreta */
+        .progress-bar-container {
+            width: 100%;
+            height: 5px;
+            background: #1e293b;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #38bdf8, #ec4899);
+            transition: width 0.1s linear;
+        }
+
+        /* Botones Sencillos de Control (+ / - Grosor) */
+        .controls-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .btn-simple {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-simple:hover { background: #334155; transform: translateY(-1px); }
+        .btn-simple:active { transform: scale(0.96); }
+
+        #loadingOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 15, 25, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            font-size: 1.1rem;
+            color: var(--accent);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla de Regalo Inicial 🎁 -->
+    <div id="giftOverlay" onclick="openGift()">
+        <div class="gift-box">🎁</div>
+        <h1 style="color: #38bdf8; margin: 15px 0 5px 0; font-size: 1.8rem;">¡Tienes una sorpresa especial!</h1>
+        <p style="color: #94a3b8; font-size: 1rem;">Haz clic para abrir tu regalo</p>
+    </div>
+
+    <div id="loadingOverlay">Optimizando dibujo e imagen... ⏳</div>
+
+    <div class="main-stage">
+        <button class="settings-btn" id="cfgToggleBtn" onclick="toggleSettings()">⚙️ Editar Regalo</button>
+
+        <!-- Panel de Configuración (Solo visible al presionar Editar) -->
+        <div id="settingsPanel">
+            <h3 style="margin-top:0; color:#38bdf8;">Configuración de la Sorpresa</h3>
+            <div class="controls-grid">
+                <div>
+                    <label>Enlace de la Foto (URL):</label>
+                    <input type="text" id="imageUrl" placeholder="https://...">
+                </div>
+                <div>
+                    <label>Mensajes (uno por línea):</label>
+                    <textarea id="messagesInput" rows="3">¡Feliz Cumpleaños! 🎉
+Que tengas un día lleno de momentos mágicos ✨
+Eres alguien muy especial 💖
+¡Disfruta al máximo tu día! 🎂</textarea>
+                </div>
+                <div>
+                    <label>Emoji Dibujante:</label>
+                    <select id="cursorEmoji">
+                        <option value="🖌️">🖌️ Pincel</option>
+                        <option value="🐢">🐢 Tortuga</option>
+                        <option value="✏️">✏️ Lápiz</option>
+                        <option value="✨">✨ Magia</option>
+                        <option value="💖">💖 Corazón</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Opacidad Final Foto (%):</label>
+                    <input type="number" id="targetOpacity" min="0" max="100" value="35">
+                </div>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:10px;">
+                <button class="btn-simple" style="background:#0284c7; width:100%; justify-content:center;" onclick="generateShareLink()">🔗 Copiar Link para Enviar</button>
+            </div>
+        </div>
+
+        <!-- Mensaje Flotante -->
+        <div id="messageCard">Cargando tus mensajes...</div>
+
+        <!-- Lienzo Flexible sin distorsión -->
+        <div class="canvas-wrapper">
+            <div class="canvas-container" id="canvasBox">
+                <img id="overlayImg" alt="Foto Original">
+                <canvas id="inkCanvas"></canvas>
+                <canvas id="cursorCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Paleta de Colores Arcade / Gamer 🎮 -->
+        <div class="arcade-palette">
+            <span class="palette-label">Pinta:</span>
+            <button class="color-btn active" style="background:#1e293b; color:#1e293b" data-color="#1e293b"></button>
+            <button class="color-btn" style="background:#ec4899; color:#ec4899" data-color="#ec4899"></button>
+            <button class="color-btn" style="background:#38bdf8; color:#38bdf8" data-color="#38bdf8"></button>
+            <button class="color-btn" style="background:#facc15; color:#facc15" data-color="#facc15"></button>
+            <button class="color-btn" style="background:#10b981; color:#10b981" data-color="#10b981"></button>
+            <button class="color-btn" style="background:#a855f7; color:#a855f7" data-color="#a855f7"></button>
+        </div>
+
+        <div class="progress-bar-container">
+            <div id="progressBar"></div>
+        </div>
+
+        <!-- Controles sencillos (+ / - Trazo y Audio) -->
+        <div class="controls-toolbar">
+            <button class="btn-simple" id="btnPlay">▶ Replay</button>
+            <button class="btn-simple" id="btnPause">⏸ Pausa</button>
+            <button class="btn-simple" onclick="changeLineWidth(-0.5)">➖ Trazo</button>
+            <button class="btn-simple" onclick="changeLineWidth(0.5)">➕ Trazo</button>
+            <button class="btn-simple" id="btnMusic" onclick="toggleMusic()">🔊 Música</button>
+        </div>
+    </div>
+
+    <!-- OpenCV.js -->
+    <script async src="https://docs.opencv.org/4.8.0/opencv.js" onload="onOpenCvReady()"></script>
+
+    <script>
+        let cvReady = false;
+        let paths = [];
+        let completedSegments = [];
+        let pathIndex = 0, pointIndex = 0, done = 0, totalPoints = 0;
+        let timer = null, paused = false, finished = false;
+        let lastPoint = null;
+        let currentColor = "#1e293b";
+        let currentLineWidth = 2.0;
+        let targetOpacityVal = 0.35;
+        let messagesList = [];
+        let currentMsgIdx = -1;
+        let musicPlaying = false;
+        let audioCtx = null, musicTimer = null;
+
+        const inkCanvas = document.getElementById("inkCanvas");
+        const cursorCanvas = document.getElementById("cursorCanvas");
+        const ctx = inkCanvas.getContext("2d");
+        const cctx = cursorCanvas.getContext("2d");
+        const canvasBox = document.getElementById("canvasBox");
+        const overlayImg = document.getElementById("overlayImg");
+
+        function loadParamsFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("img")) {
+                document.getElementById("imageUrl").value = decodeURIComponent(params.get("img"));
+            }
+            if (params.has("msg")) {
+                document.getElementById("messagesInput").value = decodeURIComponent(params.get("msg")).replace(/\|/g, "\n");
+            }
+            if (params.has("op")) {
+                let op = parseInt(params.get("op"));
+                document.getElementById("targetOpacity").value = op;
+                targetOpacityVal = op / 100;
+            }
+            if (params.has("view") && params.get("view") === "gift") {
+                document.getElementById("cfgToggleBtn").style.display = "none";
+            }
+        }
+
+        function onOpenCvReady() {
+            cvReady = true;
+            loadParamsFromUrl();
+            loadImage();
+        }
+
+        function loadImage() {
+            let url = document.getElementById("imageUrl").value.trim();
+            if (!url) {
+                url = "https://lh3.googleusercontent.com/d/143-VvnLchH4llzLh_HwrA4pCHikZdBpE=w469-ra?authuser=0";
+                document.getElementById("imageUrl").value = url;
+            }
+
+            let img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => processImage(img);
+            img.onerror = () => {
+                alert("No se pudo cargar la imagen. Usando imagen de muestra.");
+                img.src = "https://lh3.googleusercontent.com/d/143-VvnLchH4llzLh_HwrA4pCHikZdBpE=w469-ra?authuser=0";
+            };
+            img.src = url;
+        }
+
+        function processImage(imgObj) {
+            if (!cvReady) return;
+            document.getElementById("loadingOverlay").style.display = "flex";
+
+            setTimeout(() => {
+                // Cálculo de escala respetando 86vw y max 65vh exactamente
+                let maxW = window.innerWidth * 0.86;
+                let maxH = window.innerHeight * 0.65;
+                
+                let ratio = Math.min(maxW / imgObj.width, maxH / imgObj.height);
+                let w = Math.round(imgObj.width * ratio);
+                let h = Math.round(imgObj.height * ratio);
+
+                canvasBox.style.width = w + "px";
+                canvasBox.style.height = h + "px";
+                inkCanvas.width = w;
+                inkCanvas.height = h;
+                cursorCanvas.width = w;
+                cursorCanvas.height = h;
+
+                overlayImg.src = imgObj.src;
+
+                // OpenCV Detección limpia
+                let tempCanvas = document.createElement("canvas");
+                tempCanvas.width = w;
+                tempCanvas.height = h;
+                let tctx = tempCanvas.getContext("2d");
+                tctx.drawImage(imgObj, 0, 0, w, h);
+
+                let src = cv.imread(tempCanvas);
+                let gray = new cv.Mat();
+                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+                
+                let blurred = new cv.Mat();
+                cv.GaussianBlur(gray, blurred, new cv.Size(3, 3), 0);
+                
+                let edges = new cv.Mat();
+                cv.Canny(blurred, edges, 40, 110);
+
+                let contours = new cv.MatVector();
+                let hierarchy = new cv.Mat();
+                cv.findContours(edges, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+
+                paths = [];
+                for (let i = 0; i < contours.size(); ++i) {
+                    let cnt = contours.get(i);
+                    if (cnt.rows < 4) continue;
+                    let approx = new cv.Mat();
+                    cv.approxPolyDP(cnt, approx, 1.2, true);
+                    let pts = [];
+                    for (let j = 0; j < approx.rows; j++) {
+                        pts.push([approx.intAt(j, 0), approx.intAt(j, 1)]);
+                    }
+                    if (pts.length >= 2) paths.push(pts);
+                    approx.delete();
+                }
+
+                src.delete(); gray.delete(); blurred.delete(); edges.delete(); contours.delete(); hierarchy.delete();
+
+                paths.sort((a, b) => b.length - a.length);
+                paths = paths.slice(0, 160);
+
+                totalPoints = paths.reduce((sum, p) => sum + p.length + 1, 0);
+                messagesList = document.getElementById("messagesInput").value.split("\n").filter(m => m.trim() !== "");
+                targetOpacityVal = (parseInt(document.getElementById("targetOpacity").value) || 35) / 100;
+
+                document.getElementById("loadingOverlay").style.display = "none";
+            }, 50);
+        }
+
+        function openGift() {
+            let gift = document.getElementById("giftOverlay");
+            gift.style.opacity = "0";
+            setTimeout(() => { gift.style.display = "none"; }, 500);
+            startMusic();
+            restartAnimation();
+        }
+
+        function restartAnimation() {
+            if (timer) clearTimeout(timer);
+            
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, inkCanvas.width, inkCanvas.height);
+            cctx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+            overlayImg.style.opacity = "0";
+            
+            pathIndex = 0;
+            pointIndex = 0;
+            done = 0;
+            finished = false;
+            paused = false;
+            lastPoint = null;
+            completedSegments = [];
+            currentMsgIdx = -1;
+
+            updateUI();
+            drawBatch();
+        }
+
+        function drawCursor(x, y) {
+            cctx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+            let emoji = document.getElementById("cursorEmoji").value;
+            cctx.font = "28px sans-serif";
+            cctx.textAlign = "center";
+            cctx.textBaseline = "middle";
+            cctx.fillText(emoji, x, y);
+        }
+
+        function drawBatch() {
+            if (paused || finished) return;
+
+            let stepsThisFrame = 1; // Velocidad pausada y legible
+            let used = 0;
+
+            ctx.lineWidth = currentLineWidth;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+
+            while (used < stepsThisFrame && pathIndex < paths.length) {
+                let path = paths[pathIndex];
+
+                if (pointIndex === 0) {
+                    lastPoint = path[0];
+                    pointIndex = 1;
+                    drawCursor(lastPoint[0], lastPoint[1]);
+                }
+
+                if (pointIndex < path.length) {
+                    let p = path[pointIndex];
+                    
+                    ctx.strokeStyle = currentColor;
+                    ctx.beginPath();
+                    ctx.moveTo(lastPoint[0], lastPoint[1]);
+                    ctx.lineTo(p[0], p[1]);
+                    ctx.stroke();
+
+                    completedSegments.push({
+                        from: lastPoint,
+                        to: p,
+                        color: currentColor,
+                        width: currentLineWidth
+                    });
+
+                    drawCursor(p[0], p[1]);
+                    
+                    lastPoint = p;
+                    pointIndex++;
+                    done++;
+                    used++;
+                } else {
+                    pathIndex++;
+                    pointIndex = 0;
+                    lastPoint = null;
+                    done++;
+                    used++;
+                }
+            }
+
+            updateUI();
+
+            if (pathIndex >= paths.length) {
+                finishAnimation();
+                return;
+            }
+
+            timer = setTimeout(drawBatch, 35); // Cadencia natural de dibujo a mano
+        }
+
+        function updateUI() {
+            let pct = totalPoints ? Math.min(100, (done / totalPoints) * 100) : 0;
+            document.getElementById("progressBar").style.width = pct + "%";
+
+            // Transparencia gradual sincronizada
+            overlayImg.style.opacity = (pct / 100) * targetOpacityVal;
+
+            // Mensajes con animación
+            if (messagesList.length > 0) {
+                let idx = Math.min(Math.floor((pct / 100) * messagesList.length), messagesList.length - 1);
+                if (idx !== currentMsgIdx) {
+                    currentMsgIdx = idx;
+                    let msgCard = document.getElementById("messageCard");
+                    msgCard.style.animation = 'none';
+                    msgCard.offsetHeight; // Reset animación
+                    msgCard.style.animation = 'msgPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    msgCard.textContent = messagesList[currentMsgIdx];
+                }
+            }
+        }
+
+        function finishAnimation() {
+            if (timer) clearTimeout(timer);
+            finished = true;
+            cctx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+            
+            // Redibujo impecable conservando el historial exacto de colores y grosores
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, inkCanvas.width, inkCanvas.height);
+            
+            for (let seg of completedSegments) {
+                ctx.strokeStyle = seg.color;
+                ctx.lineWidth = seg.width;
+                ctx.beginPath();
+                ctx.moveTo(seg.from[0], seg.from[1]);
+                ctx.lineTo(seg.to[0], seg.to[1]);
+                ctx.stroke();
+            }
+
+            overlayImg.style.opacity = targetOpacityVal;
+            document.getElementById("progressBar").style.width = "100%";
+        }
+
+        function changeLineWidth(delta) {
+            currentLineWidth = Math.max(1, Math.min(8, currentLineWidth + delta));
+        }
+
+        // Sintetizador Música Cumpleaños Feliz
+        function startMusic() {
+            if (musicPlaying) return;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                musicPlaying = true;
+                
+                const notes = [
+                    {f: 264, d: 400}, {f: 264, d: 200}, {f: 297, d: 600}, {f: 264, d: 600}, {f: 352, d: 600}, {f: 330, d: 1200},
+                    {f: 264, d: 400}, {f: 264, d: 200}, {f: 297, d: 600}, {f: 264, d: 600}, {f: 396, d: 600}, {f: 352, d: 1200},
+                    {f: 264, d: 400}, {f: 264, d: 200}, {f: 528, d: 600}, {f: 440, d: 600}, {f: 352, d: 600}, {f: 330, d: 600}, {f: 297, d: 1200},
+                    {f: 466, d: 400}, {f: 466, d: 200}, {f: 440, d: 600}, {f: 352, d: 600}, {f: 396, d: 600}, {f: 352, d: 1200}
+                ];
+
+                let noteIdx = 0;
+                function playNextNote() {
+                    if (!musicPlaying) return;
+                    let note = notes[noteIdx];
+                    noteIdx = (noteIdx + 1) % notes.length;
+
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(note.f, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (note.d / 1000) * 0.9);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + (note.d / 1000));
+
+                    musicTimer = setTimeout(playNextNote, note.d);
+                }
+                playNextNote();
+            } catch(e) {}
+        }
+
+        function toggleMusic() {
+            musicPlaying = !musicPlaying;
+            let btn = document.getElementById("btnMusic");
+            if (musicPlaying) {
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                startMusic();
+                btn.textContent = "🔊 Música";
+            } else {
+                if (musicTimer) clearTimeout(musicTimer);
+                if (audioCtx) audioCtx.suspend();
+                btn.textContent = "🔇 Mute";
+            }
+        }
+
+        // Selección de Paleta Arcade
+        document.querySelectorAll(".color-btn").forEach(btn => {
+            btn.addEventListener("click", function() {
+                document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("active"));
+                this.classList.add("active");
+                currentColor = this.getAttribute("data-color");
+            });
+        });
+
+        function toggleSettings() {
+            let p = document.getElementById("settingsPanel");
+            p.style.display = p.style.display === "block" ? "none" : "block";
+        }
+
+        function generateShareLink() {
+            let imgUrl = document.getElementById("imageUrl").value.trim();
+            let rawMsgs = document.getElementById("messagesInput").value.trim().replace(/\n/g, "|");
+            let opacityVal = document.getElementById("targetOpacity").value;
+
+            let params = new URLSearchParams();
+            if (imgUrl) params.set("img", encodeURIComponent(imgUrl));
+            if (rawMsgs) params.set("msg", encodeURIComponent(rawMsgs));
+            params.set("op", opacityVal);
+            params.set("view", "gift"); // Oculta el botón de edición para el destinatario
+
+            let shareUrl = window.location.origin + window.location.pathname + "?" + params.toString();
+
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                alert("✨ ¡Link copiado al portapapeles!\n\nAl abrirlo, la otra persona verá directamente la caja de regalo 🎁 sin menús ni distracciones.");
+            }).catch(() => {
+                prompt("Copia este enlace para enviarlo:", shareUrl);
+            });
+        }
+
+        document.getElementById("btnPlay").addEventListener("click", () => {
+            if (finished) restartAnimation();
+            else if (paused) { paused = false; drawBatch(); }
+        });
+        document.getElementById("btnPause").addEventListener("click", () => { paused = true; });
+    </script>
+</body>
+</html>

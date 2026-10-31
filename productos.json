@@ -898,7 +898,7 @@
   {
     "Tipo de producto": "Ropa 👕👖",
     "Detalles del producto ( opcional )": "Hermoso leggins negro con diseño de rayas",
-    "id": "",
+    "id": 338946,
     "link_foto": "https://lh3.googleusercontent.com/d/1x0qe_xEz0XEhjTC35x5U9km9mCsryaq0=w469-ra?authuser=0",
     "cantidad": 3,
     "producto_Nombre": "Leggings negro con rayas ",
@@ -908,5 +908,19 @@
     "oferta": "",
     "precio_venta": 32000,
     "seo": "Regalo Navidad moda mujer dama señorita señora niña talla única"
+  },
+  {
+    "Tipo de producto": "Ropa 👕👖",
+    "Detalles del producto ( opcional )": "Jean de estilo ancho oversize skate para dama ",
+    "id": 902019,
+    "link_foto": "https://lh3.googleusercontent.com/d/1Qa0OSbfSpoLi1WJOo0LgNMFyuCas2m3S=w469-ra?authuser=0",
+    "cantidad": 2,
+    "producto_Nombre": "Jean con diseño de tirantes ",
+    "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
+    "colores": "",
+    "oferta": "",
+    "precio_venta": 85000,
+    "seo": "Rap hip hop estilo ancho oversize regalo pantalón dama señora señorita niña ropa estilo aesthetic"
   }
 ]

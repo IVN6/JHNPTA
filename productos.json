@@ -901,7 +901,7 @@
     "id": 902019,
     "link_foto": "https://lh3.googleusercontent.com/d/1Qa0OSbfSpoLi1WJOo0LgNMFyuCas2m3S=w469-ra?authuser=0",
     "cantidad": 2,
-    "producto_Nombre": "Jean con diseño de tirantes ",
+    "producto_Nombre": "Jean oversize ",
     "Para Hombre o mujer": "",
     "¿Cuál es la talla?": "",
     "colores": "",
@@ -935,6 +935,20 @@
     "colores": "",
     "oferta": "",
     "precio_venta": 66000,
+    "seo": ""
+  },
+  {
+    "Tipo de producto": "",
+    "Detalles del producto ( opcional )": "",
+    "id": 181042,
+    "link_foto": "#VALUE!",
+    "cantidad": 0,
+    "producto_Nombre": "Sin Nombre",
+    "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
+    "colores": "",
+    "oferta": "",
+    "precio_venta": 0,
     "seo": ""
   }
 ]

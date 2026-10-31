@@ -716,7 +716,7 @@
   {
     "Tipo de producto": "Mueble 🛋️",
     "Detalles del producto ( opcional )": "Hermosa cobija térmica y cama doble de delfines diseño ",
-    "id": "",
+    "id": 184820,
     "link_foto": "https://lh3.googleusercontent.com/d/1O4AZU6nu8pySUlOjF7sthVTauApiFK0q=w469-ra?authuser=0",
     "cantidad": 2,
     "producto_Nombre": "Cobija térmica de delfines 🐬",
@@ -726,5 +726,19 @@
     "oferta": "",
     "precio_venta": 180000,
     "seo": "Cobija térmica muebles hogar regalo para toda la familia"
+  },
+  {
+    "Tipo de producto": "Mueble 🛋️",
+    "Detalles del producto ( opcional )": "Hermosa cobija térmica de perritos para cama doble ",
+    "id": 884770,
+    "link_foto": "https://lh3.googleusercontent.com/d/1pnTB1ARWlcZEhy-TMFg2ih2ZGjmk_oVp=w469-ra?authuser=0",
+    "cantidad": 3,
+    "producto_Nombre": "Cobija térmica diseño de perritos 🐶",
+    "Para Hombre o mujer": "",
+    "¿Cuál es la talla?": "",
+    "colores": "",
+    "oferta": "",
+    "precio_venta": 160000,
+    "seo": "Cama hogar habitación regalo oferta frazada "
   }
 ]
